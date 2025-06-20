@@ -1,0 +1,57 @@
+use miniquad::*;
+use crate::shader;
+
+#[repr(C)]
+pub struct Vec2 {
+    pub x: f32,
+    pub y: f32,
+}
+#[repr(C)]
+pub struct Vertex {
+    pos: Vec2,
+    uv: Vec2,
+}
+
+pub struct Stage {
+    pub ctx: Box<dyn RenderingBackend>,
+    pub pipeline: Pipeline,
+    pub bindings: Bindings,
+}
+
+pub struct Polygon {
+    pub vertices: Vec<Vertex>,
+    pub indices: Vec<u16>,
+}
+pub fn draw_rectangle(width: f32, height: f32, pos: Vec2) -> Polygon {
+    let vertices: Vec<Vertex> = vec![
+        Vertex { pos : Vec2 { x: -width/2.0 + pos.x, y: -height/2.0 + pos.y }, uv: Vec2 { x: 0., y: 0. } }, // Bottom Left
+        Vertex { pos : Vec2 { x:  width/2.0 + pos.x, y: -height/2.0 + pos.y  }, uv: Vec2 { x: 1., y: 0. } }, // Bottom Right
+        Vertex { pos : Vec2 { x:  width/2.0 + pos.x, y:  height/2.0 + pos.y  }, uv: Vec2 { x: 1., y: 1. } }, // Top Right
+        Vertex { pos : Vec2 { x: -width/2.0 + pos.x, y:  height/2.0 + pos.y  }, uv: Vec2 { x: 0., y: 1. } }, // Top Left
+    ];
+
+    let indices: Vec<u16> = vec![0, 1, 2, 0, 2, 3];
+    Polygon {
+        vertices,
+        indices,
+    }
+}
+
+pub fn draw_triangle(width: f32, height: f32, pos: Vec2) -> Polygon {
+    let vertices: Vec<Vertex> = vec![
+        Vertex { pos : Vec2 { x: -width/2.0 + pos.x, y: -height/2.0 + pos.y }, uv: Vec2 { x: 0., y: 0. } }, // Bottom Left
+        Vertex { pos : Vec2 { x:  width/2.0 + pos.x, y: -height/2.0 + pos.y  }, uv: Vec2 { x: 1., y: 0. } }, // Bottom Right
+        Vertex { pos : Vec2 { x:  pos.x, y:  height/2.0 + pos.y  }, uv: Vec2 { x: 1., y: 1. } }, // Top
+    ];
+
+    let indices: Vec<u16> = vec![0, 1, 2];
+    Polygon {
+        vertices,
+        indices,
+    }
+}
+
+
+
+
+
