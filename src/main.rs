@@ -2,7 +2,6 @@ mod square;
 mod render;
 
 use crate::square::*;
-use crate::render::*;
 use miniquad::*;
 
 

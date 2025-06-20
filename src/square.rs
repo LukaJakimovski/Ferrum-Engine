@@ -1,5 +1,4 @@
 use miniquad::*;
-use crate::shader;
 
 #[repr(C)]
 pub struct Vec2 {
