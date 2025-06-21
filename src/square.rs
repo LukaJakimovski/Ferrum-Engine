@@ -1,11 +1,7 @@
-#[repr(C)] #[derive(Clone, Debug)]
-pub struct Vec2 {
-    pub x: f32,
-    pub y: f32,
-}
+use crate::math::*;
 #[repr(C)] #[derive(Clone)]
 pub struct Vertex {
-    pos: Vec2,
+    pub pos: Vec2,
     uv: Vec2,
 }
 

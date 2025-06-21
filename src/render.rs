@@ -1,8 +1,8 @@
-use std::thread::sleep;
-use std::time::Duration;
-use miniquad::{date, window, Bindings, BufferLayout, BufferSource, BufferType, BufferUsage, EventHandler, KeyCode, KeyMods, MouseButton, Pipeline, PipelineParams, RenderingBackend, ShaderSource, UniformsSource, VertexAttribute, VertexFormat};
+use miniquad::{BufferId, date, window, Bindings, BufferLayout, BufferSource, BufferType, BufferUsage, EventHandler, KeyCode, KeyMods, MouseButton, Pipeline, PipelineParams, RenderingBackend, ShaderSource, UniformsSource, VertexAttribute, VertexFormat};
 use crate::shader;
 use crate::square::*;
+use crate::math::*;
+use crate::collision_detection::*;
 
 pub struct Stage {
     pub ctx: Box<dyn RenderingBackend>,
@@ -19,6 +19,8 @@ pub struct Stage {
     pub vertex_count: i32,
     pub start_time: f64,
     pub delta_time: f64,
+    pub index_buffers: Vec<BufferId>,
+    pub vertex_buffers: Vec<BufferId>,
 }
 impl Stage {
     pub fn new(polygons: Vec<Polygon>) -> Self {
@@ -42,13 +44,13 @@ impl Stage {
 
         let vertex_buffer = ctx.new_buffer(
             BufferType::VertexBuffer,
-            BufferUsage::Immutable,
+            BufferUsage::Dynamic,
             BufferSource::slice(&vertices),
         );
 
         let index_buffer = ctx.new_buffer(
             BufferType::IndexBuffer,
-            BufferUsage::Immutable,
+            BufferUsage::Dynamic,
             BufferSource::slice(&indices),
         );
 
@@ -93,10 +95,13 @@ impl Stage {
             vertex_count: 0,
             vertices,
             indices,
+            index_buffers: vec![index_buffer],
+            vertex_buffers: vec![vertex_buffer],
         }
     }
 
-    pub fn refresh(&mut self) {
+    pub fn add_polygon(&mut self, polygon: Polygon) {
+        self.polygons.push(polygon);
         let current_indices = self.vertices.len() as u16;
         let mut new_indices = self.polygons[self.polygons.len() - 1].indices.clone();
         for i in 0..new_indices.len() {
@@ -104,21 +109,20 @@ impl Stage {
         }
         self.indices.extend(new_indices);
         self.vertices.extend(self.polygons[self.polygons.len() - 1].vertices.clone());
-        let vb = self.ctx.new_buffer(
+    }
+    pub fn refresh(&mut self) {
+        self.ctx.delete_buffer(self.bindings.vertex_buffers[0]);
+        self.ctx.delete_buffer(self.bindings.index_buffer);
+        self.bindings.vertex_buffers[0] = self.ctx.new_buffer(
             BufferType::VertexBuffer,
-            BufferUsage::Immutable,
+            BufferUsage::Dynamic,
             BufferSource::slice(&self.vertices),
         );
-        let ib = self.ctx.new_buffer(
+        self.bindings.index_buffer = self.ctx.new_buffer(
             BufferType::IndexBuffer,
-            BufferUsage::Immutable,
+            BufferUsage::Dynamic,
             BufferSource::slice(&self.indices),
         );
-        self.bindings = Bindings {
-            vertex_buffers: vec![vb],
-            index_buffer: ib,
-            images: vec![],
-        }
     }
 }
 
@@ -126,8 +130,21 @@ impl EventHandler for Stage {
     fn update(&mut self) {}
 
     fn draw(&mut self) {
+        self.refresh();
         self.delta_time = date::now() - self.start_time;
         self.start_time = date::now();
+        
+        for i in 0..self.polygons.len() {
+            for j in 0..self.polygons.len(){
+                if i != j {
+                    let result = sat_collision(&self.polygons[i], &self.polygons[j]);
+                    if result[1].y == 1.0{
+                        println!("Collision!");
+                    }
+                };
+            }
+        }
+
         if self.pressed_keys[0] == 1 {self.camera_pos.1 += 5.0 * self.delta_time as f32;}
         if self.pressed_keys[1] == 1 {self.camera_pos.0 -= 5.0 * self.delta_time as f32;}
         if self.pressed_keys[2] == 1 {self.camera_pos.1 -= 5.0 * self.delta_time as f32;}
@@ -151,9 +168,10 @@ impl EventHandler for Stage {
 
         self.ctx.commit_frame();
         self.frame_count += 1;
-        if self.frame_count % 60 == 0 {
+        if self.frame_count % 165 == 0 {
+
             println!("Frame time: {}ms", self.delta_time * 1000.0);
-            println!("Movement: {}",  5.0 * self.delta_time as f32);
+            println!("Polygons: {}", self.polygons.len());
         }
     }
 
@@ -166,16 +184,41 @@ impl EventHandler for Stage {
 
     fn mouse_motion_event(&mut self, _x: f32, _y: f32) {
         self.mouse_pos = (_x, _y);
-        //println!("Mouse: ({}, {})", _x, _y);
     }
     fn mouse_button_down_event(&mut self, _button: MouseButton, _x: f32, _y: f32) {
-        if _button == MouseButton::Middle { self.pressed_buttons[2] = 1 }
         if _button == MouseButton::Left {
             self.pressed_buttons[0] = 1;
             let position = Vec2 {x: ((self.mouse_pos.0 * 2.0 - window::screen_size().0)/ window::screen_size().0 + self.camera_pos.0 / 2.0) * -self.camera_pos.3 * 2.0, y: ((self.mouse_pos.1 * 2.0 - window::screen_size().1)/ window::screen_size().1 + self.camera_pos.1 / -2.0) * self.camera_pos.3 * 2.0};
-            self.polygons.push(rectangle(0.5, 0.5, position));
+            self.add_polygon(rectangle(0.5, 0.5, position));
+        }
+        if _button == MouseButton::Right { 
+            self.pressed_buttons[1] = 1;
+            let position = Vec2 {x: ((self.mouse_pos.0 * 2.0 - window::screen_size().0)/ window::screen_size().0 + self.camera_pos.0 / 2.0) * -self.camera_pos.3 * 2.0, y: ((self.mouse_pos.1 * 2.0 - window::screen_size().1)/ window::screen_size().1 + self.camera_pos.1 / -2.0) * self.camera_pos.3 * 2.0};
+            let mouse_polygon = rectangle(0.01, 0.01, position);
+            for i in 0..self.polygons.len() {
+                let result = sat_collision(&self.polygons[i], &mouse_polygon);
+                if result[1].y == 1.0{
+                    self.polygons.remove(i);
+                    self.indices = vec![];
+                    self.vertices = vec![];
+                    let mut start_index: u16 = 0;
+                    for polygon in self.polygons.clone() {
+                        let length = polygon.vertices.len() as u16;
+                        self.vertices.extend(polygon.vertices);
+
+                        let mut new_indices = polygon.indices;
+                        for i in 0..new_indices.len() {
+                            new_indices[i] += start_index as u16;
+                        }
+                        self.indices.extend(new_indices);
+                        start_index += length as u16;
+                    }
+                    break
+                }
+            }
             self.refresh();
         }
+        if _button == MouseButton::Middle { self.pressed_buttons[2] = 1 }
     }
     fn mouse_button_up_event(&mut self, _button: MouseButton, _x: f32, _y: f32) {
         if _button == MouseButton::Middle { self.pressed_buttons[2] = 0 }
