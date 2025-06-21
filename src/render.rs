@@ -1,3 +1,5 @@
+use std::thread::sleep;
+use std::time::Duration;
 use miniquad::{date, window, Bindings, BufferLayout, BufferSource, BufferType, BufferUsage, EventHandler, KeyCode, KeyMods, MouseButton, Pipeline, PipelineParams, RenderingBackend, ShaderSource, UniformsSource, VertexAttribute, VertexFormat};
 use crate::shader;
 use crate::square::*;
@@ -12,10 +14,11 @@ pub struct Stage {
     pub indices: Vec<u16>,
     pub pressed_keys: [u8; 16],
     pub pressed_buttons: [u8; 3],
-    pub start_time: f64,
     pub frame_count: u32,
     pub mouse_pos: (f32, f32),
     pub vertex_count: i32,
+    pub start_time: f64,
+    pub delta_time: f64,
 }
 impl Stage {
     pub fn new(polygons: Vec<Polygon>) -> Self {
@@ -80,6 +83,7 @@ impl Stage {
             bindings,
             ctx,
             polygons,
+            delta_time: 0.0,
             camera_pos: (0.0, 0.0, 0.0, -1.0),
             pressed_keys: [0; 16],
             pressed_buttons: [0, 0, 0],
@@ -122,10 +126,12 @@ impl EventHandler for Stage {
     fn update(&mut self) {}
 
     fn draw(&mut self) {
-        if self.pressed_keys[0] == 1 {self.camera_pos.1 += 0.03;}
-        if self.pressed_keys[1] == 1 {self.camera_pos.0 -= 0.03;}
-        if self.pressed_keys[2] == 1 {self.camera_pos.1 -= 0.03;}
-        if self.pressed_keys[3] == 1 {self.camera_pos.0 += 0.03;}
+        self.delta_time = date::now() - self.start_time;
+        self.start_time = date::now();
+        if self.pressed_keys[0] == 1 {self.camera_pos.1 += 5.0 * self.delta_time as f32;}
+        if self.pressed_keys[1] == 1 {self.camera_pos.0 -= 5.0 * self.delta_time as f32;}
+        if self.pressed_keys[2] == 1 {self.camera_pos.1 -= 5.0 * self.delta_time as f32;}
+        if self.pressed_keys[3] == 1 {self.camera_pos.0 += 5.0 * self.delta_time as f32;}
 
         self.vertex_count = 0;
         for polygon in self.polygons.clone() {
@@ -146,9 +152,8 @@ impl EventHandler for Stage {
         self.ctx.commit_frame();
         self.frame_count += 1;
         if self.frame_count % 60 == 0 {
-            self.start_time = date::now();
-            //println!("FPS: {}", 60.0 / (date::now() - self.start_time));
-            //println!("Vertices: {}", self.vertex_count);
+            println!("Frame time: {}ms", self.delta_time * 1000.0);
+            println!("Movement: {}",  5.0 * self.delta_time as f32);
         }
     }
 
@@ -168,7 +173,6 @@ impl EventHandler for Stage {
         if _button == MouseButton::Left {
             self.pressed_buttons[0] = 1;
             let position = Vec2 {x: ((self.mouse_pos.0 * 2.0 - window::screen_size().0)/ window::screen_size().0 + self.camera_pos.0 / 2.0) * -self.camera_pos.3 * 2.0, y: ((self.mouse_pos.1 * 2.0 - window::screen_size().1)/ window::screen_size().1 + self.camera_pos.1 / -2.0) * self.camera_pos.3 * 2.0};
-            println!("Mouse: ({:?})", &position);
             self.polygons.push(rectangle(0.5, 0.5, position));
             self.refresh();
         }
