@@ -8,7 +8,7 @@ use miniquad::*;
 fn main() {
     let conf = conf::Conf::default();
     let polygons = vec![
-        rectangle(0.5, 0.5, Vec2 {x: 0.0, y: 0.0}), 
+        rectangle(0.5, 0.5, Vec2 {x: 0.0, y: 0.0}),
         rectangle(0.5, 0.5, Vec2 {x: -0.5, y: -0.5}),
         triangle(0.5, 0.5, Vec2 {x: 0.5, y: 0.5})
     ];
@@ -20,9 +20,9 @@ mod shader {
 
     pub const VERTEX: &str = r#"#version 330 core
     attribute vec2 in_pos;
-    
+
     uniform vec4 camera_pos;
-    
+
     void main() {
         gl_Position = vec4( in_pos, 0, 1) - camera_pos;
     }"#;
@@ -31,7 +31,7 @@ mod shader {
     out vec4 FragColor;
 
     void main()
-    {   
+    {
         FragColor = vec4(1.0f, 0.5f, 0.2f, 1.0f);
     } "#;
 

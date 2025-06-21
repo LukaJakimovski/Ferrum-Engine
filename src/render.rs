@@ -1,4 +1,4 @@
-use miniquad::{conf, date, start, window, Bindings, BufferLayout, BufferSource, BufferType, BufferUsage, EventHandler, KeyCode, KeyMods, MouseButton, Pipeline, PipelineParams, RenderingBackend, ShaderSource, UniformsSource, VertexAttribute, VertexFormat};
+use miniquad::{date, window, Bindings, BufferLayout, BufferSource, BufferType, BufferUsage, EventHandler, KeyCode, KeyMods, MouseButton, Pipeline, PipelineParams, RenderingBackend, ShaderSource, UniformsSource, VertexAttribute, VertexFormat};
 use crate::shader;
 use crate::square::*;
 
@@ -8,6 +8,8 @@ pub struct Stage {
     pub bindings: Bindings,
     pub camera_pos: (f32, f32, f32, f32),
     pub polygons: Vec<Polygon>,
+    pub vertices: Vec<Vertex>,
+    pub indices: Vec<u16>,
     pub pressed_keys: Vec<KeyCode>,
     pub pressed_buttons: [u8; 3],
     pub start_time: f64,
@@ -85,78 +87,33 @@ impl Stage {
             frame_count: 0,
             mouse_pos: (0.0, 0.0),
             vertex_count: 0,
+            vertices,
+            indices,
         }
     }
 
-    pub fn refresh(&self) -> Self {
-        let start_time = date::now();
-        let mut ctx: Box<dyn RenderingBackend> = window::new_rendering_backend();
-
-        let mut indices: Vec<u16> = vec![];
-        let mut vertices: Vec<crate::square::Vertex> = vec![];
-        let mut start_index: u16 = 0;
-        for i in 0..self.polygons.len() {
-            let length = self.polygons[i].vertices.len() as u16;
-            vertices.extend(self.polygons[i].clone().vertices);
-
-            let mut new_indices = self.polygons[i].clone().indices;
-            for i in 0..new_indices.len() {
-                new_indices[i] += start_index as u16;
-            }
-            indices.extend(new_indices);
-            start_index += length as u16;
+    pub fn refresh(&mut self) {
+        let current_indices = self.vertices.len() as u16;
+        let mut new_indices = self.polygons[self.polygons.len() - 1].indices.clone();
+        for i in 0..new_indices.len() {
+            new_indices[i] += current_indices;
         }
-
-        let vertex_buffer = ctx.new_buffer(
+        self.indices.extend(new_indices);
+        self.vertices.extend(self.polygons[self.polygons.len() - 1].vertices.clone());
+        let vb = self.ctx.new_buffer(
             BufferType::VertexBuffer,
             BufferUsage::Immutable,
-            BufferSource::slice(&vertices),
+            BufferSource::slice(&self.vertices),
         );
-
-        let index_buffer = ctx.new_buffer(
+        let ib = self.ctx.new_buffer(
             BufferType::IndexBuffer,
             BufferUsage::Immutable,
-            BufferSource::slice(&indices),
+            BufferSource::slice(&self.indices),
         );
-
-        let bindings = Bindings {
-            vertex_buffers: vec![vertex_buffer],
-            index_buffer: index_buffer,
+        self.bindings = Bindings {
+            vertex_buffers: vec![vb],
+            index_buffer: ib,
             images: vec![],
-        };
-
-        let shader = ctx
-            .new_shader(
-                ShaderSource::Glsl {
-                    vertex: shader::VERTEX,
-                    fragment: shader::FRAGMENT,
-                },
-                shader::meta(),
-            )
-            .unwrap();
-
-        let pipeline = ctx.new_pipeline(
-            &[BufferLayout::default()],
-            &[
-                VertexAttribute::new("in_pos", VertexFormat::Float2),
-                VertexAttribute::new("in_uv", VertexFormat::Float2),
-            ],
-            shader,
-            PipelineParams::default(),
-        );
-
-        Stage {
-            pipeline: self.pipeline.clone(),
-            bindings: self.bindings.clone(),
-            ctx,
-            polygons: self.polygons.clone(),
-            camera_pos: self.camera_pos,
-            pressed_keys: vec![],
-            pressed_buttons: self.pressed_buttons,
-            start_time: self.start_time,
-            frame_count: self.frame_count,
-            mouse_pos: self.mouse_pos,
-            vertex_count: self.vertex_count,
         }
     }
 }
@@ -170,7 +127,6 @@ impl EventHandler for Stage {
             self.vertex_count += polygon.indices.len() as i32;
         }
         self.ctx.begin_default_pass(Default::default());
-
         self.ctx.apply_pipeline(&self.pipeline);
         self.ctx.apply_bindings(&self.bindings);
 
@@ -188,6 +144,7 @@ impl EventHandler for Stage {
             let time = date::now() - self.start_time;
             self.start_time = date::now();
             println!("FPS: {}", 60.0 / time);
+            println!("Vertices: {}", self.vertex_count);
         }
     }
 
@@ -200,15 +157,16 @@ impl EventHandler for Stage {
 
     fn mouse_motion_event(&mut self, _x: f32, _y: f32) {
         self.mouse_pos = (_x, _y);
+        //println!("Mouse: ({}, {})", _x, _y);
     }
     fn mouse_button_down_event(&mut self, _button: MouseButton, _x: f32, _y: f32) {
         if _button == MouseButton::Middle { self.pressed_buttons[2] = 1 }
-        if _button == MouseButton::Left { 
+        if _button == MouseButton::Left {
             self.pressed_buttons[0] = 1;
-            self.polygons.push(rectangle(0.5, 0.5, Vec2 {x: self.mouse_pos.0 / window::screen_size().0, y: self.mouse_pos.1 / window::screen_size().1}));
+            let position = Vec2 {x: (self.mouse_pos.0 * 2.0 - window::screen_size().0)/ window::screen_size().0 * -self.camera_pos.3 * 2.0, y: (self.mouse_pos.1 * 2.0 - window::screen_size().1)/ window::screen_size().1 * self.camera_pos.3 * 2.0};
+            //println!("Mouse: ({:?})", &position);
+            self.polygons.push(rectangle(0.5, 0.5, position));
             self.refresh();
-            let conf = conf::Conf::default();
-            start(conf, move || Box::new(Stage::new(polygons)));
         }
     }
     fn mouse_button_up_event(&mut self, _button: MouseButton, _x: f32, _y: f32) {
