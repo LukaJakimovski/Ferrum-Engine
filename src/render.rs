@@ -10,7 +10,7 @@ pub struct Stage {
     pub polygons: Vec<Polygon>,
     pub vertices: Vec<Vertex>,
     pub indices: Vec<u16>,
-    pub pressed_keys: Vec<KeyCode>,
+    pub pressed_keys: [u8; 16],
     pub pressed_buttons: [u8; 3],
     pub start_time: f64,
     pub frame_count: u32,
@@ -81,7 +81,7 @@ impl Stage {
             ctx,
             polygons,
             camera_pos: (0.0, 0.0, 0.0, -1.0),
-            pressed_keys: vec![],
+            pressed_keys: [0; 16],
             pressed_buttons: [0, 0, 0],
             start_time,
             frame_count: 0,
@@ -122,6 +122,11 @@ impl EventHandler for Stage {
     fn update(&mut self) {}
 
     fn draw(&mut self) {
+        if self.pressed_keys[0] == 1 {self.camera_pos.1 += 0.03;}
+        if self.pressed_keys[1] == 1 {self.camera_pos.0 -= 0.03;}
+        if self.pressed_keys[2] == 1 {self.camera_pos.1 -= 0.03;}
+        if self.pressed_keys[3] == 1 {self.camera_pos.0 += 0.03;}
+
         self.vertex_count = 0;
         for polygon in self.polygons.clone() {
             self.vertex_count += polygon.indices.len() as i32;
@@ -141,10 +146,9 @@ impl EventHandler for Stage {
         self.ctx.commit_frame();
         self.frame_count += 1;
         if self.frame_count % 60 == 0 {
-            let time = date::now() - self.start_time;
             self.start_time = date::now();
-            println!("FPS: {}", 60.0 / time);
-            println!("Vertices: {}", self.vertex_count);
+            //println!("FPS: {}", 60.0 / (date::now() - self.start_time));
+            //println!("Vertices: {}", self.vertex_count);
         }
     }
 
@@ -163,8 +167,8 @@ impl EventHandler for Stage {
         if _button == MouseButton::Middle { self.pressed_buttons[2] = 1 }
         if _button == MouseButton::Left {
             self.pressed_buttons[0] = 1;
-            let position = Vec2 {x: (self.mouse_pos.0 * 2.0 - window::screen_size().0)/ window::screen_size().0 * -self.camera_pos.3 * 2.0, y: (self.mouse_pos.1 * 2.0 - window::screen_size().1)/ window::screen_size().1 * self.camera_pos.3 * 2.0};
-            //println!("Mouse: ({:?})", &position);
+            let position = Vec2 {x: ((self.mouse_pos.0 * 2.0 - window::screen_size().0)/ window::screen_size().0 + self.camera_pos.0 / 2.0) * -self.camera_pos.3 * 2.0, y: ((self.mouse_pos.1 * 2.0 - window::screen_size().1)/ window::screen_size().1 + self.camera_pos.1 / -2.0) * self.camera_pos.3 * 2.0};
+            println!("Mouse: ({:?})", &position);
             self.polygons.push(rectangle(0.5, 0.5, position));
             self.refresh();
         }
@@ -179,9 +183,17 @@ impl EventHandler for Stage {
             KeyCode::Key2 => window::show_mouse(true),
             _ => (),
         }
-        if _keycode == KeyCode::W{ self.camera_pos.1 += 0.03; self.pressed_keys.push(_keycode) }
-        if _keycode == KeyCode::S{ self.camera_pos.1 -= 0.03; self.pressed_keys.push(_keycode)}
-        if _keycode == KeyCode::D{ self.camera_pos.0 += 0.03; self.pressed_keys.push(_keycode) }
-        if _keycode == KeyCode::A{ self.camera_pos.0 -= 0.03; self.pressed_keys.push(_keycode) }
+        if _keycode == KeyCode::W{self.pressed_keys[0] = 1 }
+        if _keycode == KeyCode::A{self.pressed_keys[1] = 1 }
+        if _keycode == KeyCode::S{self.pressed_keys[2] = 1}
+        if _keycode == KeyCode::D{self.pressed_keys[3] = 1 }
+
+    }
+
+    fn key_up_event(&mut self, _keycode: KeyCode, _keymods: KeyMods) {
+        if _keycode == KeyCode::W{self.pressed_keys[0] = 0 }
+        if _keycode == KeyCode::A{self.pressed_keys[1] = 0 }
+        if _keycode == KeyCode::S{self.pressed_keys[2] = 0}
+        if _keycode == KeyCode::D{self.pressed_keys[3] = 0 }
     }
 }
