@@ -1,27 +1,22 @@
 use miniquad::*;
 
-#[repr(C)]
+#[repr(C)] #[derive(Clone)]
 pub struct Vec2 {
     pub x: f32,
     pub y: f32,
 }
-#[repr(C)]
+#[repr(C)] #[derive(Clone)]
 pub struct Vertex {
     pos: Vec2,
     uv: Vec2,
 }
 
-pub struct Stage {
-    pub ctx: Box<dyn RenderingBackend>,
-    pub pipeline: Pipeline,
-    pub bindings: Bindings,
-}
-
+#[derive(Clone)]
 pub struct Polygon {
     pub vertices: Vec<Vertex>,
     pub indices: Vec<u16>,
 }
-pub fn draw_rectangle(width: f32, height: f32, pos: Vec2) -> Polygon {
+pub fn rectangle(width: f32, height: f32, pos: Vec2) -> Polygon {
     let vertices: Vec<Vertex> = vec![
         Vertex { pos : Vec2 { x: -width/2.0 + pos.x, y: -height/2.0 + pos.y }, uv: Vec2 { x: 0., y: 0. } }, // Bottom Left
         Vertex { pos : Vec2 { x:  width/2.0 + pos.x, y: -height/2.0 + pos.y  }, uv: Vec2 { x: 1., y: 0. } }, // Bottom Right
@@ -36,7 +31,7 @@ pub fn draw_rectangle(width: f32, height: f32, pos: Vec2) -> Polygon {
     }
 }
 
-pub fn draw_triangle(width: f32, height: f32, pos: Vec2) -> Polygon {
+pub fn triangle(width: f32, height: f32, pos: Vec2) -> Polygon {
     let vertices: Vec<Vertex> = vec![
         Vertex { pos : Vec2 { x: -width/2.0 + pos.x, y: -height/2.0 + pos.y }, uv: Vec2 { x: 0., y: 0. } }, // Bottom Left
         Vertex { pos : Vec2 { x:  width/2.0 + pos.x, y: -height/2.0 + pos.y  }, uv: Vec2 { x: 1., y: 0. } }, // Bottom Right
