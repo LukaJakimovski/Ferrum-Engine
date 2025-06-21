@@ -17,6 +17,14 @@ pub const FRAGMENT: &str = r#"#version 330 core
         FragColor = vec4(1.0f, 0.5f, 0.2f, 1.0f);
     } "#;
 
+pub const FRAGMENT_COLLIDING: &str = r#"#version 330 core
+    out vec4 FragColor;
+
+    void main()
+    {
+        FragColor = vec4(1.0f, 0.0f, 0.0f, 1.0f);
+    } "#;
+
 pub fn meta() -> ShaderMeta {
     ShaderMeta {
         images: vec![],
