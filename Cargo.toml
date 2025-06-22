@@ -5,3 +5,4 @@ edition = "2024"
 
 [dependencies]
 miniquad = "0.4.8"
+rand = "0.9.1"

@@ -1,7 +1,16 @@
 use std::ops::{Add, Sub, Mul, Div, AddAssign, SubAssign, MulAssign, DivAssign, Neg};
 use std::fmt;
 
-#[repr(C)] #[derive(Clone, Debug)]
+#[repr(C)] #[derive(Clone, Copy, Debug, Default)]
+pub struct Vec4 {
+    pub x: f32,
+    pub y: f32,
+    pub z: f32,
+    pub w: f32,
+}
+
+
+#[repr(C)] #[derive(Clone, Debug, Default)]
 pub struct Vec2 {
     pub x: f32,
     pub y: f32,

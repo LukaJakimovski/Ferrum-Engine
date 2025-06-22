@@ -2,27 +2,23 @@ use miniquad::*;
 
 pub const VERTEX: &str = r#"#version 330 core
     attribute vec2 in_pos;
-
+    attribute vec4 in_color;
+    
+    varying lowp vec4 color;
+    
     uniform vec4 camera_pos;
 
     void main() {
         gl_Position = vec4( in_pos, 0, 1) - camera_pos;
+        color = in_color;
     }"#;
 
 pub const FRAGMENT: &str = r#"#version 330 core
-    out vec4 FragColor;
+    varying lowp vec4 color;
 
     void main()
     {
-        FragColor = vec4(1.0f, 0.5f, 0.2f, 1.0f);
-    } "#;
-
-pub const FRAGMENT_COLLIDING: &str = r#"#version 330 core
-    out vec4 FragColor;
-
-    void main()
-    {
-        FragColor = vec4(1.0f, 0.0f, 0.0f, 1.0f);
+        gl_FragColor = color;
     } "#;
 
 pub fn meta() -> ShaderMeta {
