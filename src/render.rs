@@ -30,7 +30,7 @@ impl World {
             polygons,
             colliding_polygons: vec![],
             delta_time: 0.0,
-            camera_pos: (0.0, 0.0, 0.0, -1.0),
+            camera_pos: (0.0, 0.0, 0.0, -2.0),
             pressed_keys: [0; 16],
             pressed_buttons: [0, 0, 0],
             start_time: date::now(),
@@ -101,7 +101,6 @@ impl World {
     }
 
     pub fn render(&mut self){
-        let start = date::now();
         self.ctx.begin_default_pass(Default::default());
         let mut render_polygon: Vec<Polygon> = self.polygons.clone();
         render_polygon.extend(self.colliding_polygons.clone());
@@ -115,9 +114,6 @@ impl World {
         self.ctx.draw(0, render_object.indices.len() as i32, 1);
         self.ctx.end_render_pass();
         self.ctx.commit_frame();
-        println!("Frame time: {}ms", self.delta_time * 1000.0);
-        println!("Render time: {}ms", (date::now() - start) * 1000.0);
-        println!("Polygons: {}", self.polygons.len());
     }
 }
 
@@ -158,7 +154,9 @@ impl EventHandler for World {
     }
 
     fn mouse_button_down_event(&mut self, _button: MouseButton, _x: f32, _y: f32) {
-        let position = Vec2 {x: ((self.mouse_pos.0 * 2.0 - window::screen_size().0)/ window::screen_size().0 + self.camera_pos.0 / 2.0) * -self.camera_pos.3 * 2.0, y: ((self.mouse_pos.1 * 2.0 - window::screen_size().1)/ window::screen_size().1 + self.camera_pos.1 / -2.0) * self.camera_pos.3 * 2.0};
+        let position = Vec2 {
+            x: ((self.mouse_pos.0 * 2.0 - window::screen_size().0)/ window::screen_size().0 + self.camera_pos.0 / (-self.camera_pos.3 + 1.0)) * (-self.camera_pos.3 + 1.0),
+            y: ((self.mouse_pos.1 * 2.0 - window::screen_size().1)/ window::screen_size().1 + self.camera_pos.1 / -(-self.camera_pos.3 + 1.0)) * -(-self.camera_pos.3 + 1.0)};
         if _button == MouseButton::Left {
             self.pressed_buttons[0] = 1;
             self.polygons.push(Polygon::rectangle(0.5, 0.5, position.clone()));
@@ -201,8 +199,13 @@ impl EventHandler for World {
 
     fn raw_mouse_motion(&mut self, _dx: f32, _dy: f32) {
         if self.pressed_buttons[2] == 1 {
-            self.camera_pos.0 -= _dx * 2.0 / window::screen_size().0;
-            self.camera_pos.1 += _dy * 2.0 / window::screen_size().1;
+            self.camera_pos.0 -= _dx * (-self.camera_pos.3 + 1.0) / window::screen_size().0;
+            self.camera_pos.1 += _dy *  (-self.camera_pos.3 + 1.0) / window::screen_size().1;
         }
+    }
+
+    fn mouse_wheel_event(&mut self, _x: f32, _y: f32) {
+        self.camera_pos.3 += _y * 0.3;
+        self.camera_pos.3 += _x * 0.3;
     }
 }
