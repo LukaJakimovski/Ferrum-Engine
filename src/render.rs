@@ -11,7 +11,7 @@ use crate::shader::{FRAGMENT, VERTEX};
 pub struct RenderObject {
     pub pipeline: Pipeline,
     pub bindings: Bindings,
-    pub indices: Vec<u16>,
+    pub indices: Vec<u32>,
 }
 
 pub struct World {
@@ -45,17 +45,17 @@ impl World {
     }
 
     pub fn create_render_object(&mut self, vertex_shader: &&str, fragment_shader: &&str, polygons: Vec<Polygon>) -> RenderObject {
-        let mut indices: Vec<u16> = vec![];
+        let mut indices: Vec<u32> = vec![];
         let mut vertices: Vec<crate::square::Vertex> = vec![];
-        let mut start_index: u16 = 0;
+        let mut start_index: u32 = 0;
         for polygon in polygons.clone() {
-            let length = polygon.vertices.len() as u16;
+            let length = polygon.vertices.len() as u32;
             let color = polygon.vertices[0].color;
             vertices.extend(polygon.vertices);
             vertices.push(Vertex{pos: polygon.center, uv: Vec2::zero(), color});
-            let mut new_indices = polygon.indices;
+            let mut new_indices= polygon.indices;
             for i in 0..new_indices.len() {
-                new_indices[i] += start_index as u16;
+                new_indices[i] += start_index;
             }
             indices.extend(new_indices);
             start_index += length + 1;
@@ -139,8 +139,8 @@ impl EventHandler for World {
             self.polygons[i].rotate(self.delta_time as f32 * 3.0);
             for j in 0..self.polygons.len(){
                 if i != j {
-                    //let result = sat_collision(&self.polygons[i], &self.polygons[j]);
-                    let result = [Vec2 {x: 0.0, y: 0.0}, Vec2 {x: 0.0, y: 0.0}];
+                    let result = sat_collision(&self.polygons[i], &self.polygons[j]);
+                    //let result = [Vec2 {x: 0.0, y: 0.0}, Vec2 {x: 0.0, y: 0.0}];
                     if result[1].y == 1.0{
                         self.colliding_polygons.push(self.polygons[i].clone());
                         let vertex_count = self.colliding_polygons[self.colliding_polygons.len() - 1].vertices.len();
@@ -220,7 +220,7 @@ impl EventHandler for World {
     }
 
     fn mouse_wheel_event(&mut self, _x: f32, _y: f32) {
-        self.camera_pos.3 += _y * 0.3;
-        self.camera_pos.3 += _x * 0.3;
+        self.camera_pos.3 += _y * 0.1;
+        self.camera_pos.3 += _x * 0.1;
     }
 }

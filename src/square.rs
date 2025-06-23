@@ -11,7 +11,7 @@ pub struct Vertex {
 pub struct Polygon {
     pub center: Vec2,
     pub vertices: Vec<Vertex>,
-    pub indices: Vec<u16>,
+    pub indices: Vec<u32>,
     pub shape_type: u8,
 }
 impl Polygon {
@@ -55,7 +55,7 @@ impl Polygon {
             Vertex { pos : Vec2 { x: -width/2.0 + pos.x, y:  height/2.0 + pos.y  }, uv: Vec2 { x: 0., y: 1. }, color }, // Top Left
         ];
 
-        let indices: Vec<u16> = vec![0, 1, 2, 0, 2, 3];
+        let indices: Vec<u32> = vec![0, 1, 2, 0, 2, 3];
         let mut polygon = Polygon {
             shape_type: 0,
             center: Vec2::zero(),
@@ -75,7 +75,7 @@ impl Polygon {
         ];
 
 
-        let indices: Vec<u16> = vec![0, 1, 2];
+        let indices: Vec<u32> = vec![0, 1, 2];
         let mut polygon = Polygon {
             shape_type: 0,
             center: Vec2::zero(),
@@ -86,7 +86,7 @@ impl Polygon {
         polygon
     }
 
-    pub fn polygon(sides: u16, radius: f32, pos: Vec2) -> Self {
+    pub fn polygon(sides: u32, radius: f32, pos: Vec2) -> Self {
         let color = Color::random();
         let mut vertices: Vec<Vertex> = vec![];
 
@@ -98,12 +98,12 @@ impl Polygon {
             vertices.push(vertex);
         }
 
-        let mut indices: Vec<u16> = vec![];
+        let mut indices: Vec<u32> = vec![];
 
         for i in 0..(sides - 1) {
             indices.push(i);
             indices.push(i + 1);
-            indices.push(sides as u16);
+            indices.push(sides);
         }
         indices.push(0);
         indices.push(sides - 1);
