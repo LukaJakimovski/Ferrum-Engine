@@ -1,4 +1,5 @@
 use miniquad::{date, window, Bindings, BufferLayout, BufferSource, BufferType, BufferUsage, EventHandler, KeyCode, KeyMods, MouseButton, Pipeline, PipelineParams, RenderingBackend, ShaderSource, UniformsSource, VertexAttribute, VertexFormat};
+use miniquad::window::set_window_size;
 use crate::shader;
 use crate::square::*;
 use crate::math::*;
@@ -6,6 +7,7 @@ use crate::collision_detection::*;
 use crate::color::Color;
 use crate::shader::{FRAGMENT, VERTEX};
 
+#[derive(Clone)]
 pub struct RenderObject {
     pub pipeline: Pipeline,
     pub bindings: Bindings,
@@ -17,6 +19,8 @@ pub struct World {
     pub camera_pos: (f32, f32, f32, f32),
     pub polygons: Vec<Polygon>,
     pub colliding_polygons: Vec<Polygon>,
+    pub previous_polygon_count: usize,
+    pub render_object: Option<RenderObject>,
     pub pressed_keys: [u8; 16],
     pub pressed_buttons: [u8; 3],
     pub mouse_pos: (f32, f32),
@@ -28,6 +32,8 @@ impl World {
         World {
             ctx: window::new_rendering_backend(),
             polygons,
+            previous_polygon_count: 0,
+            render_object: None,
             colliding_polygons: vec![],
             delta_time: 0.0,
             camera_pos: (0.0, 0.0, 0.0, -2.0),
@@ -44,24 +50,25 @@ impl World {
         let mut start_index: u16 = 0;
         for polygon in polygons.clone() {
             let length = polygon.vertices.len() as u16;
+            let color = polygon.vertices[0].color;
             vertices.extend(polygon.vertices);
-
+            vertices.push(Vertex{pos: polygon.center, uv: Vec2::zero(), color});
             let mut new_indices = polygon.indices;
             for i in 0..new_indices.len() {
                 new_indices[i] += start_index as u16;
             }
             indices.extend(new_indices);
-            start_index += length as u16;
+            start_index += length + 1;
         }
         let vertex_buffer = self.ctx.new_buffer(
             BufferType::VertexBuffer,
-            BufferUsage::Dynamic,
+            BufferUsage::Immutable,
             BufferSource::slice(&vertices),
         );
 
         let index_buffer = self.ctx.new_buffer(
             BufferType::IndexBuffer,
-            BufferUsage::Dynamic,
+            BufferUsage::Immutable,
             BufferSource::slice(&indices),
         );
 
@@ -104,16 +111,19 @@ impl World {
         self.ctx.begin_default_pass(Default::default());
         let mut render_polygon: Vec<Polygon> = self.polygons.clone();
         render_polygon.extend(self.colliding_polygons.clone());
-        let render_object = self.create_render_object(&VERTEX, &FRAGMENT, render_polygon);
-        self.ctx.apply_pipeline(&render_object.pipeline);
-        self.ctx.apply_bindings(&render_object.bindings);
-        self.ctx
-            .apply_uniforms(UniformsSource::table(&shader::Uniforms {
-                camera_pos: self.camera_pos
-            }));
-        self.ctx.draw(0, render_object.indices.len() as i32, 1);
+        self.render_object = Some(self.create_render_object(&VERTEX, &FRAGMENT, render_polygon));
+        if self.render_object.is_some() {
+            self.ctx.apply_pipeline(&<Option<RenderObject> as Clone>::clone(&self.render_object).unwrap().pipeline);
+            self.ctx.apply_bindings(&<Option<RenderObject> as Clone>::clone(&self.render_object).unwrap().bindings);
+            self.ctx
+                .apply_uniforms(UniformsSource::table(&shader::Uniforms {
+                    camera_pos: self.camera_pos
+                }));
+            self.ctx.draw(0, self.render_object.clone().unwrap().indices.len() as i32, 1);
+        }
         self.ctx.end_render_pass();
         self.ctx.commit_frame();
+        self.previous_polygon_count = self.polygons.len() + self.colliding_polygons.len();
     }
 }
 
@@ -121,13 +131,16 @@ impl EventHandler for World {
     fn update(&mut self) {}
 
     fn draw(&mut self) {
+        set_window_size(800, 800);
         self.delta_time = date::now() - self.start_time;
         self.start_time = date::now();
 
         for i in 0..self.polygons.len() {
+            self.polygons[i].rotate(self.delta_time as f32 * 3.0);
             for j in 0..self.polygons.len(){
                 if i != j {
-                    let result = sat_collision(&self.polygons[i], &self.polygons[j]);
+                    //let result = sat_collision(&self.polygons[i], &self.polygons[j]);
+                    let result = [Vec2 {x: 0.0, y: 0.0}, Vec2 {x: 0.0, y: 0.0}];
                     if result[1].y == 1.0{
                         self.colliding_polygons.push(self.polygons[i].clone());
                         let vertex_count = self.colliding_polygons[self.colliding_polygons.len() - 1].vertices.len();
@@ -145,6 +158,8 @@ impl EventHandler for World {
         if self.pressed_keys[3] == 1 {self.camera_pos.0 += 5.0 * self.delta_time as f32;}
 
         self.render();
+        println!("Render time: {:?}ms", (date::now() - self.start_time) * 1000.0);
+        println!("Polygons {:?}", self.polygons.len());
 
         self.colliding_polygons.clear();
     }

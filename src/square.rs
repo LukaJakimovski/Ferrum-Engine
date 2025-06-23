@@ -4,7 +4,7 @@ use crate::math::*;
 #[repr(C)] #[derive(Clone)] #[derive(Default)]
 pub struct Vertex {
     pub pos: Vec2,
-    uv: Vec2,
+    pub uv: Vec2,
     pub color: Color,
 }
 #[derive(Clone)]
@@ -12,12 +12,14 @@ pub struct Polygon {
     pub center: Vec2,
     pub vertices: Vec<Vertex>,
     pub indices: Vec<u16>,
+    pub shape_type: u8,
 }
 impl Polygon {
-    pub fn calculate_center_of_mass(&self) -> Vec2 {
+    pub fn calculate_center_of_mass(&mut self){
         let n = self.vertices.len();
         if n == 0{
-            return Vec2::zero();
+            self.center = Vec2::zero();
+            return;
         }
 
         let mut area = 0.0;
@@ -36,11 +38,12 @@ impl Polygon {
 
         area *= 0.5;
         if area == 0.0 {
-            return self.vertices[0].pos.clone();
+            self.center = self.vertices[0].pos.clone();
+            return;
         }
         let centroid_x = sum_cx / (6.0 * area);
         let centroid_y = sum_cy / (6.0 * area);
-        Vec2::new(centroid_x, centroid_y)
+        self.center = Vec2::new(centroid_x, centroid_y);
     }
 
     pub fn rectangle(width: f32, height: f32, pos: Vec2) -> Self {
@@ -53,7 +56,8 @@ impl Polygon {
         ];
 
         let indices: Vec<u16> = vec![0, 1, 2, 0, 2, 3];
-        let polygon = Polygon {
+        let mut polygon = Polygon {
+            shape_type: 0,
             center: Vec2::zero(),
             vertices,
             indices,
@@ -72,13 +76,54 @@ impl Polygon {
 
 
         let indices: Vec<u16> = vec![0, 1, 2];
-        let polygon = Polygon {
+        let mut polygon = Polygon {
+            shape_type: 0,
             center: Vec2::zero(),
             vertices,
             indices,
         };
         polygon.calculate_center_of_mass();
         polygon
+    }
+
+    pub fn polygon(sides: u16, radius: f32, pos: Vec2) -> Self {
+        let color = Color::random();
+        let mut vertices: Vec<Vertex> = vec![];
+
+        for i in 0..sides {
+            let angle = i as f32 * 2.0 * std::f32::consts::PI / sides as f32;
+            let x = radius * angle.cos();
+            let y = radius * angle.sin();
+            let vertex = Vertex { pos: Vec2 { x: x + pos.x, y: y + pos.y }, uv: Vec2 { x: 0., y: 0. }, color };
+            vertices.push(vertex);
+        }
+
+        let mut indices: Vec<u16> = vec![];
+
+        for i in 0..(sides - 1) {
+            indices.push(i);
+            indices.push(i + 1);
+            indices.push(sides as u16);
+        }
+        indices.push(0);
+        indices.push(sides - 1);
+        indices.push(sides );
+
+        Polygon{
+            shape_type: 0,
+            center: pos,
+            vertices,
+            indices,
+        }
+    }
+
+    pub fn rotate(&mut self, angle: f32) -> &mut Self{
+        for vertex in &mut self.vertices {
+            let new_x = ((vertex.pos.x - self.center.x) * angle.cos()  - (vertex.pos.y - self.center.y) * angle.sin()) + self.center.x;
+            vertex.pos.y = ((vertex.pos.x - self.center.x) * angle.sin()  + (vertex.pos.y - self.center.y) * angle.cos()) + self.center.y;
+            vertex.pos.x = new_x;
+        }
+        self
     }
 }
 
