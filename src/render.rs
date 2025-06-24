@@ -158,10 +158,9 @@ impl EventHandler for World {
         if self.pressed_keys[3] == 1 {self.camera_pos.0 += 5.0 * self.delta_time as f32;}
 
         self.render();
-        println!("Render time: {:?}ms", (date::now() - self.start_time) * 1000.0);
-        println!("Polygons {:?}", self.polygons.len());
-
         self.colliding_polygons.clear();
+        println!("Frame time: {:?}ms", (date::now() - self.start_time) * 1000.0);
+        println!("Polygons {:?}", self.polygons.len());
     }
 
     fn mouse_motion_event(&mut self, _x: f32, _y: f32) {
@@ -220,7 +219,7 @@ impl EventHandler for World {
     }
 
     fn mouse_wheel_event(&mut self, _x: f32, _y: f32) {
-        self.camera_pos.3 += _y * 0.1;
-        self.camera_pos.3 += _x * 0.1;
+        self.camera_pos.3 += _y * 0.3;
+        self.camera_pos.3 += _x * 0.3;
     }
 }

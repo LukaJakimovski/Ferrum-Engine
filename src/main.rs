@@ -12,12 +12,14 @@ use miniquad::*;
 
 fn main() {
     let conf = conf::Conf::default();
-    let polygons = vec![
-        Polygon::polygon(3, 0.3533, Vec2 { x: -0.31421356237309504, y: 0.0 }),
-        Polygon::polygon(4, 0.3533, Vec2 { x: 0.0, y: 0.55 }),
-        Polygon::polygon(5, 0.3533, Vec2 { x: 0.31421356237309504, y: 0.0 }),
-        Polygon::polygon(32, 0.3533, Vec2 { x: -1.0, y: 1.0 }),
+    let mut polygons = vec![
     ];
+    for i in 0..46 {
+        for j in 0..46{
+            polygons.push(Polygon::polygon(5, 0.3533, Vec2 { x: i as f32 * 0.7, y: j as f32 * 0.7 }));
+        }
+    }
+
     
     start(conf, move || Box::new(World::new(polygons)));
 }

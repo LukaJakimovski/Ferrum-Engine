@@ -12,7 +12,7 @@ pub struct Polygon {
     pub center: Vec2,
     pub vertices: Vec<Vertex>,
     pub indices: Vec<u32>,
-    pub shape_type: u8,
+    pub radius: f32,
 }
 impl Polygon {
     pub fn calculate_center_of_mass(&mut self){
@@ -57,11 +57,12 @@ impl Polygon {
 
         let indices: Vec<u32> = vec![0, 1, 2, 0, 2, 3];
         let mut polygon = Polygon {
-            shape_type: 0,
+            radius: 0.0,
             center: Vec2::zero(),
             vertices,
             indices,
         };
+        polygon.calculate_radius();
         polygon.calculate_center_of_mass();
         polygon
     }
@@ -77,11 +78,12 @@ impl Polygon {
 
         let indices: Vec<u32> = vec![0, 1, 2];
         let mut polygon = Polygon {
-            shape_type: 0,
+            radius: 0.0,
             center: Vec2::zero(),
             vertices,
             indices,
         };
+        polygon.calculate_radius();
         polygon.calculate_center_of_mass();
         polygon
     }
@@ -110,11 +112,22 @@ impl Polygon {
         indices.push(sides );
 
         Polygon{
-            shape_type: 0,
+            radius,
             center: pos,
             vertices,
             indices,
         }
+    }
+
+    pub fn calculate_radius(&mut self){
+        let mut max_radius = 0.0;
+        for vertex in &self.vertices {
+            let distance = vertex.pos.distance(&self.center);
+            if distance > max_radius {
+                max_radius = distance;
+            }
+        }
+        self.radius = max_radius;
     }
 
     pub fn rotate(&mut self, angle: f32) -> &mut Self{
