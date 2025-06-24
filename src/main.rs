@@ -9,14 +9,29 @@ use crate::square::*;
 use crate::render::*;
 use crate::math::*;
 use miniquad::*;
+use miniquad::conf::Platform;
 
 fn main() {
-    let conf = conf::Conf::default();
+    let conf = conf::Conf {
+        window_title: "Ferrum Engine".to_string(),
+        window_height: 800,
+        high_dpi: false,
+        window_width: 800,
+        sample_count: 16,
+        window_resizable: false,
+        icon: None,
+        platform: Platform {
+            swap_interval: Some(0),
+            ..Default::default()
+        },
+        fullscreen: false
+    }
+        ;
     let mut polygons = vec![
     ];
-    for i in 0..46 {
-        for j in 0..46{
-            polygons.push(Polygon::polygon(5, 0.3533, Vec2 { x: i as f32 * 0.7, y: j as f32 * 0.7 }));
+    for i in 0..32 {
+        for j in 0..32{
+            polygons.push(Polygon::polygon(32, 0.3533, Vec2 { x: i as f32 * 0.707, y: j as f32 * 0.707 }));
         }
     }
 

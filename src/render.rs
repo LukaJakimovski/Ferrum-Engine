@@ -9,18 +9,17 @@ use crate::shader::{FRAGMENT, VERTEX};
 
 #[derive(Clone)]
 pub struct RenderObject {
-    pub pipeline: Pipeline,
     pub bindings: Bindings,
     pub indices: Vec<u32>,
 }
 
 pub struct World {
     pub ctx: Box<dyn RenderingBackend>,
+    pub pipeline: Pipeline,
     pub camera_pos: (f32, f32, f32, f32),
     pub polygons: Vec<Polygon>,
     pub colliding_polygons: Vec<Polygon>,
-    pub previous_polygon_count: usize,
-    pub render_object: Option<RenderObject>,
+    pub render_object: RenderObject,
     pub pressed_keys: [u8; 16],
     pub pressed_buttons: [u8; 3],
     pub mouse_pos: (f32, f32),
@@ -29,11 +28,44 @@ pub struct World {
 }
 impl World {
     pub fn new(polygons: Vec<Polygon>) -> Self {
+        let mut ctx = window::new_rendering_backend();
+        let shader = ctx
+            .new_shader(
+                ShaderSource::Glsl {
+                    vertex: &VERTEX,
+                    fragment: &FRAGMENT,
+                },
+                shader::meta(),
+            )
+            .unwrap();
+
+        let pipeline = ctx.new_pipeline(
+            &[BufferLayout::default()],
+            &[
+                VertexAttribute::new("in_pos", VertexFormat::Float2),
+                VertexAttribute::new("in_uv", VertexFormat::Float2),
+                VertexAttribute::new("in_color", VertexFormat::Float4),
+            ],
+            shader,
+            PipelineParams::default(),
+        );
+
+        let index_buffer = ctx.new_buffer(
+            BufferType::IndexBuffer,
+            BufferUsage::Immutable,
+            BufferSource::slice(&vec![0]),
+        );
+
+        let bindings = Bindings {
+            vertex_buffers: vec![],
+            index_buffer,
+            images: vec![],
+        };
         World {
-            ctx: window::new_rendering_backend(),
+            ctx,
+            pipeline,
             polygons,
-            previous_polygon_count: 0,
-            render_object: None,
+            render_object: RenderObject {bindings, indices: vec![]},
             colliding_polygons: vec![],
             delta_time: 0.0,
             camera_pos: (0.0, 0.0, 0.0, -2.0),
@@ -44,9 +76,9 @@ impl World {
         }
     }
 
-    pub fn create_render_object(&mut self, vertex_shader: &&str, fragment_shader: &&str, polygons: Vec<Polygon>) -> RenderObject {
+    pub fn create_render_object(&mut self, polygons: Vec<Polygon>) -> RenderObject {
         let mut indices: Vec<u32> = vec![];
-        let mut vertices: Vec<crate::square::Vertex> = vec![];
+        let mut vertices: Vec<Vertex> = vec![];
         let mut start_index: u32 = 0;
         for polygon in polygons.clone() {
             let length = polygon.vertices.len() as u32;
@@ -62,13 +94,13 @@ impl World {
         }
         let vertex_buffer = self.ctx.new_buffer(
             BufferType::VertexBuffer,
-            BufferUsage::Immutable,
+            BufferUsage::Dynamic,
             BufferSource::slice(&vertices),
         );
 
         let index_buffer = self.ctx.new_buffer(
             BufferType::IndexBuffer,
-            BufferUsage::Immutable,
+            BufferUsage::Dynamic,
             BufferSource::slice(&indices),
         );
 
@@ -78,30 +110,7 @@ impl World {
             images: vec![],
         };
 
-        let shader = self.ctx
-            .new_shader(
-                ShaderSource::Glsl {
-                    vertex: vertex_shader,
-                    fragment: fragment_shader,
-                },
-                shader::meta(),
-            )
-            .unwrap();
-
-        let pipeline = self.ctx.new_pipeline(
-            &[BufferLayout::default()],
-            &[
-                VertexAttribute::new("in_pos", VertexFormat::Float2),
-                VertexAttribute::new("in_uv", VertexFormat::Float2),
-                VertexAttribute::new("in_color", VertexFormat::Float4),
-            ],
-            shader,
-            PipelineParams::default(),
-        );
-
-        // Pipeline Bindings Indices
         RenderObject {
-            pipeline,
             bindings,
             indices,
         }
@@ -111,19 +120,18 @@ impl World {
         self.ctx.begin_default_pass(Default::default());
         let mut render_polygon: Vec<Polygon> = self.polygons.clone();
         render_polygon.extend(self.colliding_polygons.clone());
-        self.render_object = Some(self.create_render_object(&VERTEX, &FRAGMENT, render_polygon));
-        if self.render_object.is_some() {
-            self.ctx.apply_pipeline(&<Option<RenderObject> as Clone>::clone(&self.render_object).unwrap().pipeline);
-            self.ctx.apply_bindings(&<Option<RenderObject> as Clone>::clone(&self.render_object).unwrap().bindings);
-            self.ctx
-                .apply_uniforms(UniformsSource::table(&shader::Uniforms {
-                    camera_pos: self.camera_pos
-                }));
-            self.ctx.draw(0, self.render_object.clone().unwrap().indices.len() as i32, 1);
-        }
+        self.render_object = self.create_render_object(render_polygon);
+        self.ctx.apply_pipeline(&self.pipeline);
+        self.ctx.apply_bindings(&self.render_object.bindings);
+        self.ctx
+            .apply_uniforms(UniformsSource::table(&shader::Uniforms {
+                camera_pos: self.camera_pos
+            }));
+        self.ctx.draw(0, self.render_object.clone().indices.len() as i32, 1);
+        self.ctx.delete_buffer(self.render_object.bindings.vertex_buffers[0]);
+        self.ctx.delete_buffer(self.render_object.bindings.index_buffer);
         self.ctx.end_render_pass();
         self.ctx.commit_frame();
-        self.previous_polygon_count = self.polygons.len() + self.colliding_polygons.len();
     }
 }
 
@@ -136,13 +144,21 @@ impl EventHandler for World {
         self.start_time = date::now();
 
         for i in 0..self.polygons.len() {
-            self.polygons[i].rotate(self.delta_time as f32 * 3.0);
-            for j in 0..self.polygons.len(){
+            self.polygons[i].rotate(self.delta_time as f32 * 3.0 * rand::random::<f32>());
+        }
+        for i in 0..self.polygons.len() {
+            for j in i..self.polygons.len(){
                 if i != j {
                     let result = sat_collision(&self.polygons[i], &self.polygons[j]);
                     //let result = [Vec2 {x: 0.0, y: 0.0}, Vec2 {x: 0.0, y: 0.0}];
                     if result[1].y == 1.0{
                         self.colliding_polygons.push(self.polygons[i].clone());
+                        let vertex_count = self.colliding_polygons[self.colliding_polygons.len() - 1].vertices.len();
+                        let length = self.colliding_polygons.len();
+                        for k in 0..vertex_count {
+                            self.colliding_polygons[length - 1].vertices[k].color = Color::red();
+                        }
+                        self.colliding_polygons.push(self.polygons[j].clone());
                         let vertex_count = self.colliding_polygons[self.colliding_polygons.len() - 1].vertices.len();
                         let length = self.colliding_polygons.len();
                         for k in 0..vertex_count {
