@@ -8,6 +8,6 @@ A 2D physics engine written in Rust with minimal libraries.
 # Compilation
 Install Rust
 run the following command:
-'''
+```
 cargo run --package ferrum_engine --bin ferrum_engine
-'''
+```
