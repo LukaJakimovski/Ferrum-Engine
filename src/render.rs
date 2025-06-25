@@ -1,5 +1,4 @@
 use miniquad::{date, window, Bindings, BufferLayout, BufferSource, BufferType, BufferUsage, EventHandler, KeyCode, KeyMods, MouseButton, Pipeline, PipelineParams, RenderingBackend, ShaderSource, UniformsSource, VertexAttribute, VertexFormat};
-use miniquad::window::set_window_size;
 use crate::shader;
 use crate::square::*;
 use crate::math::*;
@@ -19,6 +18,7 @@ pub struct World {
     pub camera_pos: (f32, f32, f32, f32),
     pub polygons: Vec<Polygon>,
     pub colliding_polygons: Vec<Polygon>,
+    pub previous_polygon_count: usize,
     pub render_object: RenderObject,
     pub pressed_keys: [u8; 16],
     pub pressed_buttons: [u8; 3],
@@ -43,8 +43,7 @@ impl World {
             &[BufferLayout::default()],
             &[
                 VertexAttribute::new("in_pos", VertexFormat::Float2),
-                VertexAttribute::new("in_uv", VertexFormat::Float2),
-                VertexAttribute::new("in_color", VertexFormat::Float4),
+                VertexAttribute::new("in_color", VertexFormat::Float3),
             ],
             shader,
             PipelineParams::default(),
@@ -67,6 +66,7 @@ impl World {
             polygons,
             render_object: RenderObject {bindings, indices: vec![]},
             colliding_polygons: vec![],
+            previous_polygon_count: 0,
             delta_time: 0.0,
             camera_pos: (0.0, 0.0, 0.0, -2.0),
             pressed_keys: [0; 16],
@@ -76,7 +76,7 @@ impl World {
         }
     }
 
-    pub fn create_render_object(&mut self, polygons: Vec<Polygon>) -> RenderObject {
+    pub fn create_render_object(&mut self, polygons: Vec<Polygon>) {
         let mut indices: Vec<u32> = vec![];
         let mut vertices: Vec<Vertex> = vec![];
         let mut start_index: u32 = 0;
@@ -84,7 +84,7 @@ impl World {
             let length = polygon.vertices.len() as u32;
             let color = polygon.vertices[0].color;
             vertices.extend(polygon.vertices);
-            vertices.push(Vertex{pos: polygon.center, uv: Vec2::zero(), color});
+            vertices.push(Vertex{pos: polygon.center, color});
             let mut new_indices= polygon.indices;
             for i in 0..new_indices.len() {
                 new_indices[i] += start_index;
@@ -92,35 +92,48 @@ impl World {
             indices.extend(new_indices);
             start_index += length + 1;
         }
-        let vertex_buffer = self.ctx.new_buffer(
-            BufferType::VertexBuffer,
-            BufferUsage::Dynamic,
+        if self.previous_polygon_count != polygons.len() {
+            let vertex_buffer = self.ctx.new_buffer(
+                BufferType::VertexBuffer,
+                BufferUsage::Dynamic,
+                BufferSource::slice(&vertices),
+            );
+
+            let index_buffer = self.ctx.new_buffer(
+                BufferType::IndexBuffer,
+                BufferUsage::Dynamic,
+                BufferSource::slice(&indices),
+            );
+
+            let bindings = Bindings {
+                vertex_buffers: vec![vertex_buffer],
+                index_buffer,
+                images: vec![],
+            };
+
+            self.render_object = RenderObject {
+                bindings,
+                indices,
+            };
+            return
+        }
+        self.ctx.buffer_update(
+            self.render_object.bindings.vertex_buffers[0],
             BufferSource::slice(&vertices),
         );
 
-        let index_buffer = self.ctx.new_buffer(
-            BufferType::IndexBuffer,
-            BufferUsage::Dynamic,
+        self.ctx.buffer_update(
+            self.render_object.bindings.index_buffer,
             BufferSource::slice(&indices),
         );
-
-        let bindings = Bindings {
-            vertex_buffers: vec![vertex_buffer],
-            index_buffer,
-            images: vec![],
-        };
-
-        RenderObject {
-            bindings,
-            indices,
-        }
+        self.previous_polygon_count = polygons.len();
     }
 
     pub fn render(&mut self){
         self.ctx.begin_default_pass(Default::default());
         let mut render_polygon: Vec<Polygon> = self.polygons.clone();
         render_polygon.extend(self.colliding_polygons.clone());
-        self.render_object = self.create_render_object(render_polygon);
+        self.create_render_object(render_polygon);
         self.ctx.apply_pipeline(&self.pipeline);
         self.ctx.apply_bindings(&self.render_object.bindings);
         self.ctx
@@ -128,8 +141,8 @@ impl World {
                 camera_pos: self.camera_pos
             }));
         self.ctx.draw(0, self.render_object.clone().indices.len() as i32, 1);
-        self.ctx.delete_buffer(self.render_object.bindings.vertex_buffers[0]);
-        self.ctx.delete_buffer(self.render_object.bindings.index_buffer);
+        //self.ctx.delete_buffer(self.render_object.bindings.vertex_buffers[0]);
+        //self.ctx.delete_buffer(self.render_object.bindings.index_buffer);
         self.ctx.end_render_pass();
         self.ctx.commit_frame();
     }
@@ -139,7 +152,6 @@ impl EventHandler for World {
     fn update(&mut self) {}
 
     fn draw(&mut self) {
-        set_window_size(800, 800);
         self.delta_time = date::now() - self.start_time;
         self.start_time = date::now();
 
@@ -149,8 +161,8 @@ impl EventHandler for World {
         for i in 0..self.polygons.len() {
             for j in i..self.polygons.len(){
                 if i != j {
-                    let result = sat_collision(&self.polygons[i], &self.polygons[j]);
-                    //let result = [Vec2 {x: 0.0, y: 0.0}, Vec2 {x: 0.0, y: 0.0}];
+                    //let result = sat_collision(&self.polygons[i], &self.polygons[j]);
+                    let result = [Vec2 {x: 0.0, y: 0.0}, Vec2 {x: 0.0, y: 0.0}];
                     if result[1].y == 1.0{
                         self.colliding_polygons.push(self.polygons[i].clone());
                         let vertex_count = self.colliding_polygons[self.colliding_polygons.len() - 1].vertices.len();
@@ -175,6 +187,7 @@ impl EventHandler for World {
 
         self.render();
         self.colliding_polygons.clear();
+
         println!("Frame time: {:?}ms", (date::now() - self.start_time) * 1000.0);
         println!("Polygons {:?}", self.polygons.len());
     }

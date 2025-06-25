@@ -4,7 +4,6 @@ use crate::math::*;
 #[repr(C)] #[derive(Clone)] #[derive(Default)]
 pub struct Vertex {
     pub pos: Vec2,
-    pub uv: Vec2,
     pub color: Color,
 }
 #[derive(Clone)]
@@ -49,10 +48,10 @@ impl Polygon {
     pub fn rectangle(width: f32, height: f32, pos: Vec2) -> Self {
         let color = Color::random();
         let vertices: Vec<Vertex> = vec![
-            Vertex { pos : Vec2 { x: -width/2.0 + pos.x, y: -height/2.0 + pos.y }, uv: Vec2 { x: 0., y: 0. }, color }, // Bottom Left
-            Vertex { pos : Vec2 { x:  width/2.0 + pos.x, y: -height/2.0 + pos.y  }, uv: Vec2 { x: 1., y: 0. }, color }, // Bottom Right
-            Vertex { pos : Vec2 { x:  width/2.0 + pos.x, y:  height/2.0 + pos.y  }, uv: Vec2 { x: 1., y: 1. }, color }, // Top Right
-            Vertex { pos : Vec2 { x: -width/2.0 + pos.x, y:  height/2.0 + pos.y  }, uv: Vec2 { x: 0., y: 1. }, color }, // Top Left
+            Vertex { pos : Vec2 { x: -width/2.0 + pos.x, y: -height/2.0 + pos.y }, color }, // Bottom Left
+            Vertex { pos : Vec2 { x:  width/2.0 + pos.x, y: -height/2.0 + pos.y  }, color }, // Bottom Right
+            Vertex { pos : Vec2 { x:  width/2.0 + pos.x, y:  height/2.0 + pos.y  }, color }, // Top Right
+            Vertex { pos : Vec2 { x: -width/2.0 + pos.x, y:  height/2.0 + pos.y  }, color }, // Top Left
         ];
 
         let indices: Vec<u32> = vec![0, 1, 2, 0, 2, 3];
@@ -67,12 +66,13 @@ impl Polygon {
         polygon
     }
 
+    #[allow(dead_code)]
     pub fn triangle(width: f32, height: f32, pos: Vec2) -> Self {
         let color = Color::random();
         let vertices: Vec<Vertex> = vec![
-            Vertex { pos: Vec2 { x: -width/2.0 + pos.x, y: -height/2.0 + pos.y }, uv: Vec2 { x: 0., y: 0. }, color }, // Bottom Left
-            Vertex { pos : Vec2 { x:  width/2.0 + pos.x, y: -height/2.0 + pos.y  }, uv: Vec2 { x: 1., y: 0. }, color }, // Bottom Right
-            Vertex { pos : Vec2 { x:  pos.x, y:  height/2.0 + pos.y  }, uv: Vec2 { x: 1., y: 1. }, color }, // Top
+            Vertex { pos: Vec2 { x: -width/2.0 + pos.x, y: -height/2.0 + pos.y }, color }, // Bottom Left
+            Vertex { pos : Vec2 { x:  width/2.0 + pos.x, y: -height/2.0 + pos.y  }, color }, // Bottom Right
+            Vertex { pos : Vec2 { x:  pos.x, y:  height/2.0 + pos.y  }, color }, // Top
         ];
 
 
@@ -96,7 +96,7 @@ impl Polygon {
             let angle = i as f32 * 2.0 * std::f32::consts::PI / sides as f32;
             let x = radius * angle.cos();
             let y = radius * angle.sin();
-            let vertex = Vertex { pos: Vec2 { x: x + pos.x, y: y + pos.y }, uv: Vec2 { x: 0., y: 0. }, color };
+            let vertex = Vertex { pos: Vec2 { x: x + pos.x, y: y + pos.y }, color };
             vertices.push(vertex);
         }
 

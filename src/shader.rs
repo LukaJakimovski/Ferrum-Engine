@@ -2,9 +2,9 @@ use miniquad::*;
 
 pub const VERTEX: &str = r#"#version 330 core
     attribute vec2 in_pos;
-    attribute vec4 in_color;
+    attribute vec3 in_color;
     
-    varying lowp vec4 color;
+    varying lowp vec3 color;
     
     uniform vec4 camera_pos;
 
@@ -14,11 +14,11 @@ pub const VERTEX: &str = r#"#version 330 core
     }"#;
 
 pub const FRAGMENT: &str = r#"#version 330 core
-    varying lowp vec4 color;
+    varying lowp vec3 color;
 
     void main()
     {
-        gl_FragColor = color;
+        gl_FragColor = vec4 ( color, 1.0);
     } "#;
 
 pub fn meta() -> ShaderMeta {
