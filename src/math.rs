@@ -10,7 +10,7 @@ pub struct Vec4 {
 }
 
 
-#[repr(C)] #[derive(Clone, Debug, Default)]
+#[repr(C)] #[derive(Clone, Debug, Default, Copy)]
 pub struct Vec2 {
     pub x: f32,
     pub y: f32,

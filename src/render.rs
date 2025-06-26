@@ -48,6 +48,11 @@ impl World {
             shader,
             PipelineParams::default(),
         );
+        let vertex_buffer = ctx.new_buffer(
+            BufferType::VertexBuffer,
+            BufferUsage::Immutable,
+            BufferSource::slice(&vec![0]),
+        );
 
         let index_buffer = ctx.new_buffer(
             BufferType::IndexBuffer,
@@ -56,7 +61,7 @@ impl World {
         );
 
         let bindings = Bindings {
-            vertex_buffers: vec![],
+            vertex_buffers: vec![vertex_buffer],
             index_buffer,
             images: vec![],
         };
@@ -93,6 +98,8 @@ impl World {
             start_index += length + 1;
         }
         if self.previous_polygon_count != polygons.len() {
+            self.ctx.delete_buffer(self.render_object.bindings.vertex_buffers[0]);
+            self.ctx.delete_buffer(self.render_object.bindings.index_buffer);
             let vertex_buffer = self.ctx.new_buffer(
                 BufferType::VertexBuffer,
                 BufferUsage::Dynamic,
@@ -141,8 +148,6 @@ impl World {
                 camera_pos: self.camera_pos
             }));
         self.ctx.draw(0, self.render_object.clone().indices.len() as i32, 1);
-        //self.ctx.delete_buffer(self.render_object.bindings.vertex_buffers[0]);
-        //self.ctx.delete_buffer(self.render_object.bindings.index_buffer);
         self.ctx.end_render_pass();
         self.ctx.commit_frame();
     }
@@ -155,15 +160,28 @@ impl EventHandler for World {
         self.delta_time = date::now() - self.start_time;
         self.start_time = date::now();
 
-        for i in 0..self.polygons.len() {
-            self.polygons[i].rotate(self.delta_time as f32 * 3.0 * rand::random::<f32>());
+        if self.pressed_keys[4] == 1 {
+            for i in 0..self.polygons.len() {
+                self.polygons[i].rotate(self.delta_time as f32 * 16.0 * rand::random::<f32>());
+            }
+
         }
         for i in 0..self.polygons.len() {
             for j in i..self.polygons.len(){
                 if i != j {
-                    //let result = sat_collision(&self.polygons[i], &self.polygons[j]);
-                    let result = [Vec2 {x: 0.0, y: 0.0}, Vec2 {x: 0.0, y: 0.0}];
-                    if result[1].y == 1.0{
+                    let result = sat_collision(&self.polygons[i], &self.polygons[j]);
+                    //let result = [Vec2 {x: 0.0, y: 0.0}, Vec2 {x: 0.0, y: 0.0}];
+                    if result[1].y != 0.0{
+                        let direction = result[0].normalized();
+                        let translation = Vec2 {x: direction.x * result[1].x * 1.5, y: direction.y * result[1].x * 1.5};
+                        if result[1].y < 0.0 {
+                            self.polygons[i].translate(translation);
+                            self.polygons[j].translate(-translation);
+                        }
+                        else {
+                            self.polygons[i].translate(-translation);
+                            self.polygons[j].translate(translation);
+                        }
                         self.colliding_polygons.push(self.polygons[i].clone());
                         let vertex_count = self.colliding_polygons[self.colliding_polygons.len() - 1].vertices.len();
                         let length = self.colliding_polygons.len();
@@ -231,13 +249,14 @@ impl EventHandler for World {
         if _keycode == KeyCode::A{self.pressed_keys[1] = 1 }
         if _keycode == KeyCode::S{self.pressed_keys[2] = 1}
         if _keycode == KeyCode::D{self.pressed_keys[3] = 1 }
-
+        if _keycode == KeyCode::R{self.pressed_keys[4] = 1 }
     }
     fn key_up_event(&mut self, _keycode: KeyCode, _keymods: KeyMods) {
         if _keycode == KeyCode::W{self.pressed_keys[0] = 0 }
         if _keycode == KeyCode::A{self.pressed_keys[1] = 0 }
         if _keycode == KeyCode::S{self.pressed_keys[2] = 0}
         if _keycode == KeyCode::D{self.pressed_keys[3] = 0 }
+        if _keycode == KeyCode::R{self.pressed_keys[4] = 0 }
     }
 
     fn raw_mouse_motion(&mut self, _dx: f32, _dy: f32) {

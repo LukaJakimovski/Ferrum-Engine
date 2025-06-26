@@ -50,6 +50,7 @@ pub fn sat_collision(shape1: &Polygon, shape2: &Polygon) -> [Vec2; 2]{
     let mut smallest: Vec2 = Vec2 {x: 0.0, y: 0.0};
     let axes1: Vec<Vec2> = get_axes(shape1);
     let axes2: Vec<Vec2> = get_axes(shape2);
+    let mut shape: f32 = 0.0;
 
     for i in 0..axes1.len(){
         let axis = &axes1[i];
@@ -64,6 +65,7 @@ pub fn sat_collision(shape1: &Polygon, shape2: &Polygon) -> [Vec2; 2]{
             if o < overlap {
                 overlap = o;
                 smallest = axis.clone();
+                shape = 1.0;
             }
         }
     }
@@ -75,14 +77,18 @@ pub fn sat_collision(shape1: &Polygon, shape2: &Polygon) -> [Vec2; 2]{
         let p2 = project(shape2, &axis);
 
         if !overlaps(&p1, &p2){
-            return [Vec2 {x: -133.7, y: -133.7}, Vec2 {x: -133.7, y: -133.7}];
+            return [Vec2 {x: -133.7, y: -133.7}, Vec2 {x: -133.7, y: 0.0}];
         } else {
             let o: f32 = get_overlap(&p1, &p2);
             if o < overlap {
                 overlap = o;
                 smallest = axis.clone();
+                shape = -1.0;
             }
         }
     }
-    [Vec2 {x: smallest.x, y: smallest.y}, Vec2 {x: overlap, y: 1.0}]
+    if overlap < 0.01 {
+        return [Vec2 {x: -133.7, y: -133.7}, Vec2 {x: -133.7, y: 0.0}];       
+    }
+    [Vec2 {x: smallest.x, y: smallest.y}, Vec2 {x: overlap, y: shape}]
 }

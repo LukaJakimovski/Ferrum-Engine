@@ -130,6 +130,14 @@ impl Polygon {
         self.radius = max_radius;
     }
 
+    pub fn translate(&mut self, pos: Vec2) -> &mut Self{
+        for vertex in &mut self.vertices {
+            vertex.pos += pos;
+        }
+        self.center += pos;
+        self
+    }
+
     pub fn rotate(&mut self, angle: f32) -> &mut Self{
         for vertex in &mut self.vertices {
             let new_x = ((vertex.pos.x - self.center.x) * angle.cos()  - (vertex.pos.y - self.center.y) * angle.sin()) + self.center.x;

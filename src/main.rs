@@ -29,9 +29,9 @@ fn main() {
         ;
     let mut polygons = vec![
     ];
-    for i in 0..256 {
-        for j in 0..256{
-            polygons.push(Polygon::polygon(rand::random::<u32>() % 4 + 3, 0.3533, Vec2 { x: i as f32 * 0.67, y: j as f32 * 0.67 }));
+    for i in 0..64 {
+        for j in 0..64{
+            polygons.push(Polygon::polygon(rand::random::<u32>() % 3 + 3, 0.3533, Vec2 { x: i as f32 * 0.67, y: j as f32 * 0.67 }));
         }
     }
 
