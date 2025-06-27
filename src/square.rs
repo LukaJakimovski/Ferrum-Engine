@@ -6,7 +6,7 @@ pub struct Vertex {
     pub pos: Vec2,
     pub color: Color,
 }
-#[derive(Clone)]
+#[derive(Clone)] #[derive(Default)]
 pub struct Polygon {
     pub center: Vec2,
     pub vertices: Vec<Vertex>,
@@ -145,6 +145,12 @@ impl Polygon {
             vertex.pos.x = new_x;
         }
         self
+    }
+
+    pub fn change_color(&mut self, color: Color){
+        for vertex in &mut self.vertices {
+            vertex.color = color;
+        }
     }
 }
 

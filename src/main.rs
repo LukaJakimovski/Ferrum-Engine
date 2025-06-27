@@ -31,7 +31,7 @@ fn main() {
     ];
     for i in 0..64 {
         for j in 0..64{
-            polygons.push(Polygon::polygon(rand::random::<u32>() % 3 + 3, 0.3533, Vec2 { x: i as f32 * 0.67, y: j as f32 * 0.67 }));
+            polygons.push(Polygon::polygon(rand::random::<u32>() % 3 + 3, 0.3533, Vec2 { x: i as f32 * 0.59, y: j as f32 * 0.59 }));
         }
     }
 
