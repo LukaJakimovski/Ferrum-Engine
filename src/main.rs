@@ -4,12 +4,16 @@ mod shader;
 mod collision_detection;
 mod math;
 mod color;
+mod ode_solver;
+mod physics;
 
 use crate::square::*;
 use crate::render::*;
 use crate::math::*;
 use miniquad::*;
 use miniquad::conf::Platform;
+
+
 
 fn main() {
     let conf = conf::Conf {
@@ -18,7 +22,7 @@ fn main() {
         window_width: 1440,
         high_dpi: false,
         sample_count: 16,
-        window_resizable: false,
+        window_resizable: true,
         icon: None,
         platform: Platform {
             swap_interval: Some(0),
@@ -29,12 +33,14 @@ fn main() {
         ;
     let mut polygons = vec![
     ];
-    for i in 0..64 {
-        for j in 0..64{
-            polygons.push(Polygon::polygon(rand::random::<u32>() % 3 + 3, 0.3533, Vec2 { x: i as f32 * 0.59, y: j as f32 * 0.59 }));
+    for i in 0..1 {
+        for j in 0..1{
+            polygons.push(Polygon::polygon(rand::random::<u32>() % 3 + 3, 0.3533, Vec2 { x: i as f32 * 0.35, y: j as f32 * 0.35 }));
         }
     }
-
+    for polygon in &mut polygons{
+        polygon.rotate(rand::random::<f32>() * 360.0);
+    }
     
     start(conf, move || Box::new(World::new(polygons)));
 }

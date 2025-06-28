@@ -87,7 +87,7 @@ pub fn sat_collision(shape1: &Polygon, shape2: &Polygon) -> [Vec2; 2]{
             }
         }
     }
-    if overlap < 0.00001 {
+    if overlap < 0.0001 {
         return [Vec2 {x: -133.7, y: -133.7}, Vec2 {x: -133.7, y: 0.0}];
     }
     [Vec2 {x: smallest.x, y: smallest.y}, Vec2 {x: overlap, y: shape}]

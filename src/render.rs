@@ -3,7 +3,6 @@ use crate::shader;
 use crate::square::*;
 use crate::math::*;
 use crate::collision_detection::*;
-use crate::color::Color;
 use crate::shader::{FRAGMENT, VERTEX};
 
 #[derive(Clone)]
@@ -25,6 +24,7 @@ pub struct World {
     pub mouse_pos: (f32, f32),
     pub start_time: f64,
     pub delta_time: f64,
+    pub scaling_factor: f32,
 }
 impl World {
     pub fn new(polygons: Vec<Polygon>) -> Self {
@@ -78,6 +78,7 @@ impl World {
             pressed_buttons: [0, 0, 0],
             start_time: date::now(),
             mouse_pos: (0.0, 0.0),
+            scaling_factor: 10.0,
         }
     }
 
@@ -145,95 +146,12 @@ impl World {
         self.ctx.apply_bindings(&self.render_object.bindings);
         self.ctx
             .apply_uniforms(UniformsSource::table(&shader::Uniforms {
-                camera_pos: self.camera_pos
+                camera_pos: self.camera_pos,
+                aspect_ratio: window::screen_size().0 / window::screen_size().1,
             }));
         self.ctx.draw(0, self.render_object.clone().indices.len() as i32, 1);
         self.ctx.end_render_pass();
         self.ctx.commit_frame();
-    }
-
-    pub fn collision_resolution(&mut self) {
-        let mut x_min = f32::MAX;
-        let mut x_max = f32::MIN;
-        let mut y_min = f32::MAX;
-        let mut y_max = f32::MIN;
-        for i in 0..self.polygons.len() {
-            if self.polygons[i].center.x < x_min {
-                x_min = self.polygons[i].center.x;
-            }
-            if self.polygons[i].center.x > x_max {
-                x_max = self.polygons[i].center.x;
-            }
-            if self.polygons[i].center.y < y_min {
-                y_min = self.polygons[i].center.y;
-            }
-            if self.polygons[i].center.y > y_max {
-                y_max = self.polygons[i].center.y;
-            }
-        }
-        const X_SECTIONS: usize = 64 as usize;
-        const Y_SECTIONS: usize = 64 as usize;
-        const SECTION_COUNT: usize = X_SECTIONS * Y_SECTIONS;
-        let x_range = x_max - x_min + 0.05;
-        let x_interval = x_range / X_SECTIONS as f32;
-        let y_range = y_max - y_min + 0.05;
-        let y_interval = y_range / Y_SECTIONS as f32;
-        let mut sections: [Vec<usize>; X_SECTIONS * Y_SECTIONS] = [const { vec![] }; X_SECTIONS * Y_SECTIONS];
-        let start = date::now();
-        for i in 0..self.polygons.len(){
-            let x_index: usize = (self.polygons[i].center.x / x_interval) as usize;
-            let y_index: usize = (self.polygons[i].center.y / y_interval) as usize;
-            let index = x_index + y_index * X_SECTIONS;
-            //println!("{} {} {}", x_index, y_index, index);
-            sections[index].push(i);
-        }
-        println!("Section creation time: {:?}ms", (date::now() - start) * 1000.0);
-        let start = date::now();
-        let mut section_time = 0.0;
-        for i in 0..sections.len(){
-            let section_start = date::now();
-            let mut new_section: Vec<usize> = vec![];
-            new_section.extend(sections[i].clone());
-            if i < SECTION_COUNT - 1 { new_section.extend(sections[i + 1].clone()); }; // Right
-            //if i != 0 { new_section.extend(sections[i - 1].clone()); }; // Left
-            if i < SECTION_COUNT - X_SECTIONS { new_section.extend(sections[i + X_SECTIONS].clone()); }; // Down
-            //if i > X_SECTIONS { new_section.extend(sections[i - X_SECTIONS].clone()); }; // Up
-
-            //if i > X_SECTIONS + 1 { new_section.extend(sections[i - X_SECTIONS - 1].clone()); }; // Up left
-            //if i > X_SECTIONS { new_section.extend(sections[i - X_SECTIONS + 1].clone()); }; // Up right
-            if i < SECTION_COUNT - X_SECTIONS - 1 { new_section.extend(sections[i + X_SECTIONS + 1].clone()); }; // Down right
-            if i < SECTION_COUNT - X_SECTIONS { new_section.extend(sections[i + X_SECTIONS - 1].clone()); }; // Down left
-            section_time += date::now() - section_start;
-            //Get all adjacent sections
-            for j in &new_section {
-                for k in &new_section {
-                    if j != k{
-                        let result = sat_collision(&self.polygons[*j], &self.polygons[*k]);
-                        //let result = [Vec2 {x: 0.0, y: 0.0}, Vec2 {x: 0.0, y: 0.0}];
-                        if result[1].y != 0.0{
-                            let direction = result[0].normalized();
-                            let translation = Vec2 {x: direction.x * result[1].x * 1.5, y: direction.y * result[1].x * 1.5};
-                            if result[1].y < 0.0 {
-                                self.polygons[*j].translate(translation);
-                                self.polygons[*k].translate(-translation);
-                            }
-                            else {
-                                self.polygons[*j].translate(-translation);
-                                self.polygons[*k].translate(translation);
-                            }
-                            self.colliding_polygons.push(self.polygons[*j].clone());
-                            let length = self.colliding_polygons.len();
-                            self.colliding_polygons[length - 1].change_color(Color::red());
-                            self.colliding_polygons.push(self.polygons[*k].clone());
-                            let length = self.colliding_polygons.len();
-                            self.colliding_polygons[length - 1].change_color(Color::red());
-                        }
-                    }
-                }
-            }
-        }
-        println!("Section append time: {:?}ms", section_time);
-        println!("Collision resolution time: {:?}ms", (date::now() - start) * 1000.0);
     }
 }
 
@@ -246,22 +164,20 @@ impl EventHandler for World {
 
         if self.pressed_keys[4] == 1 {
             for i in 0..self.polygons.len() {
-                self.polygons[i].rotate(self.delta_time as f32 * 16.0 * rand::random::<f32>());
+                self.polygons[i].rotate(self.delta_time as f32 * 4.0 * rand::random::<f32>());
             }
         }
-
-
-
         if self.pressed_keys[0] == 1 {self.camera_pos.1 += 5.0 * self.delta_time as f32;}
         if self.pressed_keys[1] == 1 {self.camera_pos.0 -= 5.0 * self.delta_time as f32;}
         if self.pressed_keys[2] == 1 {self.camera_pos.1 -= 5.0 * self.delta_time as f32;}
         if self.pressed_keys[3] == 1 {self.camera_pos.0 += 5.0 * self.delta_time as f32;}
-        self.collision_resolution();
+        if self.pressed_keys[5] == 1 {
+            self.update_physics();
+        }
         self.render();
         self.colliding_polygons.clear();
 
-        println!("Frame time: {:?}ms", (date::now() - self.start_time) * 1000.0);
-        println!("Polygons {:?}", self.polygons.len());
+        //println!("Frame time: {:?}ms", (date::now() - self.start_time) * 1000.0);
     }
 
     fn mouse_motion_event(&mut self, _x: f32, _y: f32) {
@@ -271,14 +187,14 @@ impl EventHandler for World {
     fn mouse_button_down_event(&mut self, _button: MouseButton, _x: f32, _y: f32) {
         let position = Vec2 {
             x: ((self.mouse_pos.0 * 2.0 - window::screen_size().0)/ window::screen_size().0 + self.camera_pos.0 / (-self.camera_pos.3 + 1.0)) * (-self.camera_pos.3 + 1.0),
-            y: ((self.mouse_pos.1 * 2.0 - window::screen_size().1)/ window::screen_size().1 + self.camera_pos.1 / -(-self.camera_pos.3 + 1.0)) * -(-self.camera_pos.3 + 1.0)};
+            y: ((self.mouse_pos.1 * 2.0 - window::screen_size().1)/ window::screen_size().1 + self.camera_pos.1 / -(-self.camera_pos.3 + 1.0)) * -(-self.camera_pos.3 + 1.0) * window::screen_size().1 / window::screen_size().0,};
         if _button == MouseButton::Left {
             self.pressed_buttons[0] = 1;
             self.polygons.push(Polygon::rectangle(0.5, 0.5, position.clone()));
         }
         if _button == MouseButton::Right {
             self.pressed_buttons[1] = 1;
-            let mouse_polygon = Polygon::rectangle(0.01, 0.01, position);
+            let mouse_polygon = Polygon::rectangle(0.03, 0.03, position);
             for i in 0..self.polygons.len() {
                 let result = sat_collision(&self.polygons[i], &mouse_polygon);
                 if result[1].y != 0.0{
@@ -302,9 +218,11 @@ impl EventHandler for World {
         }
         if _keycode == KeyCode::W{self.pressed_keys[0] = 1 }
         if _keycode == KeyCode::A{self.pressed_keys[1] = 1 }
-        if _keycode == KeyCode::S{self.pressed_keys[2] = 1}
+        if _keycode == KeyCode::S{self.pressed_keys[2] = 1 }
         if _keycode == KeyCode::D{self.pressed_keys[3] = 1 }
         if _keycode == KeyCode::R{self.pressed_keys[4] = 1 }
+        if _keycode == KeyCode::P{self.pressed_keys[5] = 1 }
+        if _keycode == KeyCode::LeftControl || _keycode == KeyCode::RightControl { self.pressed_keys[6] = 1 }
     }
     fn key_up_event(&mut self, _keycode: KeyCode, _keymods: KeyMods) {
         if _keycode == KeyCode::W{self.pressed_keys[0] = 0 }
@@ -312,6 +230,8 @@ impl EventHandler for World {
         if _keycode == KeyCode::S{self.pressed_keys[2] = 0}
         if _keycode == KeyCode::D{self.pressed_keys[3] = 0 }
         if _keycode == KeyCode::R{self.pressed_keys[4] = 0 }
+        //if _keycode == KeyCode::P{self.pressed_keys[5] = 0 }
+        if _keycode == KeyCode::LeftControl || _keycode == KeyCode::RightControl { self.pressed_keys[6] = 0 }
     }
 
     fn raw_mouse_motion(&mut self, _dx: f32, _dy: f32) {
@@ -322,7 +242,14 @@ impl EventHandler for World {
     }
 
     fn mouse_wheel_event(&mut self, _x: f32, _y: f32) {
-        self.camera_pos.3 += _y * 0.1;
-        self.camera_pos.3 += _x * 0.1;
+        if self.pressed_keys[6] == 1 {
+            self.scaling_factor += _y * 0.1;
+            self.scaling_factor += _x * 0.1;
+            println!("Scaling factor: {}", self.scaling_factor);
+        }
+        else {
+            self.camera_pos.3 += _y * 0.1 * self.scaling_factor;
+            self.camera_pos.3 += _x * 0.1 * self.scaling_factor;
+        }
     }
 }

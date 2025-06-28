@@ -12,6 +12,9 @@ pub struct Polygon {
     pub vertices: Vec<Vertex>,
     pub indices: Vec<u32>,
     pub radius: f32,
+    pub mass: f32,
+    pub velocity: Vec2,
+    pub gravity_object: bool,
 }
 impl Polygon {
     pub fn calculate_center_of_mass(&mut self){
@@ -56,10 +59,13 @@ impl Polygon {
 
         let indices: Vec<u32> = vec![0, 1, 2, 0, 2, 3];
         let mut polygon = Polygon {
+            mass: 1.0,
+            velocity: Vec2::zero(),
             radius: 0.0,
             center: Vec2::zero(),
             vertices,
             indices,
+            gravity_object: true,
         };
         polygon.calculate_radius();
         polygon.calculate_center_of_mass();
@@ -78,10 +84,13 @@ impl Polygon {
 
         let indices: Vec<u32> = vec![0, 1, 2];
         let mut polygon = Polygon {
+            mass: 1.0,
+            velocity: Vec2::zero(),
             radius: 0.0,
             center: Vec2::zero(),
             vertices,
             indices,
+            gravity_object: true,
         };
         polygon.calculate_radius();
         polygon.calculate_center_of_mass();
@@ -112,10 +121,13 @@ impl Polygon {
         indices.push(sides );
 
         Polygon{
+            mass: 1.0,
+            velocity: Vec2::zero(),
             radius,
             center: pos,
             vertices,
             indices,
+            gravity_object: true,
         }
     }
 
