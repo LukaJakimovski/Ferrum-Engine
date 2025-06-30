@@ -30,7 +30,7 @@ fn main() {
         ;
     let mut polygons = vec![
     ];
-    polygons.push(Polygon::rectangle(3.0, 1.0, Vec2 { x: 0.0, y: 0.0}));
+    polygons.push(Polygon::rectangle(10.0, 1.0, Vec2 { x: 0.0, y: 0.0}));
     polygons.push(Polygon::rectangle(1.0, 1.0, Vec2 { x: 0.0, y: 5.0}));
     start(conf, move || Box::new(World::new(polygons)));
 }

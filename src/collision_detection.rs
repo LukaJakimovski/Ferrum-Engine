@@ -113,7 +113,7 @@ fn clip(v1: Vec2, v2: Vec2, normal: Vec2, offset: f32) -> Vec<Vec2> {
     }
     clipped
 }
-fn best_edge(polygon: &Polygon, normal: Vec2) -> (Vec2, Vec2) {
+fn best_edge(polygon: &Polygon, normal: Vec2) -> (Vec2, Vec2, Vec2) {
     let c = polygon.vertices.len();
     let mut max = f32::MIN;
     let mut index = 0;
@@ -136,9 +136,9 @@ fn best_edge(polygon: &Polygon, normal: Vec2) -> (Vec2, Vec2) {
     r.normalize();
 
     if r.dot(&normal) <= l.dot(&normal) {
-        (v0, v)
+        (v0, v, v)
     } else {
-        (v, v1)
+        (v, v1, v)
     }
 }
 
@@ -160,13 +160,13 @@ pub fn find_contact_points(polygon1: &Polygon, polygon2: &Polygon, mtv: &[Vec2; 
     let ref_edge;
     let inc_edge;
     let mut flip = false;
-    if edge1v.dot(&normal).abs() >= edge2v.dot(&normal).abs() {
+    if edge1v.dot(&normal).abs() <= edge2v.dot(&normal).abs() {
+        ref_edge = edge1;
+        inc_edge = edge2;
+    } else {
         ref_edge = edge2;
         inc_edge = edge1;
         flip = true;
-    } else {
-        ref_edge = edge1;
-        inc_edge = edge2;
     }
 
     let mut refv = ref_edge.1 - ref_edge.0;
@@ -180,13 +180,7 @@ pub fn find_contact_points(polygon1: &Polygon, polygon2: &Polygon, mtv: &[Vec2; 
 
     if flip {ref_normal = -ref_normal;};
 
-    let max;
-    if ref_edge.1.dot(&ref_normal) > ref_edge.0.dot(&ref_normal) {
-        max = ref_normal.dot(&ref_edge.1);
-    }
-    else {
-        max = ref_normal.dot(&ref_edge.0);
-    }
+    let max = ref_normal.dot(&ref_edge.2);
 
     if clipped.len() > 0 && ref_normal.dot(&clipped[0]) - max < 0.0 {
         clipped.remove(0);

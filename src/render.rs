@@ -175,7 +175,7 @@ impl EventHandler for World {
             self.update_physics();
         }
         self.render();
-        self.colliding_polygons.clear();
+        //self.colliding_polygons.clear();
 
         //println!("Frame time: {:?}ms", (date::now() - self.start_time) * 1000.0);
     }

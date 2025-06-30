@@ -78,6 +78,8 @@ impl Vec2 {
         self.x * other.x + self.y * other.y
     }
 
+    pub fn dot_float(&self, scalar: &f32) -> Vec2 { Vec2::new(self.x * scalar,self.y * scalar) }
+
     /// Cross product of two vectors (returns the z-component since it's 2D)
     pub fn cross(&self, other: &Vec2) -> f32 {
         self.x * other.y - self.y * other.x
@@ -163,6 +165,17 @@ impl Add for Vec2 {
     }
 }
 
+impl Add<f32> for Vec2 {
+    type Output = Self;
+
+    fn add(self, rhs: f32) -> Self::Output {
+        Self{
+            x: self.x + rhs,
+            y: self.y + rhs,
+        }
+    }
+}
+
 impl Sub for Vec2 {
     type Output = Self;
 
@@ -170,6 +183,17 @@ impl Sub for Vec2 {
         Self {
             x: self.x - other.x,
             y: self.y - other.y,
+        }
+    }
+}
+
+impl Sub<f32> for Vec2 {
+    type Output = Vec2;
+
+    fn sub(self, rhs: f32) -> Self::Output {
+        Self{
+            x: self.x - rhs,
+            y: self.y - rhs,
         }
     }
 }
