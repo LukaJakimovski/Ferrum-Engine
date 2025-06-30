@@ -12,9 +12,6 @@ use crate::render::*;
 use crate::math::*;
 use miniquad::*;
 use miniquad::conf::Platform;
-
-
-
 fn main() {
     let conf = conf::Conf {
         window_title: "Ferrum Engine".to_string(),
@@ -33,14 +30,7 @@ fn main() {
         ;
     let mut polygons = vec![
     ];
-    for i in 0..1 {
-        for j in 0..1{
-            polygons.push(Polygon::polygon(rand::random::<u32>() % 3 + 3, 0.3533, Vec2 { x: i as f32 * 0.35, y: j as f32 * 0.35 }));
-        }
-    }
-    for polygon in &mut polygons{
-        polygon.rotate(rand::random::<f32>() * 360.0);
-    }
-    
+    polygons.push(Polygon::rectangle(3.0, 1.0, Vec2 { x: 0.0, y: 0.0}));
+    polygons.push(Polygon::rectangle(1.0, 1.0, Vec2 { x: 0.0, y: 5.0}));
     start(conf, move || Box::new(World::new(polygons)));
 }

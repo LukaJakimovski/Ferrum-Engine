@@ -65,6 +65,7 @@ pub fn sat_collision(shape1: &Polygon, shape2: &Polygon) -> [Vec2; 2]{
             if o < overlap {
                 overlap = o;
                 smallest = axis.clone();
+                // Pointing away from shape1
                 shape = 1.0;
             }
         }
@@ -83,6 +84,7 @@ pub fn sat_collision(shape1: &Polygon, shape2: &Polygon) -> [Vec2; 2]{
             if o < overlap {
                 overlap = o;
                 smallest = axis.clone();
+                // Pointing away from shape2
                 shape = -1.0;
             }
         }
@@ -91,4 +93,108 @@ pub fn sat_collision(shape1: &Polygon, shape2: &Polygon) -> [Vec2; 2]{
         return [Vec2 {x: -133.7, y: -133.7}, Vec2 {x: -133.7, y: 0.0}];
     }
     [Vec2 {x: smallest.x, y: smallest.y}, Vec2 {x: overlap, y: shape}]
+}
+fn clip(v1: Vec2, v2: Vec2, normal: Vec2, offset: f32) -> Vec<Vec2> {
+    let mut clipped = Vec::new();
+    let d1 = normal.dot(&v1) - offset;
+    let d2 = normal.dot(&v2) - offset;
+
+    if d1 >= 0.0 {clipped.push(v1);};
+    if d2 >= 0.0 {clipped.push(v2);};
+
+    if d1 * d2 < 0.0 {
+        let mut e = v2 - v1;
+
+        let u = d1 / (d1 - d2);
+        e = e * u;
+        e = e + v1;
+
+        clipped.push(e);
+    }
+    clipped
+}
+fn best_edge(polygon: &Polygon, normal: Vec2) -> (Vec2, Vec2) {
+    let c = polygon.vertices.len();
+    let mut max = f32::MIN;
+    let mut index = 0;
+    for i in 0..c {
+        let projection = normal.dot(&polygon.vertices[i].pos);
+        if projection > max {
+            max = projection;
+            index = i
+        }
+    }
+
+    let v = polygon.vertices[index].pos;
+    let v1 = polygon.vertices[(index + 1) % c].pos;
+    let v0 = polygon.vertices[(index + c - 1) % c].pos;
+
+    let mut l = v - v1;
+    let mut r = v - v0;
+
+    l.normalize();
+    r.normalize();
+
+    if r.dot(&normal) <= l.dot(&normal) {
+        (v0, v)
+    } else {
+        (v, v1)
+    }
+}
+
+
+
+pub fn find_contact_points(polygon1: &Polygon, polygon2: &Polygon, mtv: &[Vec2; 2], ) -> Vec<Vec2> {
+    let normal;
+    if mtv[0].normalized().dot(&polygon1.center) < mtv[0].normalized().dot(&polygon2.center) {
+        normal = mtv[0].normalized();
+    }
+    else {
+        normal = -mtv[0].normalized();
+    }
+    let edge1 = best_edge(polygon1, normal);
+    let edge2 = best_edge(polygon2, -normal);
+    let edge1v = edge1.1 - edge1.0;
+    let edge2v = edge2.1 - edge2.0;
+
+    let ref_edge;
+    let inc_edge;
+    let mut flip = false;
+    if edge1v.dot(&normal).abs() >= edge2v.dot(&normal).abs() {
+        ref_edge = edge2;
+        inc_edge = edge1;
+        flip = true;
+    } else {
+        ref_edge = edge1;
+        inc_edge = edge2;
+    }
+
+    let mut refv = ref_edge.1 - ref_edge.0;
+    refv.normalize();
+
+    let o1 = refv.dot(&ref_edge.0);
+    let mut clipped = clip(inc_edge.0, inc_edge.1, refv, o1);
+    if clipped.len() < 2 { return vec![Vec2::zero(), Vec2::zero()];};
+
+    let mut ref_normal = Vec2::new(ref_edge.1.y - ref_edge.0.y, ref_edge.0.x - ref_edge.1.x).normalized();
+
+    if flip {ref_normal = -ref_normal;};
+
+    let max;
+    if ref_edge.1.dot(&ref_normal) > ref_edge.0.dot(&ref_normal) {
+        max = ref_normal.dot(&ref_edge.1);
+    }
+    else {
+        max = ref_normal.dot(&ref_edge.0);
+    }
+
+    if clipped.len() > 0 && ref_normal.dot(&clipped[0]) - max < 0.0 {
+        clipped.remove(0);
+    }
+    if clipped.len() > 1 && ref_normal.dot(&clipped[1]) - max < 0.0 {
+        clipped.remove(1);
+    }
+
+
+    clipped
 }

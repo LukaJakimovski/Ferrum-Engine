@@ -1,9 +1,10 @@
-use miniquad::date;
-use crate::collision_detection::sat_collision;
+use crate::collision_detection::{find_contact_points, sat_collision};
 use crate::color::Color;
 use crate::math::Vec2;
 use crate::render::World;
 use crate::ode_solver::rk4_step;
+use crate::square::Polygon;
+
 impl World {
     pub fn collision_resolution(&mut self) {
         let mut x_min = f32::MAX;
@@ -39,7 +40,6 @@ impl World {
             if index >= sections.len() { index = sections.len() - 1}
             sections[index].push(i);
         }
-        let start = date::now();
         for i in 0..sections.len() {
             let mut new_section: Vec<usize> = vec![];
             new_section.extend(sections[i].clone());
@@ -52,25 +52,52 @@ impl World {
                     let result = sat_collision(&self.polygons[new_section[j]], &self.polygons[new_section[k]]);
                     //let result = [Vec2 {x: 0.0, y: 0.0}, Vec2 {x: 0.0, y: 0.0}];
                     if result[1].y != 0.0 {
-                        let direction = result[0].normalized();
-                        let v1 = self.polygons[new_section[j]].velocity;
-                        let v2 = self.polygons[new_section[k]].velocity;
-                        let m1 = self.polygons[new_section[j]].mass;
-                        let m2 = self.polygons[new_section[k]].mass;
+                        let polygon1 = &self.polygons[new_section[j]];
+                        let polygon2 = &self.polygons[new_section[k]];
+                        let normal;
+                        if result[0].normalized().dot(&polygon1.center) < result[0].normalized().dot(&polygon2.center) {
+                            normal = result[0].normalized();
+                        }
+                        else {
+                            normal = -result[0].normalized();
+                        }
+                        // Contact Points
+                        let contact_points = find_contact_points(polygon1, &self.polygons[new_section[k]], &result);
+                        let mut average_point = Vec2::zero();
+                        for point in &contact_points {
+                            average_point += *point;
+                        }
+                        average_point /= contact_points.len() as f32;
+                        // Linear Impulse
+                        let v1 = polygon1.velocity;
+                        let v2 = polygon2.velocity;
+                        let m1 = 1.0 / polygon1.mass;
+                        let m2 = 1.0 / polygon2.mass;
                         let relative_velocity = v1 - v2;
-                        let vel_along_normal = relative_velocity.dot(&direction);
+                        let vel_along_normal = relative_velocity.dot(&normal);
                         let restitution = 1.0;
-                        let impulse_magnitude = -(1.0 + restitution) * vel_along_normal / (1.0 / m1 + 1.0 / m2);
-                        let impulse = direction * impulse_magnitude;
-                        self.polygons[new_section[j]].velocity = v1 + impulse / m1;
-                        self.polygons[new_section[k]].velocity = v2 - impulse / m2;
 
-                        self.colliding_polygons.push(self.polygons[new_section[j]].clone());
-                        let length = self.colliding_polygons.len();
-                        self.colliding_polygons[length - 1].change_color(Color::red());
-                        self.colliding_polygons.push(self.polygons[new_section[k]].clone());
-                        let length = self.colliding_polygons.len();
-                        self.colliding_polygons[length - 1].change_color(Color::red());
+
+                        let i1 = 1.0 / polygon1.moment_of_inertia;
+                        let i2 = 1.0 / polygon2.moment_of_inertia;
+                        let a1 = self.polygons[new_section[j]].angular_velocity;
+                        let a2 = self.polygons[new_section[k]].angular_velocity;
+                        let r1 = average_point - polygon1.center;
+                        let r2 = average_point - polygon2.center;
+                        let angle1 = r1.cross_float(&r1.cross(&normal)) * i1;
+                        let angle2 = r1.cross_float(&r2.cross(&normal)) * i2;
+
+
+                        let impulse_magnitude = -(1.0 + restitution) * vel_along_normal / (m1 + m2 + (angle1 + angle2).dot(&normal));
+                        let impulse_vector = normal * impulse_magnitude;
+                        self.polygons[new_section[j]].velocity = v1 - impulse_vector * m1;
+                        self.polygons[new_section[k]].velocity = v2 + impulse_vector * m2;
+                        self.polygons[new_section[j]].angular_velocity = a1 - r1.cross(&impulse_vector) * i1;
+                        self.polygons[new_section[k]].angular_velocity = a2 + r2.cross(&impulse_vector) * i2;
+
+                        if contact_points.len() > 0 { self.colliding_polygons.push(Polygon::polygon(16, 0.1, contact_points[0])); self.colliding_polygons[0].change_color(Color::blue());};
+                        if contact_points.len() > 1 { self.colliding_polygons.push(Polygon::polygon(16, 0.1, contact_points[1])); self.colliding_polygons[1].change_color(Color::blue());};
+                        self.pressed_keys[5] = 0;
                     }
                 }
             }
@@ -81,17 +108,19 @@ impl World {
         let mut kinetic_energy = 0.0;
         let g = Vec2 { x: 0.0, y: 9.81 };
         self.polygons[0].gravity_object = false;
-        self.polygons[0].mass = 100000000000.0;
+        self.polygons[0].mass = f32::MAX;
         for polygon in &mut self.polygons {
             let force = |_: f32, _: Vec2, _: Vec2| g;
-            let (mut new_x, mut new_v) = rk4_step(0.0, polygon.center, polygon.velocity, 0.00001, polygon.mass, &force);
-            for _i in 0..10{
-                (new_x, new_v) = rk4_step(0.0, new_x, new_v, 0.00001, polygon.mass, &force);
+            let (mut new_x, mut new_v) = rk4_step(0.0, polygon.center, polygon.velocity, self.delta_time as f32 / 1010.0, polygon.mass, &force);
+            for _i in 0..100{
+                (new_x, new_v) = rk4_step(0.0, new_x, new_v, self.delta_time as f32 / 1010.0, polygon.mass, &force);
             }
+            polygon.rotate(polygon.angular_velocity * self.delta_time as f32);
             polygon.velocity = new_v;
             let diff = polygon.center - new_x;
             polygon.translate(diff);
             kinetic_energy += 0.5 * polygon.mass * polygon.velocity.dot(&polygon.velocity);
+            kinetic_energy += 0.5 * polygon.moment_of_inertia * polygon.angular_velocity * polygon.angular_velocity;
         }
         self.collision_resolution();
         println!("Kinetic energy: {}", kinetic_energy);

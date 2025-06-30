@@ -14,40 +14,12 @@ pub struct Polygon {
     pub radius: f32,
     pub mass: f32,
     pub velocity: Vec2,
+    pub angular_velocity: f32,
+    pub moment_of_inertia: f32,
+    pub area: f32,
     pub gravity_object: bool,
 }
 impl Polygon {
-    pub fn calculate_center_of_mass(&mut self){
-        let n = self.vertices.len();
-        if n == 0{
-            self.center = Vec2::zero();
-            return;
-        }
-
-        let mut area = 0.0;
-        let mut sum_cx = 0.0;
-        let mut sum_cy = 0.0;
-
-        for i in 0..n{
-            let iv: &Vec2 = &self.vertices[i].pos;
-            let jv: &Vec2 = &self.vertices[(i + 1) % n].pos;
-
-            let cross = iv.cross(&jv);
-            area += cross;
-            sum_cx += (iv.x + jv.x) * cross;
-            sum_cy += (iv.y + jv.y) * cross;
-        }
-
-        area *= 0.5;
-        if area == 0.0 {
-            self.center = self.vertices[0].pos.clone();
-            return;
-        }
-        let centroid_x = sum_cx / (6.0 * area);
-        let centroid_y = sum_cy / (6.0 * area);
-        self.center = Vec2::new(centroid_x, centroid_y);
-    }
-
     pub fn rectangle(width: f32, height: f32, pos: Vec2) -> Self {
         let color = Color::random();
         let vertices: Vec<Vertex> = vec![
@@ -59,6 +31,9 @@ impl Polygon {
 
         let indices: Vec<u32> = vec![0, 1, 2, 0, 2, 3];
         let mut polygon = Polygon {
+            angular_velocity: 0.0,
+            area: 0.0,
+            moment_of_inertia: 0.0,
             mass: 1.0,
             velocity: Vec2::zero(),
             radius: 0.0,
@@ -67,8 +42,10 @@ impl Polygon {
             indices,
             gravity_object: true,
         };
+        polygon.calculate_area();
         polygon.calculate_radius();
         polygon.calculate_center_of_mass();
+        polygon.calculate_moment_of_inertia();
         polygon
     }
 
@@ -84,6 +61,9 @@ impl Polygon {
 
         let indices: Vec<u32> = vec![0, 1, 2];
         let mut polygon = Polygon {
+            angular_velocity: 0.0,
+            area: 0.0,
+            moment_of_inertia: 0.0,
             mass: 1.0,
             velocity: Vec2::zero(),
             radius: 0.0,
@@ -92,11 +72,12 @@ impl Polygon {
             indices,
             gravity_object: true,
         };
+        polygon.calculate_area();
         polygon.calculate_radius();
         polygon.calculate_center_of_mass();
         polygon
     }
-
+    #[allow(dead_code)]
     pub fn polygon(sides: u32, radius: f32, pos: Vec2) -> Self {
         let color = Color::random();
         let mut vertices: Vec<Vertex> = vec![];
@@ -120,7 +101,10 @@ impl Polygon {
         indices.push(sides - 1);
         indices.push(sides );
 
-        Polygon{
+        let mut polygon = Polygon{
+            angular_velocity: 0.0,
+            area: 0.0,
+            moment_of_inertia: 0.0,
             mass: 1.0,
             velocity: Vec2::zero(),
             radius,
@@ -128,7 +112,10 @@ impl Polygon {
             vertices,
             indices,
             gravity_object: true,
-        }
+        };
+        polygon.calculate_area();
+        polygon.calculate_moment_of_inertia();
+        polygon
     }
 
     pub fn calculate_radius(&mut self){
@@ -140,6 +127,74 @@ impl Polygon {
             }
         }
         self.radius = max_radius;
+    }
+
+    pub fn calculate_area(&mut self){
+        let n = self.vertices.len();
+        let mut area = 0.0;
+
+        for i in 0..n{
+            let iv: &Vec2 = &self.vertices[i].pos;
+            let jv: &Vec2 = &self.vertices[(i + 1) % n].pos;
+
+            let cross = iv.cross(&jv);
+            area += cross;
+        }
+        area *= 0.5;
+        self.area = area;
+    }
+
+    pub fn calculate_center_of_mass(&mut self){
+        let n = self.vertices.len();
+        if n == 0{
+            self.center = Vec2::zero();
+            return;
+        }
+
+        let mut sum_cx = 0.0;
+        let mut sum_cy = 0.0;
+
+        for i in 0..n{
+            let iv: &Vec2 = &self.vertices[i].pos;
+            let jv: &Vec2 = &self.vertices[(i + 1) % n].pos;
+
+            let cross = iv.cross(&jv);
+
+            sum_cx += (iv.x + jv.x) * cross;
+            sum_cy += (iv.y + jv.y) * cross;
+        }
+
+
+        if self.area == 0.0 {
+            self.center = self.vertices[0].pos.clone();
+            return;
+        }
+        let centroid_x = sum_cx / (6.0 * self.area);
+        let centroid_y = sum_cy / (6.0 * self.area);
+        self.center = Vec2::new(centroid_x, centroid_y);
+    }
+
+    pub fn calculate_moment_of_inertia(&mut self){
+        let n = self.vertices.len();
+
+        let mut inertia = 0.0;
+
+        for i in 0..n {
+            let p0 = self.vertices[i].pos;
+            let p1 = self.vertices[(i + 1) % n].pos;
+            let cross = Vec2::cross(&p0, &p1);
+
+            let dx2 = p0.x * p0.x + p0.x * p1.x + p1.x * p1.x;
+            let dy2 = p0.y * p0.y + p0.y * p1.y + p1.y * p1.y;
+            inertia += cross * (dx2 + dy2);
+        }
+        let inertia_origin = inertia / 12.0;
+
+        let cx = self.center.x;
+        let cy = self.center.y;
+        let inertia_centroid = inertia_origin - self.area * (cx * cx + cy * cy);
+
+        self.moment_of_inertia = inertia_centroid * (self.mass / self.area.abs());
     }
 
     pub fn translate(&mut self, pos: Vec2) -> &mut Self{

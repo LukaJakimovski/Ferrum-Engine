@@ -164,7 +164,7 @@ impl EventHandler for World {
 
         if self.pressed_keys[4] == 1 {
             for i in 0..self.polygons.len() {
-                self.polygons[i].rotate(self.delta_time as f32 * 4.0 * rand::random::<f32>());
+                self.polygons[i].angular_velocity = 1.0 * rand::random::<f32>();
             }
         }
         if self.pressed_keys[0] == 1 {self.camera_pos.1 += 5.0 * self.delta_time as f32;}

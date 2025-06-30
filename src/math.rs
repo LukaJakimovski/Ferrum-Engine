@@ -37,6 +37,20 @@ impl Vec2 {
         self.x * self.x + self.y * self.y
     }
 
+    pub fn abs(&self) -> Self {
+        Self {
+            x: self.x.abs(),
+            y: self.y.abs(),
+        }
+    }
+
+    pub fn scale(&self, scalar: f32) -> Self {
+        Self {
+            x: self.x * scalar,
+            y: self.y * scalar,
+        }
+    }
+
     /// Returns a normalized version of the vector (unit vector)
     pub fn normalized(&self) -> Self {
         let mag = self.magnitude();
@@ -68,6 +82,8 @@ impl Vec2 {
     pub fn cross(&self, other: &Vec2) -> f32 {
         self.x * other.y - self.y * other.x
     }
+
+    pub fn cross_float(&self, scalar: &f32) -> Vec2 { Vec2::new(self.y * -scalar,self.x  * scalar) }
 
     /// Returns the distance between two vectors
     pub fn distance(&self, other: &Vec2) -> f32 {
