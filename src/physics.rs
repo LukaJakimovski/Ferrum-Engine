@@ -1,9 +1,7 @@
 use crate::collision_detection::{find_contact_points, sat_collision};
-use crate::color::Color;
 use crate::math::Vec2;
 use crate::render::World;
 use crate::ode_solver::rk4_step;
-use crate::square::Polygon;
 
 impl World {
     pub fn collision_resolution(&mut self) {
@@ -50,7 +48,6 @@ impl World {
             for j in 0..new_section.len() {
                 for k in j+1..new_section.len() {
                     let result = sat_collision(&self.polygons[new_section[j]], &self.polygons[new_section[k]]);
-                    //let result = [Vec2 {x: 0.0, y: 0.0}, Vec2 {x: 0.0, y: 0.0}];
                     if result[1].y != 0.0 {
 
                         let polygon1 = &self.polygons[new_section[j]];
@@ -79,13 +76,12 @@ impl World {
                         self.polygons[new_section[j]].translate(-normal * penetration * (m1 / m_total));
                         self.polygons[new_section[k]].translate(normal * penetration * (m2 / m_total));
 
-                        // Linear Impulse
+                        // Impulse
                         let polygon1 = &self.polygons[new_section[j]];
                         let polygon2 = &self.polygons[new_section[k]];
 
                         let r1 = average_point - polygon1.center;
                         let r2 = average_point - polygon2.center;
-
 
                         let tangent_v1 = r1.perpendicular() * polygon1.angular_velocity;
                         let tangent_v2 = r2.perpendicular() * polygon2.angular_velocity;
@@ -93,46 +89,58 @@ impl World {
                         let fv2 = v2 + tangent_v2;
                         let relative_velocity = fv2 - fv1;
                         let vel_along_normal = relative_velocity.dot(&normal);
-                        let restitution = 1.0;
 
-
+                        let restitution: f32;
+                        if polygon1.restitution < polygon2.restitution {
+                            restitution = polygon1.restitution;
+                        } else{
+                            restitution = polygon2.restitution;
+                        }
+                        
                         let i1 = 1.0 / polygon1.moment_of_inertia;
                         let i2 = 1.0 / polygon2.moment_of_inertia;
 
                         let rn1 = r1.cross(&normal);
                         let rn2 = r2.cross(&normal);
-                        let angle_term1 = (rn1 * rn1) * i1;
-                        let angle_term2 = (rn2 * rn2) * i2;
-
-
+                        
+                        let angle_term1: f32;
+                        let angle_term2: f32;
+                        
+                        if self.parameters.angular_velocity == true{
+                            angle_term1 = (rn1 * rn1) * i1;
+                            angle_term2 = (rn2 * rn2) * i2;
+                        } else {
+                            angle_term1 = 0.0;
+                            angle_term2 = 0.0;
+                        }
+                        
                         let impulse_magnitude = -(1.0 + restitution) * vel_along_normal / (m1 + m2 + angle_term1 + angle_term2);
                         let impulse_vector = normal * impulse_magnitude;
+
                         self.polygons[new_section[j]].velocity = v1 - impulse_vector * m1;
                         self.polygons[new_section[k]].velocity = v2 + impulse_vector * m2;
-                        self.polygons[new_section[j]].angular_velocity = self.polygons[new_section[j]].angular_velocity - r1.cross(&impulse_vector) * i1;
-                        self.polygons[new_section[k]].angular_velocity = self.polygons[new_section[k]].angular_velocity + r2.cross(&impulse_vector) * i2;
-
-                        if contact_points.len() > 0 { self.colliding_polygons.push(Polygon::polygon(16, 0.1, contact_points[0])); self.colliding_polygons[0].change_color(Color::blue());};
-                        if contact_points.len() > 1 { self.colliding_polygons.push(Polygon::polygon(16, 0.1, contact_points[1])); self.colliding_polygons[1].change_color(Color::blue());};
-                        self.pressed_keys[5] = 0;
+                        if self.parameters.angular_velocity == true{
+                            self.polygons[new_section[j]].angular_velocity = self.polygons[new_section[j]].angular_velocity - r1.cross(&impulse_vector) * i1;
+                            self.polygons[new_section[k]].angular_velocity = self.polygons[new_section[k]].angular_velocity + r2.cross(&impulse_vector) * i2;
+                        }
+                        self.collisions += 1;
                     }
                 }
             }
         }
-        //println!("Collision resolution time: {:?}ms", (date::now() - start) * 1000.0);
     }
     pub fn update_physics(&mut self) {
         let mut kinetic_energy = 0.0;
-        let g = Vec2 { x: 0.0, y: -9.81 };
-        self.polygons[0].gravity_object = false;
-        self.polygons[0].mass = f32::MAX;
-        self.polygons[0].calculate_moment_of_inertia();
+        let g: Vec2;
+        if self.parameters.gravity == true{
+            g = Vec2 { x: 0.0, y: -9.81 };
+        } else{
+            g = Vec2 { x: 0.0, y: 0.0 };
+        }
+
         for polygon in &mut self.polygons {
             let force = |_: f32, _: Vec2, _: Vec2| g;
-            let (mut new_x, mut new_v) = rk4_step(0.0, polygon.center, polygon.velocity, self.delta_time as f32 / 101.0, polygon.mass, &force);
-            for _i in 0..100{
-                (new_x, new_v) = rk4_step(0.0, new_x, new_v, self.delta_time as f32 / 101.0, polygon.mass, &force);
-            }
+            let (new_x, new_v) = rk4_step(0.0, polygon.center, polygon.velocity, self.delta_time as f32, polygon.mass, &force);
             polygon.rotate(polygon.angular_velocity * self.delta_time as f32);
             polygon.velocity = new_v;
             let diff = new_x - polygon.center;
@@ -141,6 +149,5 @@ impl World {
             kinetic_energy += 0.5 * polygon.moment_of_inertia * polygon.angular_velocity * polygon.angular_velocity;
         }
         self.collision_resolution();
-        println!("Kinetic energy: {}", kinetic_energy);
     }
 }

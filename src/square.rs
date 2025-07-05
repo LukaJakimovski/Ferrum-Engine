@@ -17,7 +17,7 @@ pub struct Polygon {
     pub angular_velocity: f32,
     pub moment_of_inertia: f32,
     pub area: f32,
-    pub gravity_object: bool,
+    pub restitution: f32,
 }
 impl Polygon {
     pub fn rectangle(width: f32, height: f32, pos: Vec2) -> Self {
@@ -40,7 +40,7 @@ impl Polygon {
             center: Vec2::zero(),
             vertices,
             indices,
-            gravity_object: true,
+            restitution: 1.0,
         };
         polygon.calculate_area();
         polygon.calculate_radius();
@@ -70,7 +70,7 @@ impl Polygon {
             center: Vec2::zero(),
             vertices,
             indices,
-            gravity_object: true,
+            restitution: 1.0,
         };
         polygon.calculate_area();
         polygon.calculate_radius();
@@ -111,7 +111,7 @@ impl Polygon {
             center: pos,
             vertices,
             indices,
-            gravity_object: true,
+            restitution: 1.0,
         };
         polygon.calculate_area();
         polygon.calculate_moment_of_inertia();

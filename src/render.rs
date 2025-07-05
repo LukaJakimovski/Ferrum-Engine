@@ -11,23 +11,42 @@ pub struct RenderObject {
     pub indices: Vec<u32>,
 }
 
+pub struct Parameters{
+    pub delta_time: f32,
+    pub updates_per_frame: u32,
+    pub angular_velocity: bool,
+    pub camera_pos: (f32, f32, f32, f32),
+    pub gravity: bool,
+}
 pub struct World {
     pub ctx: Box<dyn RenderingBackend>,
+    pub render_object: RenderObject,
     pub pipeline: Pipeline,
+
+    pub scaling_factor: f32,
     pub camera_pos: (f32, f32, f32, f32),
+    pub mouse_pos: (f32, f32),
+    
     pub polygons: Vec<Polygon>,
     pub colliding_polygons: Vec<Polygon>,
-    pub previous_polygon_count: usize,
-    pub render_object: RenderObject,
+    previous_polygon_count: usize,
+    
+    pub collisions: usize,
+    
     pub pressed_keys: [u8; 16],
     pub pressed_buttons: [u8; 3],
-    pub mouse_pos: (f32, f32),
+    
     pub start_time: f64,
     pub delta_time: f64,
-    pub scaling_factor: f32,
+    pub frame_count: u32,
+
+    pub parameters: Parameters,
+
 }
 impl World {
-    pub fn new(polygons: Vec<Polygon>) -> Self {
+    pub fn new(polygons: Vec<Polygon>, 
+               parameters: Parameters,
+                ) -> Self {
         let mut ctx = window::new_rendering_backend();
         let shader = ctx
             .new_shader(
@@ -71,14 +90,17 @@ impl World {
             polygons,
             render_object: RenderObject {bindings, indices: vec![]},
             colliding_polygons: vec![],
-            previous_polygon_count: 0,
+            collisions: 0,
             delta_time: 0.0,
-            camera_pos: (0.0, 0.0, 0.0, -2.0),
+            camera_pos: parameters.camera_pos,
             pressed_keys: [0; 16],
             pressed_buttons: [0, 0, 0],
             start_time: date::now(),
             mouse_pos: (0.0, 0.0),
             scaling_factor: 10.0,
+            frame_count: 0,
+            previous_polygon_count: 0,
+            parameters
         }
     }
 
@@ -159,25 +181,41 @@ impl EventHandler for World {
     fn update(&mut self) {}
 
     fn draw(&mut self) {
-        self.delta_time = date::now() - self.start_time;
-        self.start_time = date::now();
+        if self.parameters.delta_time == 0.0 {
+            self.delta_time = date::now() - self.start_time;
+            self.start_time = date::now()
+        }
+        else{
+            self.delta_time = self.parameters.delta_time as f64;
+        }
+
 
         if self.pressed_keys[4] == 1 {
             for i in 0..self.polygons.len() {
-                self.polygons[i].angular_velocity = 1.0 * rand::random::<f32>();
+                self.polygons[i].angular_velocity = 5.0;
             }
         }
+        
         if self.pressed_keys[0] == 1 {self.camera_pos.1 += 5.0 * self.delta_time as f32;}
         if self.pressed_keys[1] == 1 {self.camera_pos.0 -= 5.0 * self.delta_time as f32;}
         if self.pressed_keys[2] == 1 {self.camera_pos.1 -= 5.0 * self.delta_time as f32;}
         if self.pressed_keys[3] == 1 {self.camera_pos.0 += 5.0 * self.delta_time as f32;}
-        if self.pressed_keys[5] == 1 {
-            self.update_physics();
+        
+        if self.pressed_keys[5] == 1{
+            for _i in 0..self.parameters.updates_per_frame {
+                self.update_physics();
+            }
         }
+        println!("Collisions: {}", self.collisions);
+        
+        let position = Vec2 {
+            x: ((self.mouse_pos.0 * 2.0 - window::screen_size().0)/ window::screen_size().0 + self.camera_pos.0 / (-self.camera_pos.3 + 1.0)) * (-self.camera_pos.3 + 1.0),
+            y: ((self.mouse_pos.1 * 2.0 - window::screen_size().1)/ window::screen_size().1 + self.camera_pos.1 / -(-self.camera_pos.3 + 1.0)) * -(-self.camera_pos.3 + 1.0) * window::screen_size().1 / window::screen_size().0,};
+        if self.pressed_keys[7] == 1 {
+            self.polygons.push(Polygon::polygon(32, 0.3533, position.clone()));
+        }
+        
         self.render();
-        //self.colliding_polygons.clear();
-
-        //println!("Frame time: {:?}ms", (date::now() - self.start_time) * 1000.0);
     }
 
     fn mouse_motion_event(&mut self, _x: f32, _y: f32) {
@@ -190,7 +228,9 @@ impl EventHandler for World {
             y: ((self.mouse_pos.1 * 2.0 - window::screen_size().1)/ window::screen_size().1 + self.camera_pos.1 / -(-self.camera_pos.3 + 1.0)) * -(-self.camera_pos.3 + 1.0) * window::screen_size().1 / window::screen_size().0,};
         if _button == MouseButton::Left {
             self.pressed_buttons[0] = 1;
-            self.polygons.push(Polygon::rectangle(0.5, 0.5, position.clone()));
+            self.polygons.push(Polygon::polygon(64, 0.3533, position.clone()));
+            let length = self.polygons.len();
+            self.polygons[length - 1].restitution = 0.95;
         }
         if _button == MouseButton::Right {
             self.pressed_buttons[1] = 1;
@@ -223,6 +263,7 @@ impl EventHandler for World {
         if _keycode == KeyCode::R{self.pressed_keys[4] = 1 }
         if _keycode == KeyCode::P{self.pressed_keys[5] = 1 }
         if _keycode == KeyCode::LeftControl || _keycode == KeyCode::RightControl { self.pressed_keys[6] = 1 }
+        if _keycode == KeyCode::L{self.pressed_keys[7] = 1 }
     }
     fn key_up_event(&mut self, _keycode: KeyCode, _keymods: KeyMods) {
         if _keycode == KeyCode::W{self.pressed_keys[0] = 0 }
@@ -232,6 +273,7 @@ impl EventHandler for World {
         if _keycode == KeyCode::R{self.pressed_keys[4] = 0 }
         //if _keycode == KeyCode::P{self.pressed_keys[5] = 0 }
         if _keycode == KeyCode::LeftControl || _keycode == KeyCode::RightControl { self.pressed_keys[6] = 0 }
+        if _keycode == KeyCode::L{self.pressed_keys[7] = 0 }
     }
 
     fn raw_mouse_motion(&mut self, _dx: f32, _dy: f32) {
