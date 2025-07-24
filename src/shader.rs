@@ -1,10 +1,10 @@
 use miniquad::*;
 
-pub const VERTEX: &str = r#"#version 330 core
-    attribute vec2 in_pos;
-    attribute vec3 in_color;
+pub const VERTEX: &str = r#"#version 330
+    in vec2 in_pos;
+    in vec3 in_color;
     
-    varying lowp vec3 color;
+    out lowp vec3 color;
     
     uniform vec4 camera_pos;
     uniform float aspect_ratio;
@@ -14,8 +14,8 @@ pub const VERTEX: &str = r#"#version 330 core
         color = in_color;
     }"#;
 
-pub const FRAGMENT: &str = r#"#version 330 core
-    varying lowp vec3 color;
+pub const FRAGMENT: &str = r#"#version 120
+    in lowp vec3 color;
 
     void main()
     {

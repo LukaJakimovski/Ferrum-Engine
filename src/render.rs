@@ -1,9 +1,9 @@
 use miniquad::{date, window, Bindings, BufferLayout, BufferSource, BufferType, BufferUsage, EventHandler, KeyCode, KeyMods, MouseButton, Pipeline, PipelineParams, RenderingBackend, ShaderSource, UniformsSource, VertexAttribute, VertexFormat};
-use crate::shader;
 use crate::square::*;
 use crate::math::*;
 use crate::collision_detection::*;
 use crate::shader::{FRAGMENT, VERTEX};
+use crate::shader;
 
 #[derive(Clone)]
 pub struct RenderObject {
@@ -84,6 +84,11 @@ impl World {
             index_buffer,
             images: vec![],
         };
+        #[cfg(all(target_os = "windows", target_arch = "x86_64", target_env = "gnu"))]
+        let scaling_factor = 0.1;
+        #[cfg(not(all(target_os = "windows", target_arch = "x86_64", target_env = "gnu")))]
+        let scaling_factor = 10.0;
+        
         World {
             ctx,
             pipeline,
@@ -97,7 +102,7 @@ impl World {
             pressed_buttons: [0, 0, 0],
             start_time: date::now(),
             mouse_pos: (0.0, 0.0),
-            scaling_factor: 10.0,
+            scaling_factor,
             frame_count: 0,
             previous_polygon_count: 0,
             parameters
@@ -200,8 +205,7 @@ impl EventHandler for World {
         if self.pressed_keys[1] == 1 {self.camera_pos.0 -= 5.0 * self.delta_time as f32;}
         if self.pressed_keys[2] == 1 {self.camera_pos.1 -= 5.0 * self.delta_time as f32;}
         if self.pressed_keys[3] == 1 {self.camera_pos.0 += 5.0 * self.delta_time as f32;}
-        
-        if self.pressed_keys[5] == 1{
+        if self.pressed_keys[5] == 1 {
             for _i in 0..self.parameters.updates_per_frame {
                 self.update_physics();
             }
@@ -215,6 +219,8 @@ impl EventHandler for World {
             self.polygons.push(Polygon::polygon(32, 0.3533, position.clone()));
         }
         
+        
+        self.frame_count += 1;
         self.render();
     }
 
