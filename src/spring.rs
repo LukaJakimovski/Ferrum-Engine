@@ -28,7 +28,7 @@ impl Spring {
         let distance = world_anchor_a.distance(&world_anchor_b);
 
         let connector = Rigidbody::rectangle(0.1, distance, Vec2::new((world_anchor_a.x + world_anchor_b.x) / 2.0, (world_anchor_a.y + world_anchor_b.y) / 2.0));
-        
+
         Spring {
             body_a,
             body_b,
@@ -105,14 +105,17 @@ impl Spring {
         
         let old_angle_a = a.angle;
         a.angle = new_angle_a;
+        let diff = new_angle_a - old_angle_a;
         a.rotate(new_angle_a - old_angle_a);
         a.angular_velocity = new_omega_a;
+        self.anchor_a.rotate(&Vec2::zero(), diff);
         
         let old_angle_b = b.angle;
         b.angle = new_angle_b;
+        let diff = new_angle_b - old_angle_b;
         b.rotate(new_angle_b - old_angle_b);
         b.angular_velocity = new_omega_b;
-
+        self.anchor_b.rotate(&Vec2::zero(), diff);
     }
 
 }
