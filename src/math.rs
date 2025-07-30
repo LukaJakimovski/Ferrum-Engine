@@ -151,6 +151,14 @@ impl Vec2 {
             y: self.y.max(other.y),
         }
     }
+
+    /// Rotates a point around another point
+    pub fn rotate(&mut self, other: &Self,  angle: f32) -> &mut Self{
+        let new_x = ((self.x - other.x) * angle.cos()  - (self.y - other.y) * angle.sin()) + other.x;
+        self.y = ((self.x - other.x) * angle.sin()  + (self.y - other.y) * angle.cos()) + other.y;
+        self.x = new_x;
+        self
+    }
 }
 
 // Operator overloading for owned Vec2

@@ -18,8 +18,37 @@ fn main() {
     };
 
     let mut springs= vec![];
-    springs.push(Spring::new());
+    /*
+    springs.push(Spring::new(
+        Rigidbody::rectangle(0.5, 0.5, Vec2::new(0.0, 1.0)),
+        Rigidbody::rectangle(0.5, 0.5, Vec2::new(0.0, -1.0)),
+        Vec2::new(0.0, -0.25),
+        Vec2::new(0.0, 0.25),
+        7.0,
+        10.0,
+        1.0,
+    ));
+    springs.push(Spring::new(
+        Rigidbody::rectangle(0.5, 0.5, Vec2::new(-3.0, 5.0)),
+        Rigidbody::rectangle(0.5, 0.5, Vec2::new(-3.0, -5.0)),
+        Vec2::new(0.0, -0.25),
+        Vec2::new(0.0, 0.25),
+        2.0,
+        10.0,
+        2.0,
+    ));
+    */
+    springs.push(Spring::new(
+        Rigidbody::rectangle(0.5, 0.5, Vec2::new(2.5, 3.0)),
+        Rigidbody::rectangle(0.5, 0.5, Vec2::new(3.5, -3.0)),
+        Vec2::new(0.0, -0.25),
+        Vec2::new(0.0, 0.25),
+        5.0,
+        10.0,
+        0.0,
+    ));
+
     
-    let parameters = Parameters {delta_time: 0.000001, updates_per_frame: 25, angular_velocity: true, camera_pos: (0.0, 2.5, 0.0, -3.0), gravity: false };
+    let parameters = Parameters {delta_time: 0.0, updates_per_frame: 1, angular_velocity: true, camera_pos: (0.0, 0.0, 0.0, -6.0), gravity: false };
     start(conf, move || Box::new(World::new(vec![], springs, parameters)));
 }

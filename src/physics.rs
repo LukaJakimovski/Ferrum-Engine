@@ -101,7 +101,7 @@ impl World {
         }
         
         for spring in &mut self.springs{
-            spring.apply(self.delta_time as f32, self.delta_time as f32);
+            spring.apply(self.delta_time as f32);
         }
         println!("{:?}", kinetic_energy);
         self.collision_resolution();
