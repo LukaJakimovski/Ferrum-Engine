@@ -1,5 +1,6 @@
 use crate::color::Color;
 use crate::math::*;
+use crate::ode_solver::rk4_step;
 
 #[repr(C)] #[derive(Clone)] #[derive(Default)]
 pub struct Vertex {
@@ -7,7 +8,7 @@ pub struct Vertex {
     pub color: Color,
 }
 #[derive(Clone)] #[derive(Default)]
-pub struct Polygon {
+pub struct Rigidbody {
     pub center: Vec2,
     pub vertices: Vec<Vertex>,
     pub indices: Vec<u32>,
@@ -18,8 +19,10 @@ pub struct Polygon {
     pub moment_of_inertia: f32,
     pub area: f32,
     pub restitution: f32,
+    pub force: Vec2,
+    pub torque: f32,
 }
-impl Polygon {
+impl Rigidbody {
     pub fn rectangle(width: f32, height: f32, pos: Vec2) -> Self {
         let color = Color::random();
         let vertices: Vec<Vertex> = vec![
@@ -30,7 +33,7 @@ impl Polygon {
         ];
 
         let indices: Vec<u32> = vec![0, 1, 2, 0, 2, 3];
-        let mut polygon = Polygon {
+        let mut polygon = Rigidbody {
             angular_velocity: 0.0,
             area: 0.0,
             moment_of_inertia: 0.0,
@@ -41,6 +44,8 @@ impl Polygon {
             vertices,
             indices,
             restitution: 1.0,
+            force: Vec2::zero(),
+            torque: 0.0,
         };
         polygon.calculate_area();
         polygon.calculate_radius();
@@ -60,7 +65,7 @@ impl Polygon {
 
 
         let indices: Vec<u32> = vec![0, 1, 2];
-        let mut polygon = Polygon {
+        let mut polygon = Rigidbody {
             angular_velocity: 0.0,
             area: 0.0,
             moment_of_inertia: 0.0,
@@ -71,6 +76,8 @@ impl Polygon {
             vertices,
             indices,
             restitution: 1.0,
+            force: Vec2::zero(),
+            torque: 0.0
         };
         polygon.calculate_area();
         polygon.calculate_radius();
@@ -101,7 +108,7 @@ impl Polygon {
         indices.push(sides - 1);
         indices.push(sides );
 
-        let mut polygon = Polygon{
+        let mut polygon = Rigidbody {
             angular_velocity: 0.0,
             area: 0.0,
             moment_of_inertia: 0.0,
@@ -112,6 +119,8 @@ impl Polygon {
             vertices,
             indices,
             restitution: 1.0,
+            force: Vec2::zero(),
+            torque: 0.0,
         };
         polygon.calculate_area();
         polygon.calculate_moment_of_inertia();
@@ -218,6 +227,15 @@ impl Polygon {
         for vertex in &mut self.vertices {
             vertex.color = color;
         }
+    }
+
+    pub fn update_rigidbody(&mut self, g: Vec2, dt: f32) {
+        let force = |_: f32, _: Vec2, _: Vec2| g + self.force;
+        let (new_x, new_v) = rk4_step(0.0, self.center, self.velocity, dt, self.mass, &force);
+        self.rotate(self.angular_velocity * dt);
+        self.velocity = new_v;
+        let diff = new_x - self.center;
+        self.translate(diff);
     }
 }
 

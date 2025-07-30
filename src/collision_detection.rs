@@ -1,7 +1,7 @@
-use crate::square::Polygon;
+use crate::rigidbody::Rigidbody;
 use crate::math::Vec2;
 
-fn get_axes(shape: &Polygon) -> Vec<Vec2>{
+fn get_axes(shape: &Rigidbody) -> Vec<Vec2>{
     let mut axes: Vec<Vec2> = vec![];
     for i in 0..shape.vertices.len() {
         let p1: &Vec2 = &shape.vertices[i].pos;
@@ -14,7 +14,7 @@ fn get_axes(shape: &Polygon) -> Vec<Vec2>{
     axes
 }
 
-fn project(shape: &Polygon, axis: &Vec2) -> Vec2{
+fn project(shape: &Rigidbody, axis: &Vec2) -> Vec2{
     let mut min: f32 = axis.dot(&shape.vertices[0].pos);
     let mut max: f32 = min;
 
@@ -42,7 +42,7 @@ fn get_overlap(interval1: &Vec2, interval2: &Vec2) -> f32{
     0.0
 }
 
-pub fn sat_collision(shape1: &Polygon, shape2: &Polygon) -> [Vec2; 2]{
+pub fn sat_collision(shape1: &Rigidbody, shape2: &Rigidbody) -> [Vec2; 2]{
     if shape1.center.distance(&shape2.center) > shape1.radius + shape2.radius {
         return [Vec2 {x: -133.7, y: -133.7}, Vec2 {x: -133.7, y: 0.0}];
     }
@@ -113,7 +113,7 @@ fn clip(v1: Vec2, v2: Vec2, normal: Vec2, offset: f32) -> Vec<Vec2> {
     }
     clipped
 }
-fn best_edge(polygon: &Polygon, normal: Vec2) -> (Vec2, Vec2, Vec2) {
+fn best_edge(polygon: &Rigidbody, normal: Vec2) -> (Vec2, Vec2, Vec2) {
     let c = polygon.vertices.len();
     let mut max = f32::MIN;
     let mut index = 0;
@@ -144,7 +144,7 @@ fn best_edge(polygon: &Polygon, normal: Vec2) -> (Vec2, Vec2, Vec2) {
 
 
 
-pub fn find_contact_points(polygon1: &Polygon, polygon2: &Polygon, mtv: &[Vec2; 2], ) -> Vec<Vec2> {
+pub fn find_contact_points(polygon1: &Rigidbody, polygon2: &Rigidbody, mtv: &[Vec2; 2], ) -> Vec<Vec2> {
     let normal;
     if mtv[0].normalized().dot(&polygon1.center) < mtv[0].normalized().dot(&polygon2.center) {
         normal = mtv[0].normalized();
@@ -152,8 +152,8 @@ pub fn find_contact_points(polygon1: &Polygon, polygon2: &Polygon, mtv: &[Vec2; 
     else {
         normal = -mtv[0].normalized();
     }
-    let edge1 = best_edge(polygon1, normal);
-    let edge2 = best_edge(polygon2, -normal);
+    let edge1 = best_edge(&polygon1, normal);
+    let edge2 = best_edge(&polygon2, -normal);
     let edge1v = edge1.1 - edge1.0;
     let edge2v = edge2.1 - edge2.0;
 
@@ -188,7 +188,6 @@ pub fn find_contact_points(polygon1: &Polygon, polygon2: &Polygon, mtv: &[Vec2; 
     if clipped.len() > 1 && ref_normal.dot(&clipped[1]) - max < 0.0 {
         clipped.remove(1);
     }
-
 
     clipped
 }

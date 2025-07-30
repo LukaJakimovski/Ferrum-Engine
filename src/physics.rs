@@ -1,7 +1,8 @@
 use crate::collision_detection::{find_contact_points, sat_collision};
 use crate::math::Vec2;
-use crate::render::World;
+use crate::world::World;
 use crate::ode_solver::rk4_step;
+use crate::Rigidbody;
 
 impl World {
     pub fn collision_resolution(&mut self) {
@@ -139,15 +140,15 @@ impl World {
         }
 
         for polygon in &mut self.polygons {
-            let force = |_: f32, _: Vec2, _: Vec2| g;
-            let (new_x, new_v) = rk4_step(0.0, polygon.center, polygon.velocity, self.delta_time as f32, polygon.mass, &force);
-            polygon.rotate(polygon.angular_velocity * self.delta_time as f32);
-            polygon.velocity = new_v;
-            let diff = new_x - polygon.center;
-            polygon.translate(diff);
-            kinetic_energy += 0.5 * polygon.mass * polygon.velocity.dot(&polygon.velocity);
-            kinetic_energy += 0.5 * polygon.moment_of_inertia * polygon.angular_velocity * polygon.angular_velocity;
+            polygon.update_rigidbody(g, self.delta_time as f32);
         }
+        
+        for spring in &mut self.springs{
+            spring.apply();
+            spring.body_a.update_rigidbody(g, self.delta_time as f32);
+            spring.body_b.update_rigidbody(g, self.delta_time as f32);
+        }
+        println!("{:?}", kinetic_energy);
         self.collision_resolution();
     }
 }

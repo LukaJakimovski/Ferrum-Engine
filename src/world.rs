@@ -1,9 +1,10 @@
 use miniquad::{date, window, Bindings, BufferLayout, BufferSource, BufferType, BufferUsage, EventHandler, KeyCode, KeyMods, MouseButton, Pipeline, PipelineParams, RenderingBackend, ShaderSource, UniformsSource, VertexAttribute, VertexFormat};
-use crate::square::*;
+use crate::rigidbody::*;
 use crate::math::*;
 use crate::collision_detection::*;
 use crate::shader::{FRAGMENT, VERTEX};
-use crate::shader;
+use crate::{shader, Color};
+use crate::spring::*;
 
 #[derive(Clone)]
 pub struct RenderObject {
@@ -19,16 +20,17 @@ pub struct Parameters{
     pub gravity: bool,
 }
 pub struct World {
-    pub ctx: Box<dyn RenderingBackend>,
-    pub render_object: RenderObject,
-    pub pipeline: Pipeline,
+    ctx: Box<dyn RenderingBackend>,
+    render_object: RenderObject,
+    pipeline: Pipeline,
 
     pub scaling_factor: f32,
-    pub camera_pos: (f32, f32, f32, f32),
-    pub mouse_pos: (f32, f32),
+    camera_pos: (f32, f32, f32, f32),
+    mouse_pos: (f32, f32),
     
-    pub polygons: Vec<Polygon>,
-    pub colliding_polygons: Vec<Polygon>,
+    pub springs: Vec<Spring>,
+    pub polygons: Vec<Rigidbody>,
+    spring_polygons: Vec<Rigidbody>,
     previous_polygon_count: usize,
     
     pub collisions: usize,
@@ -38,13 +40,14 @@ pub struct World {
     
     pub start_time: f64,
     pub delta_time: f64,
-    pub frame_count: u32,
+    frame_count: u32,
 
     pub parameters: Parameters,
 
 }
 impl World {
-    pub fn new(polygons: Vec<Polygon>, 
+    pub fn new(polygons: Vec<Rigidbody>,
+               springs: Vec<Spring>,
                parameters: Parameters,
                 ) -> Self {
         let mut ctx = window::new_rendering_backend();
@@ -84,17 +87,24 @@ impl World {
             index_buffer,
             images: vec![],
         };
+        
+        let mut spring_polygons: Vec<Rigidbody> = vec![];
+        for spring in  &springs{
+            spring_polygons.push(spring.body_a.clone());
+            spring_polygons.push(spring.body_b.clone());
+        }
+        
         #[cfg(all(target_os = "windows", target_arch = "x86_64", target_env = "gnu"))]
         let scaling_factor = 0.1;
         #[cfg(not(all(target_os = "windows", target_arch = "x86_64", target_env = "gnu")))]
         let scaling_factor = 10.0;
-        
         World {
             ctx,
             pipeline,
             polygons,
             render_object: RenderObject {bindings, indices: vec![]},
-            colliding_polygons: vec![],
+            springs,
+            spring_polygons,
             collisions: 0,
             delta_time: 0.0,
             camera_pos: parameters.camera_pos,
@@ -109,7 +119,7 @@ impl World {
         }
     }
 
-    pub fn create_render_object(&mut self, polygons: Vec<Polygon>) {
+    pub fn create_render_object(&mut self, polygons: Vec<Rigidbody>) {
         let mut indices: Vec<u32> = vec![];
         let mut vertices: Vec<Vertex> = vec![];
         let mut start_index: u32 = 0;
@@ -166,8 +176,8 @@ impl World {
 
     pub fn render(&mut self){
         self.ctx.begin_default_pass(Default::default());
-        let mut render_polygon: Vec<Polygon> = self.polygons.clone();
-        render_polygon.extend(self.colliding_polygons.clone());
+        let mut render_polygon: Vec<Rigidbody> = self.polygons.clone();
+        render_polygon.extend(self.spring_polygons.clone());
         self.create_render_object(render_polygon);
         self.ctx.apply_pipeline(&self.pipeline);
         self.ctx.apply_bindings(&self.render_object.bindings);
@@ -210,15 +220,23 @@ impl EventHandler for World {
                 self.update_physics();
             }
         }
-        println!("Collisions: {}", self.collisions);
+        //println!("Collisions: {}", self.collisions);
         
         let position = Vec2 {
             x: ((self.mouse_pos.0 * 2.0 - window::screen_size().0)/ window::screen_size().0 + self.camera_pos.0 / (-self.camera_pos.3 + 1.0)) * (-self.camera_pos.3 + 1.0),
             y: ((self.mouse_pos.1 * 2.0 - window::screen_size().1)/ window::screen_size().1 + self.camera_pos.1 / -(-self.camera_pos.3 + 1.0)) * -(-self.camera_pos.3 + 1.0) * window::screen_size().1 / window::screen_size().0,};
         if self.pressed_keys[7] == 1 {
-            self.polygons.push(Polygon::polygon(32, 0.3533, position.clone()));
+            self.polygons.push(Rigidbody::polygon(32, 0.3533, position.clone()));
         }
         
+        self.spring_polygons.clear();
+        for spring in &self.springs{
+            self.spring_polygons.push(spring.body_a.clone());
+            self.spring_polygons.push(spring.body_b.clone());
+            self.spring_polygons.push(spring.connector.clone());
+            let length = self.spring_polygons.len() - 1;
+            self.spring_polygons[length].change_color(Color::white());
+        }
         
         self.frame_count += 1;
         self.render();
@@ -234,13 +252,13 @@ impl EventHandler for World {
             y: ((self.mouse_pos.1 * 2.0 - window::screen_size().1)/ window::screen_size().1 + self.camera_pos.1 / -(-self.camera_pos.3 + 1.0)) * -(-self.camera_pos.3 + 1.0) * window::screen_size().1 / window::screen_size().0,};
         if _button == MouseButton::Left {
             self.pressed_buttons[0] = 1;
-            self.polygons.push(Polygon::polygon(64, 0.3533, position.clone()));
+            self.polygons.push(Rigidbody::polygon(64, 0.3533, position.clone()));
             let length = self.polygons.len();
             self.polygons[length - 1].restitution = 0.95;
         }
         if _button == MouseButton::Right {
             self.pressed_buttons[1] = 1;
-            let mouse_polygon = Polygon::rectangle(0.03, 0.03, position);
+            let mouse_polygon = Rigidbody::rectangle(0.03, 0.03, position);
             for i in 0..self.polygons.len() {
                 let result = sat_collision(&self.polygons[i], &mouse_polygon);
                 if result[1].y != 0.0{

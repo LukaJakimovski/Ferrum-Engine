@@ -21,3 +21,31 @@ pub fn rk4_step(t: f32, x: Vec2, v: Vec2, dt: f32, m: f32, force: &dyn Fn(f32, V
 
     (x_next, v_next)
 }
+
+pub fn rk4_angular_step(
+    t: f32,
+    angle: f32,
+    angular_velocity: f32,
+    dt: f32,
+    moment_of_inertia: f32,
+    torque: &dyn Fn(f32, f32, f32) -> f32
+) -> (f32, f32) {
+    let alpha = |t: f32, theta: f32, omega: f32| torque(t, theta, omega) / moment_of_inertia;
+
+    let k1_theta = angular_velocity;
+    let k1_omega = alpha(t, angle, angular_velocity);
+
+    let k2_theta = angular_velocity + 0.5 * dt * k1_omega;
+    let k2_omega = alpha(t + 0.5 * dt, angle + 0.5 * dt * k1_theta, angular_velocity + 0.5 * dt * k1_omega);
+
+    let k3_theta = angular_velocity + 0.5 * dt * k2_omega;
+    let k3_omega = alpha(t + 0.5 * dt, angle + 0.5 * dt * k2_theta, angular_velocity + 0.5 * dt * k2_omega);
+
+    let k4_theta = angular_velocity + dt * k3_omega;
+    let k4_omega = alpha(t + dt, angle + dt * k3_theta, angular_velocity + dt * k3_omega);
+
+    let theta_next = angle + dt / 6.0 * (k1_theta + 2.0 * k2_theta + 2.0 * k3_theta + k4_theta);
+    let omega_next = angular_velocity + dt / 6.0 * (k1_omega + 2.0 * k2_omega + 2.0 * k3_omega + k4_omega);
+
+    (theta_next, omega_next)
+}
