@@ -6,12 +6,60 @@ use crate::world::World;
 impl World {
     pub fn collision_resolution(&mut self) {
         for i in 0..self.polygons.len() {
+            for j in 0..self.springs.len(){
+                let mut body1 = self.polygons[i].clone();
+                let mut body2 = self.springs[j].body_a.clone();
+                self.check_and_resolve(&mut body1, &mut body2);
+                self.polygons[i] = body1;
+                self.springs[j].body_a = body2;
+
+                let mut body1 = self.polygons[i].clone();
+                let mut body2 = self.springs[j].body_b.clone();
+                self.check_and_resolve(&mut body1, &mut body2);
+                self.polygons[i] = body1;
+                self.springs[j].body_b = body2;
+
+                let mut body1 = self.springs[j].body_a.clone();
+                let mut body2 = self.springs[j].body_b.clone();
+                self.check_and_resolve(&mut body1, &mut body2);
+                self.springs[j].body_a = body1;
+                self.springs[j].body_b = body2;
+            }
+
             for j in i+1..self.polygons.len() {
                 let mut body1 = self.polygons[i].clone();
                 let mut body2 = self.polygons[j].clone();
                 self.check_and_resolve(&mut body1, &mut body2);
                 self.polygons[i] = body1;
                 self.polygons[j] = body2;
+            }
+        }
+
+        for i in 0..self.springs.len() {
+            for j in i+1..self.springs.len() {
+                let mut body1 = self.springs[i].body_a.clone();
+                let mut body2 = self.springs[j].body_a.clone();
+                self.check_and_resolve(&mut body1, &mut body2);
+                self.springs[i].body_a = body1;
+                self.springs[j].body_a = body2;
+
+                let mut body1 = self.springs[i].body_a.clone();
+                let mut body2 = self.springs[j].body_b.clone();
+                self.check_and_resolve(&mut body1, &mut body2);
+                self.springs[i].body_a = body1;
+                self.springs[j].body_b = body2;
+
+                let mut body1 = self.springs[i].body_b.clone();
+                let mut body2 = self.springs[j].body_a.clone();
+                self.check_and_resolve(&mut body1, &mut body2);
+                self.springs[i].body_b = body1;
+                self.springs[j].body_a = body2;
+
+                let mut body1 = self.springs[i].body_b.clone();
+                let mut body2 = self.springs[j].body_b.clone();
+                self.check_and_resolve(&mut body1, &mut body2);
+                self.springs[i].body_b = body1;
+                self.springs[j].body_b = body2;
             }
         }
     }
