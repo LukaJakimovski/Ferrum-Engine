@@ -1,4 +1,3 @@
-use crate::color::Color;
 use crate::math::*;
 use crate::ode_solver::{rk4_angular_step, rk4_step};
 use crate::rigidbody::Rigidbody;
@@ -24,11 +23,9 @@ impl Spring {
         let world_anchor_a = a.center + anchor_a;
         let world_anchor_b = b.center + anchor_b;
 
-        let delta = world_anchor_b - world_anchor_a;
         let distance = world_anchor_a.distance(&world_anchor_b);
 
         let connector = Rigidbody::rectangle(0.1, distance, Vec2::new((world_anchor_a.x + world_anchor_b.x) / 2.0, (world_anchor_a.y + world_anchor_b.y) / 2.0));
-
         Spring {
             body_a,
             body_b,
@@ -53,9 +50,15 @@ impl Spring {
 
         let direction = delta / distance;
 
-        self.connector = Rigidbody::rectangle(0.1, distance, Vec2::new((world_anchor_a.x + world_anchor_b.x) / 2.0, (world_anchor_a.y + world_anchor_b.y) / 2.0));
-        let angle = direction.angle(&Vec2::new(0.0, 1.0));
-        self.connector.rotate(-angle);
+        self.connector = Rigidbody::rectangle(0.01, distance, Vec2::new((world_anchor_a.x + world_anchor_b.x) / 2.0, (world_anchor_a.y + world_anchor_b.y) / 2.0));
+        let angle = direction.angle(&Vec2::new(0.0, -1.0));
+        if (direction.x < 0.0 && direction.y < 0.0){
+            self.connector.rotate(-angle);
+        }
+        else{
+            self.connector.rotate(angle);
+        }
+
 
         let stretch = distance - self.rest_length;
 
