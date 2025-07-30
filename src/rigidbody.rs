@@ -21,6 +21,7 @@ pub struct Rigidbody {
     pub restitution: f32,
     pub force: Vec2,
     pub torque: f32,
+    pub angle: f32,
 }
 impl Rigidbody {
     pub fn rectangle(width: f32, height: f32, pos: Vec2) -> Self {
@@ -46,6 +47,7 @@ impl Rigidbody {
             restitution: 1.0,
             force: Vec2::zero(),
             torque: 0.0,
+            angle: 0.0,
         };
         polygon.calculate_area();
         polygon.calculate_radius();
@@ -77,7 +79,8 @@ impl Rigidbody {
             indices,
             restitution: 1.0,
             force: Vec2::zero(),
-            torque: 0.0
+            torque: 0.0,
+            angle: 0.0,
         };
         polygon.calculate_area();
         polygon.calculate_radius();
@@ -121,6 +124,7 @@ impl Rigidbody {
             restitution: 1.0,
             force: Vec2::zero(),
             torque: 0.0,
+            angle: 0.0,
         };
         polygon.calculate_area();
         polygon.calculate_moment_of_inertia();

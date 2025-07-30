@@ -310,6 +310,14 @@ impl Mul<f32> for Vec2 {
     }
 }
 
+impl Mul<Vec2> for f32 {
+    type Output = Vec2;
+    
+    fn mul(self, rhs: Vec2) -> Vec2 {
+        Vec2{x: self * rhs.x, y: self * rhs.y}
+    }
+}
+
 impl Neg for Vec2 {
     type Output = Self;
 
