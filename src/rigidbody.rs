@@ -1,4 +1,3 @@
-use std::sync::TryLockResult;
 use crate::color::Color;
 use crate::math::*;
 use crate::ode_solver::rk4_step;

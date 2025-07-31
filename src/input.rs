@@ -1,5 +1,5 @@
 use miniquad::{window, KeyCode, KeyMods, MouseButton};
-use crate::enums::Keys;
+use crate::enums::{Keys, Mouse};
 use crate::{Color, Rigidbody, Vec2, World};
 use crate::collision_detection::sat_collision;
 
@@ -46,13 +46,11 @@ impl World{
             x: ((self.mouse_pos.0 * 2.0 - window::screen_size().0)/ window::screen_size().0 + self.camera_pos.0 / (-self.camera_pos.3 + 1.0)) * (-self.camera_pos.3 + 1.0),
             y: ((self.mouse_pos.1 * 2.0 - window::screen_size().1)/ window::screen_size().1 + self.camera_pos.1 / -(-self.camera_pos.3 + 1.0)) * -(-self.camera_pos.3 + 1.0) * window::screen_size().1 / window::screen_size().0,};
         if _button == MouseButton::Left {
-            self.pressed_buttons[0] = 1;
+            self.pressed_buttons[Mouse::Left as usize] = 1;
             self.polygons.push(Rigidbody::polygon(16, 0.3533, position.clone(), 1.0, 1.0, Color::random()));
-            let length = self.polygons.len();
-            self.polygons[length - 1].restitution = 0.95;
         }
         if _button == MouseButton::Right {
-            self.pressed_buttons[1] = 1;
+            self.pressed_buttons[Mouse::Right as usize] = 1;
             let mouse_polygon = Rigidbody::rectangle(0.03, 0.03, position, 1.0, 1.0, Color::random());
             for i in 0..self.polygons.len() {
                 let result = sat_collision(&self.polygons[i], &mouse_polygon);
@@ -65,9 +63,9 @@ impl World{
         if _button == MouseButton::Middle { self.pressed_buttons[2] = 1 }
     }
     pub fn mouse_button_up_eventhandler(&mut self, _button: MouseButton, _x: f32, _y: f32) {
-        if _button == MouseButton::Middle { self.pressed_buttons[2] = 0 }
-        if _button == MouseButton::Right { self.pressed_buttons[1] = 0 }
-        if _button == MouseButton::Left { self.pressed_buttons[0] = 0 }
+        if _button == MouseButton::Middle { self.pressed_buttons[Mouse::Middle as usize] = 0 }
+        if _button == MouseButton::Right { self.pressed_buttons[Mouse::Right as usize] = 0 }
+        if _button == MouseButton::Left { self.pressed_buttons[Mouse::Left as usize] = 0 }
     }
     pub fn key_down_eventhandler(&mut self, _keycode: KeyCode, _keymods: KeyMods, _repeat: bool) {
         match _keycode {
@@ -97,7 +95,7 @@ impl World{
     }
 
     pub fn raw_mouse_motionhandler(&mut self, _dx: f32, _dy: f32) {
-        if self.pressed_buttons[2] == 1 {
+        if self.pressed_buttons[Mouse::Middle as usize] == 1 {
             self.camera_pos.0 -= _dx * (-self.camera_pos.3 + 1.0) / window::screen_size().0;
             self.camera_pos.1 += _dy *  (-self.camera_pos.3 + 1.0) / window::screen_size().1;
         }

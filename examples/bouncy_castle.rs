@@ -11,7 +11,7 @@ fn main() {
         window_resizable: true,
         icon: None,
         platform: Platform {
-            swap_interval: Some(0),
+            swap_interval: Some(1),
             ..Default::default()
         },
         fullscreen: false
@@ -40,8 +40,8 @@ fn main() {
         1,
         Vec2::new(-2.5, 0.0),
         Vec2::new(-2.5, 0.0),
-        4.0,
-        100000.0,
+        3.5,
+        1000000.0,
         0.0,
         &rigidbodies,
     ));
@@ -50,8 +50,8 @@ fn main() {
         1,
         Vec2::new(2.5, 0.0),
         Vec2::new(2.5, 0.0),
-        4.0,
-        100000.0,
+        3.5,
+        1000000.0,
         0.0,
         &rigidbodies,
     ));
@@ -61,11 +61,11 @@ fn main() {
         1,
         Vec2::new(0.0, 0.0),
         Vec2::new(0.0, 0.0),
-        4.0,
-        100000.0,
+        3.5,
+        1000000.0,
         0.0,
         &rigidbodies,
     ));
-    let parameters = Parameters {delta_time: 0.00001, updates_per_frame: 25, angular_velocity: true, camera_pos: (0.0, 0.0, 0.0, -6.0), gravity: true, world_size: 500.0 };
+    let parameters = Parameters {delta_time: 0.00003, updates_per_frame: 165, angular_velocity: true, camera_pos: (0.0, 0.0, 0.0, -6.0), gravity: true, world_size: 500.0 };
     start(conf, move || Box::new(World::new(rigidbodies, springs, parameters)));
 }

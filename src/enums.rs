@@ -1,4 +1,5 @@
 #[repr(usize)]
+#[allow(dead_code)]
 pub enum Keys{
     A = 0,
     B = 1,
@@ -49,7 +50,7 @@ pub enum Keys{
     Minus = 46,
 }
 
-pub enum MouseButton{
+pub enum Mouse{
     Left = 0,
     Right = 1,
     Middle = 2,
