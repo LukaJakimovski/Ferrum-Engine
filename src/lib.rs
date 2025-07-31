@@ -7,6 +7,9 @@ pub mod color;
 pub mod ode_solver;
 pub mod physics;
 pub mod spring;
+mod enums;
+mod input;
+mod render;
 
 pub use crate::rigidbody::*;
 pub use crate::world::*;
