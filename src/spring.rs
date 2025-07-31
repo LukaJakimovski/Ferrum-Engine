@@ -4,8 +4,8 @@ use crate::rigidbody::Rigidbody;
 
 #[derive(Clone)] #[derive(Default)]
 pub struct Spring {
-    pub body_a: Rigidbody,         // Index or ID of first body
-    pub body_b: Rigidbody,         // Index or ID of second body
+    pub body_a: usize,         // Index or ID of first body
+    pub body_b: usize,         // Index or ID of second body
     pub connector: Rigidbody,
     anchor_a: Vec2,  // Local offset on body A
     anchor_b: Vec2,  // Local offset on body B
@@ -15,9 +15,9 @@ pub struct Spring {
 }
 
 impl Spring {
-    pub fn new(body_a: Rigidbody, body_b: Rigidbody, anchor_a: Vec2, anchor_b: Vec2, rest_length: f32, stiffness: f32, damping: f32) -> Self {
-        let a = &body_a;
-        let b = &body_b;
+    pub fn new(body_a: usize, body_b: usize, anchor_a: Vec2, anchor_b: Vec2, rest_length: f32, stiffness: f32, damping: f32, rigidbodys: &Vec<Rigidbody>) -> Self {
+        let a = &rigidbodys[body_a];
+        let b = &rigidbodys[body_b];
 
         // Rotate anchors into world space
         let world_anchor_a = a.center + anchor_a;
@@ -48,9 +48,19 @@ impl Spring {
             damping,
         }
     }
-    pub fn apply(&mut self, dt: f32) {
-        let a = &mut self.body_a;
-        let b = &mut self.body_b;
+    pub fn apply(&mut self, dt: f32, rigidbodys: &mut Vec<Rigidbody>) {
+        let a;
+        let b;
+        if self.body_a > self.body_b{
+            let (left, right) = rigidbodys.split_at_mut(self.body_a);
+            a = &mut left[self.body_b];
+            b = &mut right[0];
+        }
+        else{
+            let (left, right) = rigidbodys.split_at_mut(self.body_b);
+            a = &mut left[self.body_a];
+            b = &mut right[0];
+        }
 
         // Rotate anchors into world space
         let world_anchor_a = a.center + self.anchor_a;

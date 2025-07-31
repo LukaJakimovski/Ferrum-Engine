@@ -31,7 +31,6 @@ pub struct World {
     
     pub springs: Vec<Spring>,
     pub polygons: Vec<Rigidbody>,
-    spring_polygons: Vec<Rigidbody>,
     previous_polygon_count: usize,
     
     pub collisions: usize,
@@ -89,12 +88,6 @@ impl World {
             images: vec![],
         };
         
-        let mut spring_polygons: Vec<Rigidbody> = vec![];
-        for spring in  &springs{
-            spring_polygons.push(spring.body_a.clone());
-            spring_polygons.push(spring.body_b.clone());
-        }
-        
         #[cfg(all(target_os = "windows", target_arch = "x86_64", target_env = "gnu"))]
         let scaling_factor = 0.1;
         #[cfg(not(all(target_os = "windows", target_arch = "x86_64", target_env = "gnu")))]
@@ -105,7 +98,6 @@ impl World {
             polygons,
             render_object: RenderObject {bindings, indices: vec![]},
             springs,
-            spring_polygons,
             collisions: 0,
             delta_time: 0.0,
             camera_pos: parameters.camera_pos,
@@ -178,7 +170,6 @@ impl World {
     pub fn render(&mut self){
         self.ctx.begin_default_pass(Default::default());
         let mut render_polygon: Vec<Rigidbody> = self.polygons.clone();
-        render_polygon.extend(self.spring_polygons.clone());
         self.create_render_object(render_polygon);
         self.ctx.apply_pipeline(&self.pipeline);
         self.ctx.apply_bindings(&self.render_object.bindings);
@@ -194,9 +185,7 @@ impl World {
 }
 
 impl EventHandler for World {
-    fn update(&mut self) {}
-
-    fn draw(&mut self) {
+    fn update(&mut self) {
         if self.parameters.delta_time == 0.0 {
             self.delta_time = date::now() - self.start_time;
             self.start_time = date::now()
@@ -221,30 +210,25 @@ impl EventHandler for World {
             }
         }
         //println!("Collisions: {}", self.collisions);
-        
+
         let position = Vec2 {
             x: ((self.mouse_pos.0 * 2.0 - window::screen_size().0)/ window::screen_size().0 + self.camera_pos.0 / (-self.camera_pos.3 + 1.0)) * (-self.camera_pos.3 + 1.0),
             y: ((self.mouse_pos.1 * 2.0 - window::screen_size().1)/ window::screen_size().1 + self.camera_pos.1 / -(-self.camera_pos.3 + 1.0)) * -(-self.camera_pos.3 + 1.0) * window::screen_size().1 / window::screen_size().0,};
         if self.pressed_keys[7] == 1 {
             self.polygons.push(Rigidbody::polygon(16, 0.3533, position.clone()));
         }
-        
-        self.spring_polygons.clear();
-        for spring in &self.springs{
-            self.spring_polygons.push(spring.connector.clone());
-            self.spring_polygons.push(spring.body_a.clone());
-            self.spring_polygons.push(spring.body_b.clone());
-            let length = self.spring_polygons.len() - 1;
-            self.spring_polygons[length - 2].change_color(Color::white());
-        }
+
         for i in 0..self.polygons.len() {
             if self.polygons[i].center.distance(&Vec2::zero()) > self.parameters.world_size {
                 self.polygons.remove(i);
                 break;
             }
         }
-        
+
         self.frame_count += 1;
+    }
+
+    fn draw(&mut self) {
         self.render();
     }
 

@@ -6,33 +6,11 @@ use crate::world::World;
 impl World {
     pub fn collision_resolution(&mut self) {
         for i in 0..self.polygons.len() {
-            for j in 0..self.springs.len(){
-                let poly = &mut self.polygons[i];
-                let spring = &mut self.springs[j];
-
-                Self::check_and_resolve(&self.parameters, poly, &mut spring.body_a);
-                Self::check_and_resolve(&self.parameters, poly, &mut spring.body_b);
-                Self::check_and_resolve(&self.parameters, &mut spring.body_a, &mut spring.body_b);
-            }
-
             for j in i+1..self.polygons.len() {
                 let (left, right) = self.polygons.split_at_mut(j);
                 let a = &mut left[i];
                 let b = &mut right[0];
                 Self::check_and_resolve(&self.parameters, a, b);
-            }
-        }
-
-        for i in 0..self.springs.len() {
-            for j in i+1..self.springs.len() {
-                let (left, right) = self.springs.split_at_mut(j);
-                let s1 = &mut left[i];
-                let s2 = &mut right[0];
-
-                Self::check_and_resolve(&self.parameters, &mut s1.body_a, &mut s2.body_a);
-                Self::check_and_resolve(&self.parameters, &mut s1.body_a, &mut s2.body_b);
-                Self::check_and_resolve(&self.parameters, &mut s1.body_b, &mut s2.body_a);
-                Self::check_and_resolve(&self.parameters, &mut s1.body_b, &mut s2.body_b);
             }
         }
     }
@@ -130,9 +108,7 @@ impl World {
         }
         
         for spring in &mut self.springs{
-            spring.apply(self.delta_time as f32);
-            spring.body_a.update_rigidbody(g, self.delta_time as f32);
-            spring.body_b.update_rigidbody(g, self.delta_time as f32);
+            spring.apply(self.delta_time as f32, &mut self.polygons);
         }
         self.collision_resolution();
     }
