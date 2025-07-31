@@ -43,9 +43,11 @@ fn get_overlap(interval1: &Vec2, interval2: &Vec2) -> f32{
 }
 
 pub fn sat_collision(shape1: &Rigidbody, shape2: &Rigidbody) -> [Vec2; 2]{
+    // Simple circle check
     if shape1.center.distance(&shape2.center) > shape1.radius + shape2.radius {
         return [Vec2 {x: -133.7, y: -133.7}, Vec2 {x: -133.7, y: 0.0}];
     }
+    // Treat shapes with more than 15 vertices as circles
     if shape1.vertices.len() >= 16 && shape2.vertices.len() >= 16 {
         let delta = shape2.center - shape1.center;
         let dist = delta.magnitude();

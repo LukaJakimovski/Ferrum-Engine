@@ -10,6 +10,8 @@ pub struct Spring {
     pub connector: Rigidbody,
     anchor_a: Vec2,  // Local offset on body A
     anchor_b: Vec2,  // Local offset on body B
+    angle_a: f32,
+    angle_b: f32,
     rest_length: f32,
     stiffness: f32,
     damping: f32,
@@ -37,6 +39,8 @@ impl Spring {
         else{
             connector.rotate(angle);
         }
+        let angle_a = a.angle;
+        let angle_b = b.angle;
 
         Spring {
             body_a,
@@ -44,6 +48,8 @@ impl Spring {
             connector,
             anchor_a,
             anchor_b,
+            angle_a,
+            angle_b,
             rest_length,
             stiffness,
             damping,
@@ -71,16 +77,6 @@ impl Spring {
         let distance = world_anchor_a.distance(&world_anchor_b);
 
         let direction = delta / distance;
-
-        self.connector = Rigidbody::rectangle(0.1, distance, Vec2::new((world_anchor_a.x + world_anchor_b.x) / 2.0, (world_anchor_a.y + world_anchor_b.y) / 2.0), 1.0, 1.0, Color::white());
-        let angle = direction.angle(&Vec2::new(0.0, -1.0));
-        if direction.x < 0.0 && direction.y < 0.0{
-            self.connector.rotate(-angle);
-        }
-        else{
-            self.connector.rotate(angle);
-        }
-
 
         let stretch = distance - self.rest_length;
 
@@ -131,16 +127,38 @@ impl Spring {
         let old_angle_a = a.angle;
         a.angle = new_angle_a;
         let diff = new_angle_a - old_angle_a;
-        a.rotate(new_angle_a - old_angle_a);
+        a.rotate(diff);
         a.angular_velocity = new_omega_a;
+
+        let diff = new_angle_a - self.angle_a;
+        self.angle_a = new_angle_a;
         self.anchor_a.rotate(&Vec2::zero(), diff);
         
         let old_angle_b = b.angle;
         b.angle = new_angle_b;
         let diff = new_angle_b - old_angle_b;
-        b.rotate(new_angle_b - old_angle_b);
+        b.rotate(diff);
         b.angular_velocity = new_omega_b;
+
+        let diff = new_angle_b - self.angle_b;
+        self.angle_b = new_angle_b;
         self.anchor_b.rotate(&Vec2::zero(), diff);
+
+        let world_anchor_a = a.center + self.anchor_a;
+        let world_anchor_b = b.center + self.anchor_b;
+
+        let delta = world_anchor_b - world_anchor_a;
+        let distance = world_anchor_a.distance(&world_anchor_b);
+
+        let direction = delta / distance;
+        self.connector = Rigidbody::rectangle(0.1, distance, Vec2::new((world_anchor_a.x + world_anchor_b.x) / 2.0, (world_anchor_a.y + world_anchor_b.y) / 2.0), 1.0, 1.0, Color::white());
+        let angle = direction.angle(&Vec2::new(0.0, -1.0));
+        if direction.x < 0.0 || direction.y < 0.0{
+            self.connector.rotate(-angle);
+        }
+        else{
+            self.connector.rotate(angle);
+        }
     }
 
 }

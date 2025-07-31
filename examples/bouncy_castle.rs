@@ -11,7 +11,7 @@ fn main() {
         window_resizable: true,
         icon: None,
         platform: Platform {
-            swap_interval: Some(1),
+            swap_interval: Some(0),
             ..Default::default()
         },
         fullscreen: false
@@ -66,6 +66,6 @@ fn main() {
         0.0,
         &rigidbodies,
     ));
-    let parameters = Parameters {delta_time: 0.00003, updates_per_frame: 165, angular_velocity: true, camera_pos: (0.0, 0.0, 0.0, -6.0), gravity: true, world_size: 500.0 };
+    let parameters = Parameters {delta_time: 0.0, updates_per_frame: 1, angular_velocity: true, camera_pos: (0.0, 0.0, 0.0, -6.0), gravity: true, world_size: 500.0 };
     start(conf, move || Box::new(World::new(rigidbodies, springs, parameters)));
 }

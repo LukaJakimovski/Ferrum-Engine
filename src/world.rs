@@ -43,6 +43,7 @@ pub struct World {
     pub is_running: bool,
 
     pub parameters: Parameters,
+    pub timer: f64,
 
 }
 impl World {
@@ -110,10 +111,10 @@ impl World {
             previous_polygon_count: 0,
             parameters,
             is_running: false,
+            timer:  date::now()
         }
     }
 }
-
 impl EventHandler for World {
     fn update(&mut self) {
         if self.parameters.delta_time == 0.0 {
@@ -126,7 +127,7 @@ impl EventHandler for World {
 
         self.handle_input();
 
-        if self.is_running == true{
+        if self.is_running == false{
             for _i in 0..self.parameters.updates_per_frame {
                 self.update_physics();
             }
@@ -140,6 +141,10 @@ impl EventHandler for World {
         }
 
         self.frame_count += 1;
+        if self.frame_count % 30 == 0 {
+            println!("FPS: {}", 30.0 / (date::now() - self.timer));
+            self.timer = date::now();
+        }
     }
 
     fn draw(&mut self) {

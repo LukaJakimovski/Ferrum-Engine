@@ -1,3 +1,4 @@
+use std::fmt::Pointer;
 use miniquad::{window, KeyCode, KeyMods, MouseButton};
 use crate::enums::{Keys, Mouse};
 use crate::{Color, Rigidbody, Vec2, World};
@@ -23,6 +24,12 @@ impl World{
             y: ((self.mouse_pos.1 * 2.0 - window::screen_size().1)/ window::screen_size().1 + self.camera_pos.1 / -(-self.camera_pos.3 + 1.0)) * -(-self.camera_pos.3 + 1.0) * window::screen_size().1 / window::screen_size().0,};
         if self.pressed_keys[Keys::L as usize] == 1 {
             self.polygons.push(Rigidbody::polygon(16, 0.3533, position.clone(), 1.0, 1.0, Color::random()));
+        }
+        if self.pressed_keys[Keys::M as usize] == 1 {
+            for i in 0..self.polygons.len() {
+                self.polygons[i].angular_velocity = 0.0;
+                self.polygons[i].velocity = Vec2::zero();
+            }
         }
     }
 
@@ -81,6 +88,7 @@ impl World{
         if _keycode == KeyCode::P{self.pressed_keys[Keys::P as usize] = 1 }
         if _keycode == KeyCode::LeftControl || _keycode == KeyCode::RightControl { self.pressed_keys[Keys::LeftCtrl as usize] = 1 }
         if _keycode == KeyCode::L{self.pressed_keys[Keys::L as usize] = 1 }
+        if _keycode == KeyCode::M{self.pressed_keys[Keys::M as usize] = 1 }
     }
 
     pub fn key_up_eventhandler(&mut self, _keycode: KeyCode, _keymods: KeyMods) {
@@ -92,6 +100,7 @@ impl World{
         //if _keycode == KeyCode::P{self.pressed_keys[Keys::P] = 0 }
         if _keycode == KeyCode::LeftControl || _keycode == KeyCode::RightControl { self.pressed_keys[Keys::LeftCtrl as usize] = 0 }
         if _keycode == KeyCode::L{self.pressed_keys[Keys::L as usize] = 0 }
+        if _keycode == KeyCode::M{self.pressed_keys[Keys::M as usize] = 0 }
     }
 
     pub fn raw_mouse_motionhandler(&mut self, _dx: f32, _dy: f32) {

@@ -234,6 +234,7 @@ impl Rigidbody {
         let force = |_: f32, _: Vec2, _: Vec2| g + self.force;
         let (new_x, new_v) = rk4_step(0.0, self.center, self.velocity, dt, self.mass, &force);
         self.rotate(self.angular_velocity * dt);
+        self.angle += self.angular_velocity * dt;
         self.velocity = new_v;
         let diff = new_x - self.center;
         self.translate(diff);
