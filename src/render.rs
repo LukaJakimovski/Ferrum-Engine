@@ -1,24 +1,37 @@
 use miniquad::{window, Bindings, BufferSource, BufferType, BufferUsage, UniformsSource};
-use crate::{shader, RenderObject, Rigidbody, Vertex, World};
+use crate::{shader, RenderObject, Vertex, World};
 
 impl World{
-    pub fn create_render_object(&mut self, polygons: Vec<Rigidbody>) {
+    pub fn create_render_object(&mut self) {
         let mut indices: Vec<u32> = vec![];
         let mut vertices: Vec<Vertex> = vec![];
         let mut start_index: u32 = 0;
-        for polygon in polygons.clone() {
+        for polygon in &self.polygons {
             let length = polygon.vertices.len() as u32;
             let color = polygon.vertices[0].color;
-            vertices.extend(polygon.vertices);
+            vertices.extend(polygon.vertices.clone());
             vertices.push(Vertex{pos: polygon.center, color});
-            let mut new_indices= polygon.indices;
+            let mut new_indices= polygon.indices.clone();
             for i in 0..new_indices.len() {
                 new_indices[i] += start_index;
             }
             indices.extend(new_indices);
             start_index += length + 1;
         }
-        if self.previous_polygon_count != polygons.len() {
+        for spring in &self.springs {
+            let length = spring.connector.vertices.len() as u32;
+            let color = spring.connector.vertices[0].color;
+            vertices.extend(spring.connector.vertices.clone());
+            vertices.push(Vertex{pos: spring.connector.center, color});
+            let mut new_indices= spring.connector.indices.clone();
+            for i in 0..new_indices.len() {
+                new_indices[i] += start_index;
+            }
+            indices.extend(new_indices);
+            start_index += length + 1;
+        }
+
+        if self.previous_polygon_count != self.polygons.len() {
             self.ctx.delete_buffer(self.render_object.bindings.vertex_buffers[0]);
             self.ctx.delete_buffer(self.render_object.bindings.index_buffer);
             let vertex_buffer = self.ctx.new_buffer(
@@ -54,13 +67,12 @@ impl World{
             self.render_object.bindings.index_buffer,
             BufferSource::slice(&indices),
         );
-        self.previous_polygon_count = polygons.len();
+        self.previous_polygon_count = self.polygons.len();
     }
 
     pub fn render(&mut self){
         self.ctx.begin_default_pass(Default::default());
-        let mut render_polygon: Vec<Rigidbody> = self.polygons.clone();
-        self.create_render_object(render_polygon);
+        self.create_render_object();
         self.ctx.apply_pipeline(&self.pipeline);
         self.ctx.apply_bindings(&self.render_object.bindings);
         self.ctx

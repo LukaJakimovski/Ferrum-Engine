@@ -1,10 +1,8 @@
-use miniquad::{date, window, Bindings, BufferLayout, BufferSource, BufferType, BufferUsage, EventHandler, KeyCode, KeyMods, MouseButton, Pipeline, PipelineParams, RenderingBackend, ShaderSource, UniformsSource, VertexAttribute, VertexFormat};
+use miniquad::{date, window, Bindings, BufferLayout, BufferSource, BufferType, BufferUsage, EventHandler, KeyCode, KeyMods, MouseButton, Pipeline, PipelineParams, RenderingBackend, ShaderSource, VertexAttribute, VertexFormat};
 use crate::rigidbody::*;
 use crate::math::*;
-use crate::collision_detection::*;
 use crate::shader::{FRAGMENT, VERTEX};
-use crate::{shader, Color};
-use crate::enums::Keys;
+use crate::{shader};
 use crate::spring::*;
 
 #[derive(Clone)]

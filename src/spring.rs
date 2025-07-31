@@ -1,3 +1,4 @@
+use crate::Color;
 use crate::math::*;
 use crate::ode_solver::{rk4_angular_step, rk4_step};
 use crate::rigidbody::Rigidbody;
@@ -79,6 +80,7 @@ impl Spring {
         else{
             self.connector.rotate(angle);
         }
+        self.connector.change_color(Color::white());
 
 
         let stretch = distance - self.rest_length;
