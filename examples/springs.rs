@@ -18,12 +18,12 @@ fn main() {
     };
 
     let mut polygons = vec![];
-    polygons.push(Rigidbody::rectangle(0.5, 0.5, Vec2::new(0.0, 1.0)));
-    polygons.push(Rigidbody::rectangle(0.5, 0.5, Vec2::new(0.0, -1.0)));
-    polygons.push(Rigidbody::rectangle(0.5, 0.5, Vec2::new(-3.0, -5.0)));
-    polygons.push(Rigidbody::rectangle(0.5, 0.5, Vec2::new(-3.0, 5.0)));
-    polygons.push(Rigidbody::rectangle(0.5, 0.5, Vec2::new(2.5, 3.0)));
-    polygons.push(Rigidbody::rectangle(0.5, 0.5, Vec2::new(3.5, -3.0)));
+    polygons.push(Rigidbody::rectangle(0.5, 0.5, Vec2::new(0.0, 1.0), 1.0, 1.0, Color::random()));
+    polygons.push(Rigidbody::rectangle(0.5, 0.5, Vec2::new(0.0, -1.0), 1.0, 1.0, Color::random()));
+    polygons.push(Rigidbody::rectangle(0.5, 0.5, Vec2::new(-3.0, -5.0), 1.0, 1.0, Color::random()));
+    polygons.push(Rigidbody::rectangle(0.5, 0.5, Vec2::new(-3.0, 5.0), 1.0, 1.0, Color::random()));
+    polygons.push(Rigidbody::rectangle(0.5, 0.5, Vec2::new(2.5, 3.0), 1.0, 1.0, Color::random()));
+    polygons.push(Rigidbody::rectangle(0.5, 0.5, Vec2::new(3.5, -3.0), 1.0, 1.0, Color::random()));
 
     let mut springs= vec![];
     springs.push(Spring::new(

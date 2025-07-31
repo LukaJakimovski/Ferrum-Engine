@@ -1,3 +1,4 @@
+use std::sync::TryLockResult;
 use crate::color::Color;
 use crate::math::*;
 use crate::ode_solver::rk4_step;
@@ -24,8 +25,7 @@ pub struct Rigidbody {
     pub angle: f32,
 }
 impl Rigidbody {
-    pub fn rectangle(width: f32, height: f32, pos: Vec2) -> Self {
-        let color = Color::random();
+    pub fn rectangle(width: f32, height: f32, pos: Vec2, mass: f32, restitution: f32, color: Color) -> Self {
         let vertices: Vec<Vertex> = vec![
             Vertex { pos : Vec2 { x: -width/2.0 + pos.x, y: -height/2.0 + pos.y }, color }, // Bottom Left
             Vertex { pos : Vec2 { x:  width/2.0 + pos.x, y: -height/2.0 + pos.y  }, color }, // Bottom Right
@@ -38,13 +38,13 @@ impl Rigidbody {
             angular_velocity: 0.0,
             area: 0.0,
             moment_of_inertia: 0.0,
-            mass: 1.0,
+            mass,
             velocity: Vec2::zero(),
             radius: 0.0,
             center: Vec2::zero(),
             vertices,
             indices,
-            restitution: 0.6,
+            restitution,
             force: Vec2::zero(),
             torque: 0.0,
             angle: 0.0,
@@ -57,8 +57,7 @@ impl Rigidbody {
     }
 
     #[allow(dead_code)]
-    pub fn triangle(width: f32, height: f32, pos: Vec2) -> Self {
-        let color = Color::random();
+    pub fn triangle(width: f32, height: f32, pos: Vec2, mass: f32, restitution: f32, color: Color) -> Self {
         let vertices: Vec<Vertex> = vec![
             Vertex { pos: Vec2 { x: -width/2.0 + pos.x, y: -height/2.0 + pos.y }, color }, // Bottom Left
             Vertex { pos : Vec2 { x:  width/2.0 + pos.x, y: -height/2.0 + pos.y  }, color }, // Bottom Right
@@ -71,13 +70,13 @@ impl Rigidbody {
             angular_velocity: 0.0,
             area: 0.0,
             moment_of_inertia: 0.0,
-            mass: 1.0,
+            mass,
             velocity: Vec2::zero(),
             radius: 0.0,
             center: Vec2::zero(),
             vertices,
             indices,
-            restitution: 0.6,
+            restitution,
             force: Vec2::zero(),
             torque: 0.0,
             angle: 0.0,
@@ -87,9 +86,8 @@ impl Rigidbody {
         polygon.calculate_center_of_mass();
         polygon
     }
-    #[allow(dead_code)]
-    pub fn polygon(sides: u32, radius: f32, pos: Vec2) -> Self {
-        let color = Color::random();
+
+    pub fn polygon(sides: u32, radius: f32, pos: Vec2, mass: f32, restitution: f32, color: Color) -> Self {
         let mut vertices: Vec<Vertex> = vec![];
 
         for i in 0..sides {
@@ -115,13 +113,13 @@ impl Rigidbody {
             angular_velocity: 0.0,
             area: 0.0,
             moment_of_inertia: 0.0,
-            mass: 1.0,
+            mass,
             velocity: Vec2::zero(),
             radius,
             center: pos,
             vertices,
             indices,
-            restitution: 0.6,
+            restitution,
             force: Vec2::zero(),
             torque: 0.0,
             angle: 0.0,

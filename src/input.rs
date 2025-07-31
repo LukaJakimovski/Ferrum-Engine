@@ -1,6 +1,6 @@
 use miniquad::{window, KeyCode, KeyMods, MouseButton};
 use crate::enums::Keys;
-use crate::{Rigidbody, Vec2, World};
+use crate::{Color, Rigidbody, Vec2, World};
 use crate::collision_detection::sat_collision;
 
 impl World{
@@ -22,7 +22,7 @@ impl World{
             x: ((self.mouse_pos.0 * 2.0 - window::screen_size().0)/ window::screen_size().0 + self.camera_pos.0 / (-self.camera_pos.3 + 1.0)) * (-self.camera_pos.3 + 1.0),
             y: ((self.mouse_pos.1 * 2.0 - window::screen_size().1)/ window::screen_size().1 + self.camera_pos.1 / -(-self.camera_pos.3 + 1.0)) * -(-self.camera_pos.3 + 1.0) * window::screen_size().1 / window::screen_size().0,};
         if self.pressed_keys[Keys::L as usize] == 1 {
-            self.polygons.push(Rigidbody::polygon(16, 0.3533, position.clone()));
+            self.polygons.push(Rigidbody::polygon(16, 0.3533, position.clone(), 1.0, 1.0, Color::random()));
         }
     }
 
@@ -47,13 +47,13 @@ impl World{
             y: ((self.mouse_pos.1 * 2.0 - window::screen_size().1)/ window::screen_size().1 + self.camera_pos.1 / -(-self.camera_pos.3 + 1.0)) * -(-self.camera_pos.3 + 1.0) * window::screen_size().1 / window::screen_size().0,};
         if _button == MouseButton::Left {
             self.pressed_buttons[0] = 1;
-            self.polygons.push(Rigidbody::polygon(16, 0.3533, position.clone()));
+            self.polygons.push(Rigidbody::polygon(16, 0.3533, position.clone(), 1.0, 1.0, Color::random()));
             let length = self.polygons.len();
             self.polygons[length - 1].restitution = 0.95;
         }
         if _button == MouseButton::Right {
             self.pressed_buttons[1] = 1;
-            let mouse_polygon = Rigidbody::rectangle(0.03, 0.03, position);
+            let mouse_polygon = Rigidbody::rectangle(0.03, 0.03, position, 1.0, 1.0, Color::random());
             for i in 0..self.polygons.len() {
                 let result = sat_collision(&self.polygons[i], &mouse_polygon);
                 if result[1].y != 0.0{

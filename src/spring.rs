@@ -29,7 +29,7 @@ impl Spring {
 
         let direction = delta / distance;
 
-        let mut connector = Rigidbody::rectangle(0.1, distance, Vec2::new((world_anchor_a.x + world_anchor_b.x) / 2.0, (world_anchor_a.y + world_anchor_b.y) / 2.0));
+        let mut connector = Rigidbody::rectangle(0.1, distance, Vec2::new((world_anchor_a.x + world_anchor_b.x) / 2.0, (world_anchor_a.y + world_anchor_b.y) / 2.0), 1.0, 1.0, Color::white());
         let angle = direction.angle(&Vec2::new(0.0, -1.0));
         if direction.x < 0.0 && direction.y < 0.0{
             connector.rotate(-angle);
@@ -72,7 +72,7 @@ impl Spring {
 
         let direction = delta / distance;
 
-        self.connector = Rigidbody::rectangle(0.1, distance, Vec2::new((world_anchor_a.x + world_anchor_b.x) / 2.0, (world_anchor_a.y + world_anchor_b.y) / 2.0));
+        self.connector = Rigidbody::rectangle(0.1, distance, Vec2::new((world_anchor_a.x + world_anchor_b.x) / 2.0, (world_anchor_a.y + world_anchor_b.y) / 2.0), 1.0, 1.0, Color::white());
         let angle = direction.angle(&Vec2::new(0.0, -1.0));
         if direction.x < 0.0 && direction.y < 0.0{
             self.connector.rotate(-angle);
@@ -80,7 +80,6 @@ impl Spring {
         else{
             self.connector.rotate(angle);
         }
-        self.connector.change_color(Color::white());
 
 
         let stretch = distance - self.rest_length;

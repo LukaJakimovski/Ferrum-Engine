@@ -17,40 +17,55 @@ fn main() {
         fullscreen: false
     };
     let mut rigidbodies = vec![];
-    /*
     rigidbodies.push(Rigidbody::rectangle(
-        6.0,
+        10.0,
         0.5,
-        Vec2::new(0.0, 0.0)
+        Vec2::new(0.0, -6.0),
+        f32::MAX / 10000000.0,
+        1.0,
+        Color::random(),
     ));
-    */
     rigidbodies.push(Rigidbody::rectangle(
-        60.0,
+        10.0,
         0.5,
-        Vec2::new(0.0, -6.0)
+        Vec2::new(0.0, 0.0),
+        100000.0,
+        1.0,
+        Color::random(),
     ));
-    rigidbodies[0].mass = f32::MAX / 10000000.0;
-    rigidbodies[0].calculate_moment_of_inertia();
 
     let mut springs= vec![];
     springs.push(Spring::new(
-        Rigidbody::rectangle(0.5, 0.5, Vec2::new(2.5, -0.0)),
-        Rigidbody::rectangle(0.5, 0.5, Vec2::new(2.5, -1.5)),
-        Vec2::new(0.0, 0.0),
-        Vec2::new(0.0, 0.0),
-        5.0,
-        9.0,
+        0,
+        1,
+        Vec2::new(-2.5, 0.0),
+        Vec2::new(-2.5, 0.0),
+        4.0,
+        100000.0,
         0.0,
+        &rigidbodies,
     ));
     springs.push(Spring::new(
-        Rigidbody::rectangle(0.5, 0.5, Vec2::new(-2.5, -0.0)),
-        Rigidbody::rectangle(0.5, 0.5, Vec2::new(-2.5, -1.5)),
-        Vec2::new(0.0, 0.0),
-        Vec2::new(0.0, -0.0),
-        5.0,
-        9.0,
+        0,
+        1,
+        Vec2::new(2.5, 0.0),
+        Vec2::new(2.5, 0.0),
+        4.0,
+        100000.0,
         0.0,
+        &rigidbodies,
     ));
-    let parameters = Parameters {delta_time: 0.0001, updates_per_frame: 2, angular_velocity: true, camera_pos: (0.0, 0.0, 0.0, -6.0), gravity: true, world_size: 500.0 };
+
+    springs.push(Spring::new(
+        0,
+        1,
+        Vec2::new(0.0, 0.0),
+        Vec2::new(0.0, 0.0),
+        4.0,
+        100000.0,
+        0.0,
+        &rigidbodies,
+    ));
+    let parameters = Parameters {delta_time: 0.00001, updates_per_frame: 25, angular_velocity: true, camera_pos: (0.0, 0.0, 0.0, -6.0), gravity: true, world_size: 500.0 };
     start(conf, move || Box::new(World::new(rigidbodies, springs, parameters)));
 }
