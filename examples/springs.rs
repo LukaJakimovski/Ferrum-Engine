@@ -3,7 +3,7 @@ use ferrum_engine::spring::Spring;
 
 fn main() {
     let conf = conf::Conf {
-        window_title: "Explosion Example".to_string(),
+        window_title: "Springs Example".to_string(),
         window_height: 800,
         window_width: 800,
         high_dpi: false,
