@@ -28,6 +28,6 @@ fn main() {
         polygons.push(Rigidbody::polygon(32, 0.3533, Vec2{x: 2.5, y: 6.0 + i as f32 * 2.0}));
     }
     
-    let parameters = Parameters {delta_time: 0.00005, updates_per_frame: 165, angular_velocity: true, camera_pos: (0.0, 0.0, 0.0, -10.0), gravity: true };
-    start(conf, move || Box::new(World::new(polygons, parameters)));
+    let parameters = Parameters {delta_time: 0.0001, updates_per_frame: 165, angular_velocity: true, camera_pos: (0.0, 0.0, 0.0, -10.0), gravity: true, world_size: 300.0 };
+    start(conf, move || Box::new(World::new(polygons, vec![], parameters)));
 }

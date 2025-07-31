@@ -18,6 +18,7 @@ pub struct Parameters{
     pub angular_velocity: bool,
     pub camera_pos: (f32, f32, f32, f32),
     pub gravity: bool,
+    pub world_size: f32,
 }
 pub struct World {
     ctx: Box<dyn RenderingBackend>,
@@ -204,13 +205,13 @@ impl EventHandler for World {
             self.delta_time = self.parameters.delta_time as f64;
         }
 
-
         if self.pressed_keys[4] == 1 {
             for i in 0..self.polygons.len() {
                 self.polygons[i].angular_velocity = 5.0;
             }
         }
-        
+
+        self.pressed_keys[5] = 1;
         if self.pressed_keys[0] == 1 {self.camera_pos.1 += 5.0 * self.delta_time as f32;}
         if self.pressed_keys[1] == 1 {self.camera_pos.0 -= 5.0 * self.delta_time as f32;}
         if self.pressed_keys[2] == 1 {self.camera_pos.1 -= 5.0 * self.delta_time as f32;}
@@ -226,16 +227,22 @@ impl EventHandler for World {
             x: ((self.mouse_pos.0 * 2.0 - window::screen_size().0)/ window::screen_size().0 + self.camera_pos.0 / (-self.camera_pos.3 + 1.0)) * (-self.camera_pos.3 + 1.0),
             y: ((self.mouse_pos.1 * 2.0 - window::screen_size().1)/ window::screen_size().1 + self.camera_pos.1 / -(-self.camera_pos.3 + 1.0)) * -(-self.camera_pos.3 + 1.0) * window::screen_size().1 / window::screen_size().0,};
         if self.pressed_keys[7] == 1 {
-            self.polygons.push(Rigidbody::polygon(32, 0.3533, position.clone()));
+            self.polygons.push(Rigidbody::polygon(16, 0.3533, position.clone()));
         }
         
         self.spring_polygons.clear();
         for spring in &self.springs{
+            self.spring_polygons.push(spring.connector.clone());
             self.spring_polygons.push(spring.body_a.clone());
             self.spring_polygons.push(spring.body_b.clone());
-            self.spring_polygons.push(spring.connector.clone());
             let length = self.spring_polygons.len() - 1;
-            self.spring_polygons[length].change_color(Color::white());
+            self.spring_polygons[length - 2].change_color(Color::white());
+        }
+        for i in 0..self.polygons.len() {
+            if self.polygons[i].center.distance(&Vec2::zero()) > self.parameters.world_size {
+                self.polygons.remove(i);
+                break;
+            }
         }
         
         self.frame_count += 1;
@@ -252,7 +259,7 @@ impl EventHandler for World {
             y: ((self.mouse_pos.1 * 2.0 - window::screen_size().1)/ window::screen_size().1 + self.camera_pos.1 / -(-self.camera_pos.3 + 1.0)) * -(-self.camera_pos.3 + 1.0) * window::screen_size().1 / window::screen_size().0,};
         if _button == MouseButton::Left {
             self.pressed_buttons[0] = 1;
-            self.polygons.push(Rigidbody::polygon(64, 0.3533, position.clone()));
+            self.polygons.push(Rigidbody::polygon(16, 0.3533, position.clone()));
             let length = self.polygons.len();
             self.polygons[length - 1].restitution = 0.95;
         }

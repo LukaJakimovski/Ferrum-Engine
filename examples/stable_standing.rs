@@ -31,6 +31,6 @@ fn main() {
         polygon.restitution = 0.6;
         polygon.rotate(1.0);
     }
-    let parameters = Parameters {delta_time: 0.00001, updates_per_frame: 25, angular_velocity: true, camera_pos: (0.0, 2.5, 0.0, -3.0), gravity: true };
+    let parameters = Parameters {delta_time: 0.00001, updates_per_frame: 25, angular_velocity: true, camera_pos: (0.0, 2.5, 0.0, -3.0), gravity: true, world_size: 300.0 };
     start(conf, move || Box::new(World::new(polygons, vec![], parameters)));
 }

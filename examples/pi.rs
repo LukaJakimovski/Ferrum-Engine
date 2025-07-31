@@ -33,6 +33,6 @@ fn main() {
     polygons[2].velocity = Vec2{x: -0.0005, y: 0.0};
 
 
-    let parameters = Parameters {delta_time: 0.003, updates_per_frame: 10000, angular_velocity: false, camera_pos: (0.0, 0.0, 0.0, -5.0), gravity: false };
-    start(conf, move || Box::new(World::new(polygons, parameters)));
+    let parameters = Parameters {delta_time: 0.003, updates_per_frame: 10000, angular_velocity: false, camera_pos: (0.0, 0.0, 0.0, -5.0), gravity: false, world_size: 300.0 };
+    start(conf, move || Box::new(World::new(polygons, vec![], parameters)));
 }

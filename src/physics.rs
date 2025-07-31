@@ -1,70 +1,43 @@
 use crate::collision_detection::{find_contact_points, sat_collision};
 use crate::math::Vec2;
-use crate::Rigidbody;
+use crate::{Parameters, Rigidbody};
 use crate::world::World;
 
 impl World {
     pub fn collision_resolution(&mut self) {
         for i in 0..self.polygons.len() {
             for j in 0..self.springs.len(){
-                let mut body1 = self.polygons[i].clone();
-                let mut body2 = self.springs[j].body_a.clone();
-                self.check_and_resolve(&mut body1, &mut body2);
-                self.polygons[i] = body1;
-                self.springs[j].body_a = body2;
+                let poly = &mut self.polygons[i];
+                let spring = &mut self.springs[j];
 
-                let mut body1 = self.polygons[i].clone();
-                let mut body2 = self.springs[j].body_b.clone();
-                self.check_and_resolve(&mut body1, &mut body2);
-                self.polygons[i] = body1;
-                self.springs[j].body_b = body2;
-
-                let mut body1 = self.springs[j].body_a.clone();
-                let mut body2 = self.springs[j].body_b.clone();
-                self.check_and_resolve(&mut body1, &mut body2);
-                self.springs[j].body_a = body1;
-                self.springs[j].body_b = body2;
+                Self::check_and_resolve(&self.parameters, poly, &mut spring.body_a);
+                Self::check_and_resolve(&self.parameters, poly, &mut spring.body_b);
+                Self::check_and_resolve(&self.parameters, &mut spring.body_a, &mut spring.body_b);
             }
 
             for j in i+1..self.polygons.len() {
-                let mut body1 = self.polygons[i].clone();
-                let mut body2 = self.polygons[j].clone();
-                self.check_and_resolve(&mut body1, &mut body2);
-                self.polygons[i] = body1;
-                self.polygons[j] = body2;
+                let (left, right) = self.polygons.split_at_mut(j);
+                let a = &mut left[i];
+                let b = &mut right[0];
+                Self::check_and_resolve(&self.parameters, a, b);
             }
         }
 
         for i in 0..self.springs.len() {
             for j in i+1..self.springs.len() {
-                let mut body1 = self.springs[i].body_a.clone();
-                let mut body2 = self.springs[j].body_a.clone();
-                self.check_and_resolve(&mut body1, &mut body2);
-                self.springs[i].body_a = body1;
-                self.springs[j].body_a = body2;
+                let (left, right) = self.springs.split_at_mut(j);
+                let s1 = &mut left[i];
+                let s2 = &mut right[0];
 
-                let mut body1 = self.springs[i].body_a.clone();
-                let mut body2 = self.springs[j].body_b.clone();
-                self.check_and_resolve(&mut body1, &mut body2);
-                self.springs[i].body_a = body1;
-                self.springs[j].body_b = body2;
-
-                let mut body1 = self.springs[i].body_b.clone();
-                let mut body2 = self.springs[j].body_a.clone();
-                self.check_and_resolve(&mut body1, &mut body2);
-                self.springs[i].body_b = body1;
-                self.springs[j].body_a = body2;
-
-                let mut body1 = self.springs[i].body_b.clone();
-                let mut body2 = self.springs[j].body_b.clone();
-                self.check_and_resolve(&mut body1, &mut body2);
-                self.springs[i].body_b = body1;
-                self.springs[j].body_b = body2;
+                Self::check_and_resolve(&self.parameters, &mut s1.body_a, &mut s2.body_a);
+                Self::check_and_resolve(&self.parameters, &mut s1.body_a, &mut s2.body_b);
+                Self::check_and_resolve(&self.parameters, &mut s1.body_b, &mut s2.body_a);
+                Self::check_and_resolve(&self.parameters, &mut s1.body_b, &mut s2.body_b);
             }
         }
     }
     
-    pub fn check_and_resolve(&mut self, body1: &mut Rigidbody, body2: &mut Rigidbody) {
+    pub fn check_and_resolve(parameters: &Parameters, body1: &mut Rigidbody, body2: &mut Rigidbody) {
         let result = sat_collision(&body1, &body2);
         if result[1].y != 0.0 {
 
@@ -124,7 +97,7 @@ impl World {
             let angle_term1: f32;
             let angle_term2: f32;
 
-            if self.parameters.angular_velocity == true{
+            if parameters.angular_velocity == true{
                 angle_term1 = (rn1 * rn1) * i1;
                 angle_term2 = (rn2 * rn2) * i2;
             } else {
@@ -137,16 +110,14 @@ impl World {
 
             body1.velocity = v1 - impulse_vector * m1;
             body2.velocity = v2 + impulse_vector * m2;
-            if self.parameters.angular_velocity == true{
+            if parameters.angular_velocity == true{
                 body1.angular_velocity = body1.angular_velocity - r1.cross(&impulse_vector) * i1;
                 body2.angular_velocity = body2.angular_velocity + r2.cross(&impulse_vector) * i2;
             }
-            self.collisions += 1;
         }
     }
     
     pub fn update_physics(&mut self) {
-        let mut kinetic_energy = 0.0;
         let g: Vec2;
         if self.parameters.gravity == true{
             g = Vec2 { x: 0.0, y: -9.81 };
@@ -160,8 +131,9 @@ impl World {
         
         for spring in &mut self.springs{
             spring.apply(self.delta_time as f32);
+            spring.body_a.update_rigidbody(g, self.delta_time as f32);
+            spring.body_b.update_rigidbody(g, self.delta_time as f32);
         }
-        println!("{:?}", kinetic_energy);
         self.collision_resolution();
     }
 }

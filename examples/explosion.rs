@@ -10,7 +10,7 @@ fn main() {
         window_resizable: true,
         icon: None,
         platform: Platform {
-            swap_interval: Some(1),
+            swap_interval: Some(0),
             ..Default::default()
         },
         fullscreen: false
@@ -23,9 +23,9 @@ fn main() {
         }
     }
     for i in 0..polygons.len() {
-        polygons[i].velocity = Vec2{x: (rand::random::<f32>() * 2.0 - 1.0) * 10.0, y: (rand::random::<f32>() * 2.0 - 1.0) * 10.0};
-        polygons[i].angular_velocity = (rand::random::<f32>() * 2.0 - 1.0) * 100.0;
+        polygons[i].velocity = Vec2{x: (rand::random::<f32>() * 2.0 - 1.0) * 100.0, y: (rand::random::<f32>() * 2.0 - 1.0) * 100.0};
+        polygons[i].angular_velocity = (rand::random::<f32>() * 2.0 - 1.0) * 1000.0;
     }
-    let parameters = Parameters {delta_time: 0.0, updates_per_frame: 1, angular_velocity: true, camera_pos: (9.0, 9.0, 0.0, -75.0), gravity: false };
-    start(conf, move || Box::new(World::new(polygons, parameters)));
+    let parameters = Parameters {delta_time: 0.0, updates_per_frame: 1, angular_velocity: true, camera_pos: (9.0, 9.0, 0.0, -75.0), gravity: false, world_size: 300.0 };
+    start(conf, move || Box::new(World::new(polygons, vec![], parameters)));
 }

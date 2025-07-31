@@ -46,6 +46,14 @@ pub fn sat_collision(shape1: &Rigidbody, shape2: &Rigidbody) -> [Vec2; 2]{
     if shape1.center.distance(&shape2.center) > shape1.radius + shape2.radius {
         return [Vec2 {x: -133.7, y: -133.7}, Vec2 {x: -133.7, y: 0.0}];
     }
+    if shape1.vertices.len() >= 16 && shape2.vertices.len() >= 16 {
+        let delta = shape2.center - shape1.center;
+        let dist = delta.magnitude();
+        let overlap = shape1.radius + shape2.radius - dist;    // Total overlap amount
+
+        return [delta.normalized(), Vec2 {x: overlap, y: 1.0}];
+    }
+
     let mut overlap: f32 = 2.0_f32.powf(32.0);
     let mut smallest: Vec2 = Vec2 {x: 0.0, y: 0.0};
     let axes1: Vec<Vec2> = get_axes(shape1);
