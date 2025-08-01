@@ -44,7 +44,7 @@ pub struct World {
 
     pub parameters: Parameters,
     pub timer: f64,
-
+    pub egui: egui_miniquad::EguiMq,
 }
 impl World {
     pub fn new(polygons: Vec<Rigidbody>,
@@ -88,12 +88,13 @@ impl World {
             index_buffer,
             images: vec![],
         };
-        
+
         #[cfg(all(target_os = "windows", target_arch = "x86_64", target_env = "gnu"))]
         let scaling_factor = 0.1;
         #[cfg(not(all(target_os = "windows", target_arch = "x86_64", target_env = "gnu")))]
         let scaling_factor = 10.0;
         World {
+            egui: egui_miniquad::EguiMq::new(&mut *ctx),
             ctx,
             pipeline,
             polygons,
@@ -111,7 +112,7 @@ impl World {
             previous_polygon_count: 0,
             parameters,
             is_running: false,
-            timer:  date::now()
+            timer:  date::now(),
         }
     }
 }
@@ -153,26 +154,36 @@ impl EventHandler for World {
 
     fn mouse_motion_event(&mut self, _x: f32, _y: f32) {
         self.mouse_pos = (_x, _y);
+        self.egui.mouse_motion_event(_x, _y);
     }
 
     fn mouse_wheel_event(&mut self, _x: f32, _y: f32) {
         self.mouse_wheel_eventhandler(_x, _y);
+        self.egui.mouse_wheel_event(_x, _y);
     }
     fn mouse_button_down_event(&mut self, _button: MouseButton, _x: f32, _y: f32) {
         self.mouse_button_down_eventhandler(_button, _x, _y);
+        self.egui.mouse_button_down_event(_button, _x, _y);
     }
     fn mouse_button_up_event(&mut self, _button: MouseButton, _x: f32, _y: f32) {
         self.mouse_button_up_eventhandler(_button, _x, _y);
+        self.egui.mouse_button_up_event(_button, _x, _y);
     }
     fn key_down_event(&mut self, _keycode: KeyCode, _keymods: KeyMods, _repeat: bool) {
         self.key_down_eventhandler(_keycode, _keymods, _repeat);
+        self.egui.key_down_event(_keycode, _keymods);
     }
 
     fn key_up_event(&mut self, _keycode: KeyCode, _keymods: KeyMods) {
         self.key_up_eventhandler(_keycode, _keymods);
+        self.egui.key_up_event(_keycode, _keymods);
     }
 
     fn raw_mouse_motion(&mut self, _dx: f32, _dy: f32) {
         self.raw_mouse_motionhandler(_dx, _dy);
+    }
+
+    fn char_event(&mut self, _character: char, _keymods: KeyMods, _repeat: bool) {
+        self.egui.char_event(_character);
     }
 }

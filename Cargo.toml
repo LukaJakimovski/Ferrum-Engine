@@ -4,5 +4,8 @@ version = "0.1.0"
 edition = "2024"
 
 [dependencies]
+egui = "0.31.1"
+egui-miniquad = "0.16.0"
 miniquad = "0.4.8"
 rand = "0.9.1"
+egui_demo_lib = { version = "0.31.1", default-features = false }

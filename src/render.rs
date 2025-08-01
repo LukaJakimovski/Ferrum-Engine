@@ -71,7 +71,7 @@ impl World{
     }
 
     pub fn render(&mut self){
-        self.ctx.begin_default_pass(Default::default());
+        self.ctx.begin_default_pass(miniquad::PassAction::clear_color(0.0, 0.0, 0.0, 1.0));
         self.create_render_object();
         self.ctx.apply_pipeline(&self.pipeline);
         self.ctx.apply_bindings(&self.render_object.bindings);
@@ -82,6 +82,19 @@ impl World{
             }));
         self.ctx.draw(0, self.render_object.clone().indices.len() as i32, 1);
         self.ctx.end_render_pass();
+
+        // Run the UI code:
+        self.egui.run(&mut *self.ctx, |_mq_ctx, egui_ctx|{
+            egui::Window::new("Display Window").show(egui_ctx, |ui| {
+                ui.heading("Hello UI!");
+            });
+        });
+
+
+        // Draw things behind egui here
+
+        self.egui.draw(&mut *self.ctx);
+
         self.ctx.commit_frame();
     }
 }
