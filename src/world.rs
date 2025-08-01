@@ -2,7 +2,7 @@ use miniquad::{date, window, Bindings, BufferLayout, BufferSource, BufferType, B
 use crate::rigidbody::*;
 use crate::math::*;
 use crate::shader::{FRAGMENT, VERTEX};
-use crate::{shader};
+use crate::{shader, Color};
 use crate::spring::*;
 
 #[derive(Clone)]
@@ -40,11 +40,14 @@ pub struct World {
     pub start_time: f64,
     pub delta_time: f64,
     frame_count: u32,
+    pub fps: f64,
     pub is_running: bool,
+    pub total_energy: f64,
 
     pub parameters: Parameters,
     pub timer: f64,
     pub egui: egui_miniquad::EguiMq,
+    pub pointer_used: bool,
 }
 impl World {
     pub fn new(polygons: Vec<Rigidbody>,
@@ -113,6 +116,9 @@ impl World {
             parameters,
             is_running: false,
             timer:  date::now(),
+            total_energy: 0.0,
+            fps:  0.0,
+            pointer_used: false,
         }
     }
 }
@@ -142,9 +148,14 @@ impl EventHandler for World {
         }
 
         self.frame_count += 1;
-        if self.frame_count % 30 == 0 {
-            println!("FPS: {}", 30.0 / (date::now() - self.timer));
+        if self.frame_count % 10 == 0 {
+            self.fps = 10.0 / (date::now() - self.timer);
             self.timer = date::now();
+        }
+
+        self.total_energy = 0.0;
+        for polygon in &self.polygons {
+            self.total_energy += polygon.calculate_energy();
         }
     }
 
@@ -158,29 +169,29 @@ impl EventHandler for World {
     }
 
     fn mouse_wheel_event(&mut self, _x: f32, _y: f32) {
-        self.mouse_wheel_eventhandler(_x, _y);
+        self.mouse_wheel_event_handler(_x, _y);
         self.egui.mouse_wheel_event(_x, _y);
     }
     fn mouse_button_down_event(&mut self, _button: MouseButton, _x: f32, _y: f32) {
-        self.mouse_button_down_eventhandler(_button, _x, _y);
+        self.mouse_button_down_event_handler(_button, _x, _y);
         self.egui.mouse_button_down_event(_button, _x, _y);
     }
     fn mouse_button_up_event(&mut self, _button: MouseButton, _x: f32, _y: f32) {
-        self.mouse_button_up_eventhandler(_button, _x, _y);
+        self.mouse_button_up_event_handler(_button, _x, _y);
         self.egui.mouse_button_up_event(_button, _x, _y);
     }
     fn key_down_event(&mut self, _keycode: KeyCode, _keymods: KeyMods, _repeat: bool) {
-        self.key_down_eventhandler(_keycode, _keymods, _repeat);
+        self.key_down_event_handler(_keycode, _keymods, _repeat);
         self.egui.key_down_event(_keycode, _keymods);
     }
 
     fn key_up_event(&mut self, _keycode: KeyCode, _keymods: KeyMods) {
-        self.key_up_eventhandler(_keycode, _keymods);
+        self.key_up_event_handler(_keycode, _keymods);
         self.egui.key_up_event(_keycode, _keymods);
     }
 
     fn raw_mouse_motion(&mut self, _dx: f32, _dy: f32) {
-        self.raw_mouse_motionhandler(_dx, _dy);
+        self.raw_mouse_motion_handler(_dx, _dy);
     }
 
     fn char_event(&mut self, _character: char, _keymods: KeyMods, _repeat: bool) {

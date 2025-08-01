@@ -1,0 +1,32 @@
+For version 0.2.0
+
+Add display of kinetic energy
+
+Allow user to change the properties of what polygon is gonna be spawned
+
+Dont take mouse input if mouse is over UI
+Alternatively. Dont allow mouse input if UI is open in general
+
+Allow user to spawn spring
+    - Click to set anchor 1
+    - Connector linked to mouse
+    - Click to set anchor 2
+    - Cancel with Esc
+    - Allow user to change spring parameters
+
+Allow user to drag rigidbodies by connecting a spring between it and the mouse.
+
+Allow the creation of anchors to connect two objects together
+    - Anchor will make it so that the two objects will no longer collide
+    - This will require a sort of blacklist to prevent two objects from colliding
+
+Allow the creation of bearings where two objects are connected but are free to rotate
+    - Constrained in terms of linear motion
+    - Unconstrained in terms of angular motion
+    - This might make a double pendulum possible?
+
+Double pendulum?
+
+Create rad README
+
+Allow user to see the properties of a body by clicking on it.

@@ -83,10 +83,23 @@ impl World{
         self.ctx.draw(0, self.render_object.clone().indices.len() as i32, 1);
         self.ctx.end_render_pass();
 
+
         // Run the UI code:
         self.egui.run(&mut *self.ctx, |_mq_ctx, egui_ctx|{
-            egui::Window::new("Display Window").show(egui_ctx, |ui| {
-                ui.heading("Hello UI!");
+            egui::Window::new("Kinetic Energy").show(egui_ctx, |ui| {
+                ui.label(format!("{:.3}J", self.total_energy));
+            });
+
+            egui::Window::new("FPS").show(egui_ctx, |ui| {
+                ui.label(format!("{:.3}fps", self.fps));
+                ui.label(format!("{:.3}ms per frame", 1000.0 / self.fps));
+            });
+
+            egui::Window::new("Using Pointer?").show(egui_ctx, |ui| {
+                ui.label(format!("Is using pointer: {}", egui_ctx.is_pointer_over_area()));
+
+                if egui_ctx.is_pointer_over_area() { self.pointer_used = true; }
+                else { self.pointer_used = false; }
             });
         });
 
@@ -94,7 +107,7 @@ impl World{
         // Draw things behind egui here
 
         self.egui.draw(&mut *self.ctx);
-
+        //self.egui.egui_ctx().is_using_pointer();
         self.ctx.commit_frame();
     }
 }

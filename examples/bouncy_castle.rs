@@ -21,15 +21,15 @@ fn main() {
         10.0,
         0.5,
         Vec2::new(0.0, -6.0),
-        f32::MAX / 10000000.0,
-        1.0,
+        f32::MAX / 1000.0,
+        0.9,
         Color::random(),
     ));
     rigidbodies.push(Rigidbody::rectangle(
         10.0,
         0.5,
         Vec2::new(0.0, 0.0),
-        100000000000.0,
+        f32::MAX / 10000000000.0,
         1.1,
         Color::random(),
     ));
@@ -38,31 +38,110 @@ fn main() {
     springs.push(Spring::new(
         0,
         1,
-        Vec2::new(-2.5, 0.0),
-        Vec2::new(-2.5, 0.0),
+        Vec2::new(5.0, 0.0),
+        Vec2::new(5.0, 0.0),
         3.5,
-        1000000000000.0,
+        10000000000000000000000000000.0,
         0.0,
         &rigidbodies,
     ));
     springs.push(Spring::new(
         0,
         1,
-        Vec2::new(2.5, 0.0),
-        Vec2::new(2.5, 0.0),
+        Vec2::new(4.0, 0.0),
+        Vec2::new(4.0, 0.0),
         3.5,
-        1000000000000.0,
+        10000000000000000000000000000.0,
         0.0,
         &rigidbodies,
     ));
-
+    springs.push(Spring::new(
+        0,
+        1,
+        Vec2::new(3.0, 0.0),
+        Vec2::new(3.0, 0.0),
+        3.5,
+        10000000000000000000000000000.0,
+        0.0,
+        &rigidbodies,
+    ));
+    springs.push(Spring::new(
+        0,
+        1,
+        Vec2::new(2.0, 0.0),
+        Vec2::new(2.0, 0.0),
+        3.5,
+        10000000000000000000000000000.0,
+        0.0,
+        &rigidbodies,
+    ));
+    springs.push(Spring::new(
+        0,
+        1,
+        Vec2::new(1.0, 0.0),
+        Vec2::new(1.0, 0.0),
+        3.5,
+        10000000000000000000000000000.0,
+        0.0,
+        &rigidbodies,
+    ));
     springs.push(Spring::new(
         0,
         1,
         Vec2::new(0.0, 0.0),
         Vec2::new(0.0, 0.0),
         3.5,
-        1000000000000.0,
+        10000000000000000000000000000.0,
+        0.0,
+        &rigidbodies,
+    ));
+    springs.push(Spring::new(
+        0,
+        1,
+        Vec2::new(-1.0, 0.0),
+        Vec2::new(-1.0, 0.0),
+        3.5,
+        10000000000000000000000000000.0,
+        0.0,
+        &rigidbodies,
+    ));
+    springs.push(Spring::new(
+        0,
+        1,
+        Vec2::new(-2.0, 0.0),
+        Vec2::new(-2.0, 0.0),
+        3.5,
+        10000000000000000000000000000.0,
+        0.0,
+        &rigidbodies,
+    ));
+    springs.push(Spring::new(
+        0,
+        1,
+        Vec2::new(-3.0, 0.0),
+        Vec2::new(-3.0, 0.0),
+        3.5,
+        10000000000000000000000000000.0,
+        0.0,
+        &rigidbodies,
+    ));
+    springs.push(Spring::new(
+        0,
+        1,
+        Vec2::new(-4.0, 0.0),
+        Vec2::new(-4.0, 0.0),
+        3.5,
+        10000000000000000000000000000.0,
+        0.0,
+        &rigidbodies,
+    ));
+    springs.push(Spring::new(
+        0,
+        1,
+        Vec2::new(-5.0, 0.0),
+        Vec2::new(-5.0, 0.0),
+        3.5,
+        10000000000000000000000000000.0,
         0.0,
         &rigidbodies,
     ));

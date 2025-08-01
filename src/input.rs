@@ -22,7 +22,7 @@ impl World{
             x: ((self.mouse_pos.0 * 2.0 - window::screen_size().0)/ window::screen_size().0 + self.camera_pos.0 / (-self.camera_pos.3 + 1.0)) * (-self.camera_pos.3 + 1.0),
             y: ((self.mouse_pos.1 * 2.0 - window::screen_size().1)/ window::screen_size().1 + self.camera_pos.1 / -(-self.camera_pos.3 + 1.0)) * -(-self.camera_pos.3 + 1.0) * window::screen_size().1 / window::screen_size().0,};
         if self.pressed_keys[Keys::L as usize] == 1 {
-            self.polygons.push(Rigidbody::polygon(16, 0.3533, position.clone(), 1.0, 1.0, Color::random()));
+            self.polygons.push(Rigidbody::polygon(32, 0.3533, position.clone(), 1.0, 1.0, Color::random()));
         }
         if self.pressed_keys[Keys::M as usize] == 1 {
             for i in 0..self.polygons.len() {
@@ -32,48 +32,52 @@ impl World{
         }
     }
 
-    pub fn mouse_motion_eventhandler(&mut self, _x: f32, _y: f32) {
+    pub fn mouse_motion_event_handler(&mut self, _x: f32, _y: f32) {
         self.mouse_pos = (_x, _y);
     }
 
-    pub fn mouse_wheel_eventhandler(&mut self, _x: f32, _y: f32) {
-        if self.pressed_keys[6] == 1 {
-            self.scaling_factor += _y * 0.1;
-            self.scaling_factor += _x * 0.1;
-            println!("Scaling factor: {}", self.scaling_factor);
-        }
-        else {
-            self.camera_pos.3 += _y * 0.1 * self.scaling_factor;
-            self.camera_pos.3 += _x * 0.1 * self.scaling_factor;
+    pub fn mouse_wheel_event_handler(&mut self, _x: f32, _y: f32) {
+        if !self.pointer_used{
+            if self.pressed_keys[6] == 1 {
+                self.scaling_factor += _y * 0.1;
+                self.scaling_factor += _x * 0.1;
+                println!("Scaling factor: {}", self.scaling_factor);
+            }
+            else {
+                self.camera_pos.3 += _y * 0.1 * self.scaling_factor;
+                self.camera_pos.3 += _x * 0.1 * self.scaling_factor;
+            }
         }
     }
-    pub fn mouse_button_down_eventhandler(&mut self, _button: MouseButton, _x: f32, _y: f32) {
+    pub fn mouse_button_down_event_handler(&mut self, _button: MouseButton, _x: f32, _y: f32) {
         let position = Vec2 {
             x: ((self.mouse_pos.0 * 2.0 - window::screen_size().0)/ window::screen_size().0 + self.camera_pos.0 / (-self.camera_pos.3 + 1.0)) * (-self.camera_pos.3 + 1.0),
             y: ((self.mouse_pos.1 * 2.0 - window::screen_size().1)/ window::screen_size().1 + self.camera_pos.1 / -(-self.camera_pos.3 + 1.0)) * -(-self.camera_pos.3 + 1.0) * window::screen_size().1 / window::screen_size().0,};
-        if _button == MouseButton::Left {
-            self.pressed_buttons[Mouse::Left as usize] = 1;
-            self.polygons.push(Rigidbody::polygon(16, 0.3533, position.clone(), 1.0, 1.0, Color::random()));
-        }
-        if _button == MouseButton::Right {
-            self.pressed_buttons[Mouse::Right as usize] = 1;
-            let mouse_polygon = Rigidbody::rectangle(0.03, 0.03, position, 1.0, 1.0, Color::random());
-            for i in 0..self.polygons.len() {
-                let result = sat_collision(&self.polygons[i], &mouse_polygon);
-                if result[1].y != 0.0{
-                    self.remove_rigidbody(i);
-                    break;
+        if !self.pointer_used{
+            if _button == MouseButton::Left {
+                self.pressed_buttons[Mouse::Left as usize] = 1;
+                self.polygons.push(Rigidbody::polygon(16, 0.3533, position.clone(), 1.0, 1.0, Color::random()));
+            }
+            if _button == MouseButton::Right {
+                self.pressed_buttons[Mouse::Right as usize] = 1;
+                let mouse_polygon = Rigidbody::rectangle(0.03, 0.03, position, 1.0, 1.0, Color::random());
+                for i in 0..self.polygons.len() {
+                    let result = sat_collision(&self.polygons[i], &mouse_polygon);
+                    if result[1].y != 0.0{
+                        self.remove_rigidbody(i);
+                        break;
+                    }
                 }
             }
+            if _button == MouseButton::Middle { self.pressed_buttons[2] = 1 }
         }
-        if _button == MouseButton::Middle { self.pressed_buttons[2] = 1 }
     }
-    pub fn mouse_button_up_eventhandler(&mut self, _button: MouseButton, _x: f32, _y: f32) {
+    pub fn mouse_button_up_event_handler(&mut self, _button: MouseButton, _x: f32, _y: f32) {
         if _button == MouseButton::Middle { self.pressed_buttons[Mouse::Middle as usize] = 0 }
         if _button == MouseButton::Right { self.pressed_buttons[Mouse::Right as usize] = 0 }
         if _button == MouseButton::Left { self.pressed_buttons[Mouse::Left as usize] = 0 }
     }
-    pub fn key_down_eventhandler(&mut self, _keycode: KeyCode, _keymods: KeyMods, _repeat: bool) {
+    pub fn key_down_event_handler(&mut self, _keycode: KeyCode, _keymods: KeyMods, _repeat: bool) {
         match _keycode {
             KeyCode::Key1 => window::show_mouse(false),
             KeyCode::Key2 => window::show_mouse(true),
@@ -90,7 +94,7 @@ impl World{
         if _keycode == KeyCode::M{self.pressed_keys[Keys::M as usize] = 1 }
     }
 
-    pub fn key_up_eventhandler(&mut self, _keycode: KeyCode, _keymods: KeyMods) {
+    pub fn key_up_event_handler(&mut self, _keycode: KeyCode, _keymods: KeyMods) {
         if _keycode == KeyCode::W{self.pressed_keys[Keys::W as usize] = 0 }
         if _keycode == KeyCode::A{self.pressed_keys[Keys::A as usize] = 0 }
         if _keycode == KeyCode::S{self.pressed_keys[Keys::S as usize] = 0}
@@ -102,7 +106,7 @@ impl World{
         if _keycode == KeyCode::M{self.pressed_keys[Keys::M as usize] = 0 }
     }
 
-    pub fn raw_mouse_motionhandler(&mut self, _dx: f32, _dy: f32) {
+    pub fn raw_mouse_motion_handler(&mut self, _dx: f32, _dy: f32) {
         if self.pressed_buttons[Mouse::Middle as usize] == 1 {
             self.camera_pos.0 -= _dx * (-self.camera_pos.3 + 1.0) / window::screen_size().0;
             self.camera_pos.1 += _dy *  (-self.camera_pos.3 + 1.0) / window::screen_size().1;

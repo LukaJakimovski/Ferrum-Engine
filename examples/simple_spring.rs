@@ -27,10 +27,10 @@ fn main() {
     ));
     rigidbodies[0].collision = false;
     rigidbodies.push(Rigidbody::polygon(
-        16,
-        0.03533,
-        Vec2::new(5.0, 0.0),
-        5.0,
+        64,
+        3.533,
+        Vec2::new(25.0, 0.0),
+        50000.0,
         1.0,
         Color::white(),
     ));
@@ -42,11 +42,11 @@ fn main() {
         Vec2::new(0.0, 0.0),
         Vec2::new(0.0, 0.0),
         0.0,
-        100.0,
-        0.3,
+        1000000.0,
+        10.0,
         &rigidbodies,
     ));
 
-    let parameters = Parameters {delta_time: 0.0001, updates_per_frame: 1, angular_velocity: true, camera_pos: (0.0, 0.0, 0.0, -0.1), gravity: false, world_size: 100.0 };
+    let parameters = Parameters {delta_time: 0.0, updates_per_frame: 1, angular_velocity: true, camera_pos: (0.0, 0.0, 0.0, -1.0), gravity: false, world_size: 100.0 };
     start(conf, move || Box::new(World::new(rigidbodies, springs, parameters)));
 }

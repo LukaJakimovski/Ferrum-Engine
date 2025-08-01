@@ -8,7 +8,7 @@ impl World {
         for i in 0..self.polygons.len() {
             if !self.polygons[i].collision {continue;};
             for j in i+1..self.polygons.len() {
-                if !self.polygons[i].collision {continue;};
+                if !self.polygons[j].collision {continue;};
                 let (left, right) = self.polygons.split_at_mut(j);
                 let a = &mut left[i];
                 let b = &mut right[0];

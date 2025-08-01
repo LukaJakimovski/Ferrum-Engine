@@ -11,7 +11,7 @@ fn main() {
         window_resizable: true,
         icon: None,
         platform: Platform {
-            swap_interval: Some(0),
+            swap_interval: Some(1),
             ..Default::default()
         },
         fullscreen: false
@@ -19,13 +19,13 @@ fn main() {
 
     let mut polygons = vec![];
     
-    polygons.push(Rigidbody::rectangle(10.0, 1.0, Vec2{x: 0.0, y: 0.0}, f32::MAX, 0.6, Color::orange()));
+    polygons.push(Rigidbody::rectangle(10.0, 1.0, Vec2{x: 0.0, y: 0.0}, f32::MAX / 10.0, 0.6, Color::orange()));
     polygons[0].rotate(PI / 4.0);
 
     for i in 0..10 {
         polygons.push(Rigidbody::polygon(32, 0.3533, Vec2{x: 2.5, y: 6.0 + i as f32 * 2.0}, 1.0, 1.0, Color::random()));
     }
     
-    let parameters = Parameters {delta_time: 0.0, updates_per_frame: 1, angular_velocity: true, camera_pos: (0.0, 0.0, 0.0, -10.0), gravity: true, world_size: 300.0 };
+    let parameters = Parameters {delta_time: 1.0 / 1000.0, updates_per_frame: 10, angular_velocity: true, camera_pos: (0.0, 0.0, 0.0, -10.0), gravity: true, world_size: 300.0 };
     start(conf, move || Box::new(World::new(polygons, vec![], parameters)));
 }
