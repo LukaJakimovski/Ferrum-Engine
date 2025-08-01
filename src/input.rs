@@ -1,4 +1,3 @@
-use std::fmt::Pointer;
 use miniquad::{window, KeyCode, KeyMods, MouseButton};
 use crate::enums::{Keys, Mouse};
 use crate::{Color, Rigidbody, Vec2, World};
@@ -62,7 +61,7 @@ impl World{
             for i in 0..self.polygons.len() {
                 let result = sat_collision(&self.polygons[i], &mouse_polygon);
                 if result[1].y != 0.0{
-                    self.polygons.remove(i);
+                    self.remove_rigidbody(i);
                     break;
                 }
             }

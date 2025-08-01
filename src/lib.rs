@@ -10,6 +10,7 @@ pub mod spring;
 mod enums;
 mod input;
 mod render;
+mod utility;
 
 pub use crate::rigidbody::*;
 pub use crate::world::*;

@@ -135,7 +135,7 @@ impl EventHandler for World {
 
         for i in 0..self.polygons.len() {
             if self.polygons[i].center.distance(&Vec2::zero()) > self.parameters.world_size {
-                self.polygons.remove(i);
+                self.remove_rigidbody(i);
                 break;
             }
         }
