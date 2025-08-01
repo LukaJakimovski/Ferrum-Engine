@@ -6,7 +6,9 @@ use crate::world::World;
 impl World {
     pub fn collision_resolution(&mut self) {
         for i in 0..self.polygons.len() {
+            if !self.polygons[i].collision {continue;};
             for j in i+1..self.polygons.len() {
+                if !self.polygons[i].collision {continue;};
                 let (left, right) = self.polygons.split_at_mut(j);
                 let a = &mut left[i];
                 let b = &mut right[0];
@@ -58,13 +60,8 @@ impl World {
             let fv2 = v2 + tangent_v2;
             let relative_velocity = fv2 - fv1;
             let vel_along_normal = relative_velocity.dot(&normal);
-
-            let restitution: f32;
-            if polygon1.restitution < polygon2.restitution {
-                restitution = polygon1.restitution;
-            } else{
-                restitution = polygon2.restitution;
-            }
+            
+            let restitution = (polygon1.restitution + polygon2.restitution) / 2.0;
 
             let i1 = 1.0 / polygon1.moment_of_inertia;
             let i2 = 1.0 / polygon2.moment_of_inertia;

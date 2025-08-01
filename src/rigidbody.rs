@@ -22,6 +22,7 @@ pub struct Rigidbody {
     pub force: Vec2,
     pub torque: f32,
     pub angle: f32,
+    pub collision: bool,
 }
 impl Rigidbody {
     pub fn rectangle(width: f32, height: f32, pos: Vec2, mass: f32, restitution: f32, color: Color) -> Self {
@@ -47,6 +48,7 @@ impl Rigidbody {
             force: Vec2::zero(),
             torque: 0.0,
             angle: 0.0,
+            collision: true,
         };
         polygon.calculate_area();
         polygon.calculate_radius();
@@ -79,6 +81,7 @@ impl Rigidbody {
             force: Vec2::zero(),
             torque: 0.0,
             angle: 0.0,
+            collision: true,
         };
         polygon.calculate_area();
         polygon.calculate_radius();
@@ -122,6 +125,7 @@ impl Rigidbody {
             force: Vec2::zero(),
             torque: 0.0,
             angle: 0.0,
+            collision: true,
         };
         polygon.calculate_area();
         polygon.calculate_moment_of_inertia();
