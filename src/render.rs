@@ -1,36 +1,42 @@
 use miniquad::{window, Bindings, BufferSource, BufferType, BufferUsage, UniformsSource};
-use crate::{shader, RenderObject, Vertex, World};
+use crate::{shader, RenderObject, Vec2, Vertex, World};
 
 impl World{
-    pub fn create_render_object(&mut self) {
-        let mut indices: Vec<u32> = vec![];
-        let mut vertices: Vec<Vertex> = vec![];
+    pub fn get_vertices_and_indices(&mut self) -> (Vec<Vertex>, Vec<u32>){
+        let mut vertices: Vec<Vertex> = Vec::with_capacity(
+            self.polygons.iter().map(|p| p.vertices.len() + 1).sum::<usize>() +
+                self.springs.iter().map(|s| s.connector.vertices.len() + 1).sum::<usize>()
+        );
+
+        let mut indices: Vec<u32> = Vec::with_capacity(
+            self.polygons.iter().map(|p| p.indices.len()).sum::<usize>() +
+                self.springs.iter().map(|s| s.connector.indices.len()).sum::<usize>()
+        );
         let mut start_index: u32 = 0;
+
+        // Helper closure to process each connector-like structure
+        let mut process = |verts: &[Vertex], center: Vec2, indices_src: &[u32]| {
+            let color = verts[0].color;
+            vertices.extend_from_slice(verts);
+            vertices.push(Vertex { pos: center, color });
+
+            indices.extend(indices_src.iter().map(|i| i + start_index));
+            start_index += verts.len() as u32 + 1;
+        };
+
         for polygon in &self.polygons {
-            let length = polygon.vertices.len() as u32;
-            let color = polygon.vertices[0].color;
-            vertices.extend(polygon.vertices.clone());
-            vertices.push(Vertex{pos: polygon.center, color});
-            let mut new_indices= polygon.indices.clone();
-            for i in 0..new_indices.len() {
-                new_indices[i] += start_index;
-            }
-            indices.extend(new_indices);
-            start_index += length + 1;
-        }
-        for spring in &self.springs {
-            let length = spring.connector.vertices.len() as u32;
-            let color = spring.connector.vertices[0].color;
-            vertices.extend(spring.connector.vertices.clone());
-            vertices.push(Vertex{pos: spring.connector.center, color});
-            let mut new_indices= spring.connector.indices.clone();
-            for i in 0..new_indices.len() {
-                new_indices[i] += start_index;
-            }
-            indices.extend(new_indices);
-            start_index += length + 1;
+            process(&polygon.vertices, polygon.center, &polygon.indices);
         }
 
+        for spring in &self.springs {
+            process(&spring.connector.vertices, spring.connector.center, &spring.connector.indices);
+        }
+
+        (vertices, indices)
+    }
+
+    pub fn create_render_object(&mut self) {
+        let (vertices, indices) = self.get_vertices_and_indices();
         if self.previous_polygon_count != self.polygons.len() {
             self.ctx.delete_buffer(self.render_object.bindings.vertex_buffers[0]);
             self.ctx.delete_buffer(self.render_object.bindings.index_buffer);

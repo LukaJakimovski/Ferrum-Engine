@@ -50,10 +50,7 @@ impl Rigidbody {
             angle: 0.0,
             collision: true,
         };
-        polygon.calculate_area();
-        polygon.calculate_radius();
-        polygon.calculate_center_of_mass();
-        polygon.calculate_moment_of_inertia();
+        polygon.calculate_properties();
         polygon
     }
 
@@ -83,9 +80,7 @@ impl Rigidbody {
             angle: 0.0,
             collision: true,
         };
-        polygon.calculate_area();
-        polygon.calculate_radius();
-        polygon.calculate_center_of_mass();
+        polygon.calculate_properties();
         polygon
     }
 
@@ -127,11 +122,16 @@ impl Rigidbody {
             angle: 0.0,
             collision: true,
         };
-        polygon.calculate_area();
-        polygon.calculate_moment_of_inertia();
+        polygon.calculate_properties();
         polygon
     }
 
+    pub fn calculate_properties(&mut self){
+        self.calculate_area();
+        self.calculate_center_of_mass();
+        self.calculate_radius();
+        self.calculate_moment_of_inertia();
+    }
     pub fn calculate_radius(&mut self){
         let mut max_radius = 0.0;
         for vertex in &self.vertices {

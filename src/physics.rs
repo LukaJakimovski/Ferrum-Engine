@@ -4,7 +4,110 @@ use crate::{Parameters, Rigidbody};
 use crate::world::World;
 
 impl World {
+    pub fn separate_into_section(&mut self) -> Vec<Vec<usize>>{
+        let mut x_min = f32::MAX;
+        let mut x_max = f32::MIN;
+        let mut y_min = f32::MAX;
+        let mut y_max = f32::MIN;
+        let mut rad_max = f32::MIN;
+
+        for i in 0..self.polygons.len() {
+            if self.polygons[i].center.x < x_min {
+                x_min = self.polygons[i].center.x;
+            }
+            if self.polygons[i].center.x > x_max {
+                x_max = self.polygons[i].center.x;
+            }
+            if self.polygons[i].center.y < y_min {
+                y_min = self.polygons[i].center.y;
+            }
+            if self.polygons[i].center.y > y_max {
+                y_max = self.polygons[i].center.y;
+            }
+            if self.polygons[i].radius > rad_max {
+                rad_max = self.polygons[i].radius;
+            }
+        }
+        if x_max > self.parameters.world_size{
+            x_max = self.parameters.world_size;
+        }
+        if y_max > self.parameters.world_size{
+            y_max = self.parameters.world_size;
+        }
+        if x_min < -self.parameters.world_size{
+            x_min = -self.parameters.world_size;
+        }
+        if y_min < -self.parameters.world_size{
+            y_min = -self.parameters.world_size;
+        }
+
+        let mut x_sections: usize = ((x_max - x_min) / rad_max).ceil() as usize;
+        if x_sections > 256 {x_sections = 256}
+        else if x_sections == 0 {x_sections = 1}
+        let mut y_sections: usize = ((y_max - y_min) / rad_max).ceil() as usize;
+        if y_sections > 256 {y_sections = 256}
+        else if y_sections == 0 {y_sections = 1}
+        let section_count: usize = x_sections * y_sections;
+        let x_range = x_max - x_min;
+        let x_interval = x_range / x_sections as f32;
+        let y_range = y_max - y_min;
+        let y_interval = y_range / y_sections as f32;
+
+        let mut sections: Vec<Vec<usize>> = Vec::with_capacity(x_sections as usize);
+        for _i in 0..section_count {
+            sections.push(vec![]);
+        }
+        if section_count == 0{
+            return sections;
+        }
+
+        for i in 0..self.polygons.len() {
+            let x_index: usize = (self.polygons[i].center.x / x_interval) as usize;
+            let y_index: usize = (self.polygons[i].center.y / y_interval) as usize;
+            let mut index = x_index + y_index * x_sections as usize;
+            if index >= sections.len() {index = sections.len() - 1}
+            sections[index].push(i);
+        }
+
+        for i in 0..sections.len() - 1 {
+            let (left, right) = sections.split_at_mut(i + 1);
+            if (i as i32) < section_count as i32 && x_sections > 1{ left[i].extend_from_slice(&*right[0]); }; // Right
+            if (i as i32) < section_count as i32 - x_sections as i32 { left[i].extend(&*right[x_sections - 1]); }; // Down
+            if (i as i32) < section_count as i32 - x_sections as i32 - 1 && x_sections > 1{ left[i].extend(&*right[x_sections]); }; // Down right
+            if (i as i32) < section_count as i32 - x_sections as i32 - 1 && x_sections > 1 { left[i].extend(&*right[x_sections - 2]); }; // Down left
+        }
+        sections
+    }
+
     pub fn collision_resolution(&mut self) {
+
+        let sections = self.separate_into_section();
+        for section in sections {
+            for i in 0..section.len() {
+                if !self.polygons[section[i]].collision {continue;};
+                for j in i+1..section.len() {
+                    if !self.polygons[section[j]].collision {continue;};
+                    if section[i] == 0 && section[j] == 0{
+                        continue;
+                    }
+                    else if section[j] > section[i] {
+                        let (left, right) = self.polygons.split_at_mut(section[j]);
+                        let a = &mut left[section[i]];
+                        let b = &mut right[0];
+                        Self::check_and_resolve(&self.parameters, a, b);
+                    }
+                    else if section[i] > section[j] {
+                        let (left, right) = self.polygons.split_at_mut(section[i]);
+                        let a = &mut left[section[j]];
+                        let b = &mut right[0];
+                        Self::check_and_resolve(&self.parameters, a, b);
+                    }
+
+                }
+            }
+        }
+
+        /*
         for i in 0..self.polygons.len() {
             if !self.polygons[i].collision {continue;};
             for j in i+1..self.polygons.len() {
@@ -15,6 +118,7 @@ impl World {
                 Self::check_and_resolve(&self.parameters, a, b);
             }
         }
+        */
     }
     
     pub fn check_and_resolve(parameters: &Parameters, body1: &mut Rigidbody, body2: &mut Rigidbody) {
@@ -93,6 +197,7 @@ impl World {
     }
     
     pub fn update_physics(&mut self) {
+        self.collision_resolution();
         let g: Vec2;
         if self.parameters.gravity == true{
             g = Vec2 { x: 0.0, y: -9.81 };
@@ -107,6 +212,5 @@ impl World {
         for spring in &mut self.springs{
             spring.apply(self.delta_time as f32, &mut self.polygons);
         }
-        self.collision_resolution();
     }
 }

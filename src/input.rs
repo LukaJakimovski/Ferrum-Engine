@@ -56,7 +56,7 @@ impl World{
         if !self.pointer_used{
             if _button == MouseButton::Left {
                 self.pressed_buttons[Mouse::Left as usize] = 1;
-                self.polygons.push(Rigidbody::polygon(16, 0.3533, position.clone(), 1.0, 1.0, Color::random()));
+                self.polygons.push(Rigidbody::polygon(16, 0.3533, position.clone(), 1.0, 0.8, Color::random()));
             }
             if _button == MouseButton::Right {
                 self.pressed_buttons[Mouse::Right as usize] = 1;

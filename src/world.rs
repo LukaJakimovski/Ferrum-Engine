@@ -2,7 +2,7 @@ use miniquad::{date, window, Bindings, BufferLayout, BufferSource, BufferType, B
 use crate::rigidbody::*;
 use crate::math::*;
 use crate::shader::{FRAGMENT, VERTEX};
-use crate::{shader, Color};
+use crate::{shader};
 use crate::spring::*;
 
 #[derive(Clone)]
@@ -30,7 +30,7 @@ pub struct World {
     
     pub springs: Vec<Spring>,
     pub polygons: Vec<Rigidbody>,
-    pub(crate) previous_polygon_count: usize,
+    pub previous_polygon_count: usize,
     
     pub collisions: usize,
     
