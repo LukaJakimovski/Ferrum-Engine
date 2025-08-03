@@ -1,12 +1,7 @@
 use crate::color::Color;
 use crate::math::*;
 use crate::ode_solver::rk4_step;
-
-#[repr(C)] #[derive(Clone)] #[derive(Default)]
-pub struct Vertex {
-    pub pos: Vec2,
-    pub color: Color,
-}
+use crate::world::Vertex;
 #[derive(Clone)] #[derive(Default)]
 pub struct Rigidbody {
     pub center: Vec2,

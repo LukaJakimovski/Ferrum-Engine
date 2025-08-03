@@ -4,7 +4,11 @@ version = "0.1.0"
 edition = "2024"
 
 [dependencies]
-egui = "0.31.1"
-egui-miniquad = "0.16.0"
-miniquad = "0.4.8"
 rand = "0.9.1"
+anyhow = "1.0"
+winit = { version = "0.30", features = ["android-native-activity"] }
+env_logger = "0.10"
+log = "0.4"
+wgpu = "25.0"
+pollster = "0.3"
+bytemuck = "1.23.1"

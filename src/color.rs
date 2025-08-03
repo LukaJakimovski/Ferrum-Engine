@@ -1,6 +1,6 @@
 use rand;
 
-#[repr(C)] #[derive(Clone, Copy, Debug, Default)]
+#[repr(C)] #[derive(Clone, Copy, Debug, Default, bytemuck::Pod, bytemuck::Zeroable)]
 pub struct Color {
     pub r: f32,
     pub g: f32,
@@ -9,27 +9,27 @@ pub struct Color {
 
 #[allow(dead_code)]
 impl Color{
-    pub fn red() -> Self{
+    pub const fn red() -> Self{
         Self{r: 1.0, g: 0.0, b: 0.0}
     }
-    pub fn white() -> Self{
+    pub const fn white() -> Self{
         Self{r: 1.0, g: 1.0, b: 1.0}
     }
-    pub fn black() -> Self{
+    pub const fn black() -> Self{
         Self{r: 0.0, g: 0.0, b: 0.0}
     }
-    pub fn gray() -> Self{
+    pub const fn gray() -> Self{
         Self{r: 0.5, g: 0.5, b: 0.50}
     }
-    pub fn orange() -> Self{
+    pub const fn orange() -> Self{
         Self{r: 1.0, g: 0.5, b: 0.2}
     }
-    pub fn blue() -> Self{ Self{r: 0.0, g: 0.0, b: 1.0} }
-    pub fn transparent() -> Self{
+    pub const fn blue() -> Self{ Self{r: 0.0, g: 0.0, b: 1.0} }
+    pub const fn transparent() -> Self{
         Self{r: 0.0, g: 0.0, b: 0.0}
     }
     pub fn random() -> Self{ Self{ r: rand::random::<f32>(), g: rand::random::<f32>(), b: rand::random::<f32>()} }
-    pub fn new(r: f32, g: f32, b: f32) -> Self{
+    pub const fn new(r: f32, g: f32, b: f32) -> Self{
         Self{r, g, b}
     }
 }
