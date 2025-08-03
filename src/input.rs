@@ -11,19 +11,15 @@ impl World {
         match key {
             winit::keyboard::KeyCode::KeyW | winit::keyboard::KeyCode::ArrowUp => {
                 self.camera_pos.y += 5.0 * self.delta_time as f32;
-                println!("Forward");
             },
             winit::keyboard::KeyCode::KeyA | winit::keyboard::KeyCode::ArrowLeft => {
                 self.camera_pos.x -= 5.0 * self.delta_time as f32;
-                println!("Left");
             },
             winit::keyboard::KeyCode::KeyS | winit::keyboard::KeyCode::ArrowDown => {
                 self.camera_pos.y -= 5.0 * self.delta_time as f32;
-                println!("Backward");
             },
             winit::keyboard::KeyCode::KeyD | winit::keyboard::KeyCode::ArrowRight => {
                 self.camera_pos.x += 5.0 * self.delta_time as f32;
-                println!("Right");
             },
             winit::keyboard::KeyCode::KeyR => {
                 for i in 0..self.polygons.len() {
@@ -35,6 +31,8 @@ impl World {
             },
             winit::keyboard::KeyCode::KeyL => {
                 let size = self.window.inner_size();
+                if _pressed {self.pressed_keys[Keys::L as usize] = 1}
+                else if !_pressed {self.pressed_keys[Keys::L as usize] = 0}
                 let position = Vec2 {
                     x: ((self.mouse_pos.0 * 2.0 - size.width as f32) / size.width as f32+ self.camera_pos.x / (-self.camera_pos.w + 1.0)) * (-self.camera_pos.w + 1.0),
                     y: ((self.mouse_pos.1 * 2.0 - size.height as f32) /size.height as f32 + self.camera_pos.y / -(-self.camera_pos.w + 1.0)) * -(-self.camera_pos.w + 1.0) * size.height as f32 / size.width as f32};
@@ -78,13 +76,17 @@ impl World {
 
     pub fn handle_mouse_input(&mut self, state: ElementState, button: MouseButton) {
         let size = self.window.inner_size();
+        let new_pos = (-self.camera_pos.w + 1.0) * 1.0;
         let position = Vec2 {
-            x: ((self.mouse_pos.0 * 2.0 - size.width as f32) / size.width as f32 + self.camera_pos.x / (-self.camera_pos.w + 1.0)) * (-self.camera_pos.w + 1.0),
-            y: ((self.mouse_pos.1 * 2.0 - size.height as f32)/ size.height as f32 + self.camera_pos.y / -(-self.camera_pos.w + 1.0)) * -(-self.camera_pos.w + 1.0) * size.height as f32 / size.height as f32,};
+            x: ((self.mouse_pos.0 * 2.0 - size.width as f32) / size.width as f32 + self.camera_pos.x / new_pos) * new_pos,
+            y: ((self.mouse_pos.1 * 2.0 - size.height as f32)/ size.height as f32 + self.camera_pos.y / new_pos) * -new_pos * size.height as f32 / size.width as f32};
         if button == MouseButton::Left {
-            if state.is_pressed(){ self.pressed_buttons[Mouse::Left as usize] = 1; }
+            if state.is_pressed(){
+                self.pressed_buttons[Mouse::Left as usize] = 1;
+                self.polygons.push(Rigidbody::polygon(16, 0.3533, position.clone(), 1.0, 0.8, Color::random()));
+            }
             else { self.pressed_buttons[Mouse::Left as usize] = 0; }
-            self.polygons.push(Rigidbody::polygon(16, 0.3533, position.clone(), 1.0, 0.8, Color::random()));
+
         }
         if button == MouseButton::Right {
             if state.is_pressed(){ self.pressed_buttons[Mouse::Right as usize] = 1; }
