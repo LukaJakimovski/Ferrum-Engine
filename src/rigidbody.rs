@@ -247,8 +247,3 @@ impl Rigidbody {
         kinetic_energy as f64
     }
 }
-
-
-
-
-

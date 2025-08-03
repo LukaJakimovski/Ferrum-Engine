@@ -1,4 +1,5 @@
 use std::iter;
+use wgpu::util::DeviceExt;
 use crate::{Rigidbody, Vec2, Vertex, World};
 use crate::spring::Spring;
 
@@ -38,6 +39,7 @@ impl World {
 
     pub(crate) fn render(&mut self) -> Result<(), wgpu::SurfaceError> {
         let (vertices, indices) = &Self::get_vertices_and_indices(&self.polygons, &self.springs);
+
         self.window.request_redraw();
 
         // We can't render unless the surface is configured
@@ -77,11 +79,26 @@ impl World {
                 occlusion_query_set: None,
                 timestamp_writes: None,
             });
+            self.vertex_buffer.destroy();
+            self.index_buffer.destroy();
+            self.vertex_buffer = self.device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
+                label: Some("Vertex Buffer"),
+                contents: bytemuck::cast_slice(&vertices),
+                usage: wgpu::BufferUsages::VERTEX | wgpu::BufferUsages::COPY_DST,
+            });
+            self.index_buffer = self.device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
+                label: Some("Index Buffer"),
+                contents: bytemuck::cast_slice(&indices),
+                usage: wgpu::BufferUsages::INDEX | wgpu::BufferUsages::COPY_DST,
+            });
+            self.num_indices = indices.len() as u32;
+
+
             let size = self.window.inner_size();
             self.uniforms.camera_pos = self.camera_pos;
             self.uniforms.aspect_ratio = size.width as f32 / size.height as f32;
-            self.queue.write_buffer(&self.vertex_buffer, 0, bytemuck::cast_slice(&vertices));
-            self.queue.write_buffer(&self.index_buffer, 0, bytemuck::cast_slice(&indices));
+            //self.queue.write_buffer(&self.vertex_buffer, 0, bytemuck::cast_slice(&vertices));
+            //self.queue.write_buffer(&self.index_buffer, 0, bytemuck::cast_slice(&indices));
             self.queue.write_buffer(&self.uniforms_buffer, 0, bytemuck::cast_slice(&[self.uniforms]));
             self.queue.submit(None);
             render_pass.set_pipeline(&self.render_pipeline);
