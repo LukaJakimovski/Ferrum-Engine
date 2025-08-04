@@ -50,8 +50,31 @@ pub enum Keys{
     Minus = 46,
 }
 
+#[repr(usize)]
 pub enum Mouse{
     Left = 0,
     Right = 1,
     Middle = 2,
+}
+
+#[repr(usize)]
+pub enum Menu{
+    Config = 0,
+    FPS = 1,
+    Energy = 2,
+    Camera = 3,
+    Spawner = 4,
+}
+
+#[repr(usize)]
+#[derive(Debug, PartialEq)]
+pub enum RigidBodyType{
+    RegularPolygon = 0,
+    Rectangle = 1
+}
+
+#[derive(Debug, PartialEq)]
+pub enum ColorType{
+    Random = 0,
+    Set = 1,
 }

@@ -2,7 +2,7 @@ use winit::dpi::PhysicalPosition;
 use winit::event::{ElementState, MouseButton, MouseScrollDelta};
 use winit::event_loop::ActiveEventLoop;
 use crate::enums::{Keys, Mouse};
-use crate::{Color, Rigidbody, Vec2, World};
+use crate::{Color, Rigidbody, RigidbodyBuilder, Vec2, World};
 use crate::collision_detection::sat_collision;
 
 impl World {
@@ -60,7 +60,9 @@ impl World {
             x: ((self.mouse_pos.0 * 2.0 - size.width as f32) / size.width as f32+ self.camera_pos.x / (-self.camera_pos.w + 1.0)) * (-self.camera_pos.w + 1.0),
             y: ((self.mouse_pos.1 * 2.0 - size.height as f32) /size.height as f32 + self.camera_pos.y / -(-self.camera_pos.w + 1.0)) * -(-self.camera_pos.w + 1.0) * size.height as f32 / size.width as f32};
         if self.pressed_keys[Keys::L as usize] == 1 {
-            self.polygons.push(Rigidbody::polygon(32, 0.3533, position.clone(), 1.0, 1.0, Color::random()));
+            self.polygons.push(RigidbodyBuilder::create_body(&self.spawn_parameters));
+            let length = self.polygons.len() - 1;
+            self.polygons[length].translate(position);
         }
 
         if self.pressed_keys[Keys::W as usize] == 1 {self.camera_pos.y += 5.0 * self.delta_time as f32;}
@@ -76,7 +78,7 @@ impl World {
                 pos.y as f32 / 20.0
             }
         };
-        self.camera_pos.w += change * 1.0/self.scaling_factor;
+        self.camera_pos.w += change * self.scaling_factor/10.0;
     }
 
     pub fn handle_cursor_movement(&mut self, position: PhysicalPosition<f64>){
@@ -98,13 +100,15 @@ impl World {
         if button == MouseButton::Left {
             if state.is_pressed() && !self.is_pointer_used {
                 self.pressed_buttons[Mouse::Left as usize] = 1;
-                self.polygons.push(Rigidbody::polygon(16, 0.3533, position.clone(), 1.0, 0.8, Color::random()));
+                self.polygons.push(RigidbodyBuilder::create_body(&self.spawn_parameters));
+                let length = self.polygons.len() - 1;
+                self.polygons[length].translate(position);
             }
             else { self.pressed_buttons[Mouse::Left as usize] = 0; }
 
         }
         if button == MouseButton::Right {
-            if state.is_pressed(){
+            if state.is_pressed() && !self.is_pointer_used {
                 self.pressed_buttons[Mouse::Right as usize] = 1;
                 let mouse_polygon = Rigidbody::rectangle(0.03, 0.03, position, 1.0, 1.0, Color::random());
                 for i in 0..self.polygons.len() {
@@ -118,7 +122,7 @@ impl World {
             else { self.pressed_buttons[Mouse::Right as usize] = 0; }
         }
         if button == MouseButton::Middle {
-            if state.is_pressed(){ self.pressed_buttons[Mouse::Middle as usize] = 1; }
+            if state.is_pressed() && !self.is_pointer_used{ self.pressed_buttons[Mouse::Middle as usize] = 1; }
             else { self.pressed_buttons[Mouse::Middle as usize] = 0; }
         }
     }

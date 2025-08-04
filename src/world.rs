@@ -2,8 +2,9 @@ use std::sync::Arc;
 use egui_wgpu::wgpu;
 use wgpu::util::DeviceExt;
 use winit::window::Window;
-use crate::{Color, Rigidbody, Vec2, Vec4};
+use crate::{Color, Rigidbody, RigidbodyBuilder, Vec2, Vec4};
 use crate::egui_tools::EguiRenderer;
+use crate::enums::{ColorType, RigidBodyType};
 use crate::spring::Spring;
 use crate::utility::date;
 
@@ -53,7 +54,6 @@ impl Vertex {
         }
     }
 }
-
 pub struct World {
     pub surface: wgpu::Surface<'static>,
     pub device: wgpu::Device,
@@ -97,6 +97,9 @@ pub struct World {
     pub timer: f64,
     pub egui_renderer: EguiRenderer,
     pub is_pointer_used: bool,
+
+    pub menus: [bool; 8],
+    pub spawn_parameters: RigidbodyBuilder,
 }
 
 impl World {
@@ -270,6 +273,23 @@ impl World {
 
         let egui_renderer = EguiRenderer::new(&device, config.format, None, 1, &window);
 
+
+        let spawn_parameters = RigidbodyBuilder {
+            sides: 16,
+            radius: 0.3533,
+            pos: Vec2::zero(),
+            mass: 1.0,
+            width: 0.5,
+            height: 0.5,
+            restitution: 0.8,
+            color: None,
+            collides: true,
+            rotation: 0.0,
+            angular_velocity: 0.0,
+            velocity: Vec2::zero(),
+            body_type: RigidBodyType::RegularPolygon,
+            color_type: ColorType::Random,
+        };
         #[cfg(all(target_os = "windows", target_arch = "x86_64", target_env = "gnu"))]
         let scaling_factor = 0.1;
         #[cfg(not(all(target_os = "windows", target_arch = "x86_64", target_env = "gnu")))]
@@ -309,6 +329,8 @@ impl World {
             timer: 0.0,
             egui_renderer,
             is_pointer_used: false,
+            menus: [false; 8],
+            spawn_parameters,
         })
     }
 

@@ -1,4 +1,5 @@
 use crate::color::Color;
+use crate::enums::{ColorType, RigidBodyType};
 use crate::math::*;
 use crate::ode_solver::rk4_step;
 use crate::world::Vertex;
@@ -18,6 +19,51 @@ pub struct Rigidbody {
     pub torque: f32,
     pub angle: f32,
     pub collision: bool,
+}
+
+pub struct RigidbodyBuilder {
+    pub(crate) sides: u32, 
+    pub(crate) radius: f32, 
+    pub(crate) width: f32,
+    pub(crate) height: f32,
+    pub(crate) pos: Vec2, 
+    pub(crate) mass: f32, 
+    pub(crate) restitution: f32, 
+    pub(crate) color: Option<Color>,
+    pub(crate) collides: bool,
+    pub(crate) rotation: f32,
+    pub(crate) angular_velocity: f32,
+    pub(crate) velocity: Vec2,
+    pub(crate) body_type: RigidBodyType,
+    pub(crate) color_type: ColorType,
+}
+
+impl RigidbodyBuilder {
+    pub fn create_body(&self) -> Rigidbody {
+        let mut rigidbody: Rigidbody= match self.body_type {
+            RigidBodyType::RegularPolygon => {
+                if self.color.is_some(){
+                    Rigidbody::polygon(self.sides, self.radius, self.pos, self.mass, self.restitution, self.color.unwrap())
+                } else {
+                    Rigidbody::polygon(self.sides, self.radius, self.pos, self.mass, self.restitution, Color::random())
+                }
+                
+            }
+            RigidBodyType::Rectangle => {
+                if self.color.is_some(){
+                    Rigidbody::rectangle(self.width, self.height, self.pos, self.mass, self.restitution, self.color.unwrap())
+                } else {
+                    Rigidbody::rectangle(self.width, self.height, self.pos, self.mass, self.restitution, Color::random())
+                }
+                
+            }
+        };
+        rigidbody.collision = self.collides;
+        rigidbody.rotate(self.rotation);
+        rigidbody.angular_velocity = self.angular_velocity;
+        rigidbody.velocity = self.velocity;
+        rigidbody
+    }
 }
 impl Rigidbody {
     pub fn rectangle(width: f32, height: f32, pos: Vec2, mass: f32, restitution: f32, color: Color) -> Self {

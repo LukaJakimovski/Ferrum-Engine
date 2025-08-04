@@ -12,6 +12,7 @@ mod world;
 mod input;
 mod app;
 mod egui_tools;
+mod gui;
 
 pub use crate::rigidbody::*;
 pub use crate::world::*;
