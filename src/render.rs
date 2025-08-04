@@ -2,6 +2,7 @@ use std::iter;
 use wgpu::util::DeviceExt;
 use crate::{Rigidbody, Vec2, Vertex, World};
 use crate::spring::Spring;
+use egui_wgpu::{wgpu, ScreenDescriptor};
 
 impl World {
     pub fn get_vertices_and_indices(polygons: &Vec<Rigidbody>, springs: &Vec<Spring>) -> (Vec<Vertex>, Vec<u32>){
@@ -73,39 +74,128 @@ impl World {
                         }),
                         store: wgpu::StoreOp::Store,
                     },
-                    depth_slice: None,
                 })],
                 depth_stencil_attachment: None,
                 occlusion_query_set: None,
                 timestamp_writes: None,
             });
-            self.vertex_buffer.destroy();
-            self.index_buffer.destroy();
-            self.vertex_buffer = self.device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
-                label: Some("Vertex Buffer"),
-                contents: bytemuck::cast_slice(&vertices),
-                usage: wgpu::BufferUsages::VERTEX | wgpu::BufferUsages::COPY_DST,
-            });
-            self.index_buffer = self.device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
-                label: Some("Index Buffer"),
-                contents: bytemuck::cast_slice(&indices),
-                usage: wgpu::BufferUsages::INDEX | wgpu::BufferUsages::COPY_DST,
-            });
-            self.num_indices = indices.len() as u32;
-
-
+            // Always update uniforms
             let size = self.window.inner_size();
             self.uniforms.camera_pos = self.camera_pos;
             self.uniforms.aspect_ratio = size.width as f32 / size.height as f32;
-            //self.queue.write_buffer(&self.vertex_buffer, 0, bytemuck::cast_slice(&vertices));
-            //self.queue.write_buffer(&self.index_buffer, 0, bytemuck::cast_slice(&indices));
             self.queue.write_buffer(&self.uniforms_buffer, 0, bytemuck::cast_slice(&[self.uniforms]));
             self.queue.submit(None);
-            render_pass.set_pipeline(&self.render_pipeline);
-            render_pass.set_bind_group(0, &self.uniforms_bind_group, &[]);
-            render_pass.set_vertex_buffer(0, self.vertex_buffer.slice(..));
-            render_pass.set_index_buffer(self.index_buffer.slice(..), wgpu::IndexFormat::Uint32);
-            render_pass.draw_indexed(0..self.num_indices, 0, 0..1);
+
+            // Only update and draw if there are vertices/indices
+            if !vertices.is_empty() && !indices.is_empty() {
+                self.vertex_buffer.destroy();
+                self.index_buffer.destroy();
+
+                self.vertex_buffer = self.device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
+                    label: Some("Vertex Buffer"),
+                    contents: bytemuck::cast_slice(&vertices),
+                    usage: wgpu::BufferUsages::VERTEX | wgpu::BufferUsages::COPY_DST,
+                });
+
+                self.index_buffer = self.device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
+                    label: Some("Index Buffer"),
+                    contents: bytemuck::cast_slice(&indices),
+                    usage: wgpu::BufferUsages::INDEX | wgpu::BufferUsages::COPY_DST,
+                });
+
+                self.num_indices = indices.len() as u32;
+
+                render_pass.set_pipeline(&self.render_pipeline);
+                render_pass.set_bind_group(0, &self.uniforms_bind_group, &[]);
+                render_pass.set_vertex_buffer(0, self.vertex_buffer.slice(..));
+                render_pass.set_index_buffer(self.index_buffer.slice(..), wgpu::IndexFormat::Uint32);
+                render_pass.draw_indexed(0..self.num_indices, 0, 0..1);
+            }
+        }
+
+        {
+            let window = self.window.as_ref();
+            let screen_descriptor = ScreenDescriptor {
+                size_in_pixels: [self.config.width, self.config.height],
+                pixels_per_point: window.scale_factor() as f32 * 1.0,
+            };
+
+            self.egui_renderer.begin_frame(window);
+
+            egui::Window::new("Config")
+                .resizable(true)
+                .vscroll(true)
+                .default_open(true)
+                .max_height(200.0)
+                .show(self.egui_renderer.context(), |ui| {
+                    ui.label(format!(
+                        "FPS: {:.3}",
+                        self.fps
+                    ));
+                    ui.label(format!(
+                        "Energy: {:.3}",
+                        self.total_energy
+                    ));
+                    ui.label(format!(
+                        "Using Pointer: {}",
+                        self.egui_renderer.context().is_pointer_over_area()
+                    ));
+                    ui.checkbox(&mut self.is_running,
+                        "Running"
+                    );
+                    ui.checkbox(&mut self.parameters.gravity,
+                                "Gravity"
+                    );
+                    ui.columns(2, | ui |{
+                        ui[0].label("World Radius");
+                        ui[1].add(egui::DragValue::new(&mut self.parameters.world_size).speed(0.1));
+                        if self.parameters.world_size < 0.0 {
+                            self.parameters.world_size = 0.0;
+                        }
+                    });
+                    ui.columns(2, | ui |{
+                        ui[0].label("Time Step");
+                        ui[1].add(egui::DragValue::new(&mut self.parameters.delta_time).speed(0.0001));
+                        if self.parameters.delta_time < 0.0 {
+                            self.parameters.delta_time = 0.0;
+                        }
+                    });
+                    ui.columns(2, | ui |{
+                        ui[0].label("World Radius");
+                        ui[1].add(egui::DragValue::new(&mut self.parameters.world_size).speed(0.1));
+                        if self.parameters.world_size < 0.0 {
+                            self.parameters.world_size = 0.0;
+                        }
+                    });
+                    ui.columns(2, | ui |{
+                        ui[0].label("Physics Updates Per Frame");
+                        ui[1].add(egui::DragValue::new(&mut self.parameters.updates_per_frame).speed(1));
+                    });
+                });
+
+            egui::Window::new("Camera")
+                .resizable(true)
+                .vscroll(true)
+                .default_open(true)
+                .max_height(25.0)
+                .show(self.egui_renderer.context(), |ui| {
+                    ui.columns(4, | ui |{
+                        ui[0].label("Camera");
+                        ui[1].add(egui::DragValue::new(&mut self.camera_pos.x).speed(0.1));
+                        ui[2].add(egui::DragValue::new(&mut self.camera_pos.y).speed(0.1));
+                        ui[3].add(egui::DragValue::new(&mut self.camera_pos.w).speed(0.1));
+                    });
+                });
+
+            self.is_pointer_used = self.egui_renderer.context().is_pointer_over_area();
+            self.egui_renderer.end_frame_and_draw(
+                &self.device,
+                &self.queue,
+                &mut encoder,
+                window,
+                &view,
+                screen_descriptor,
+            );
         }
 
         self.queue.submit(iter::once(encoder.finish()));

@@ -7,7 +7,7 @@ use winit::window::Window;
 use crate::world::{Parameters};
 use crate::{Rigidbody, World};
 use crate::spring::Spring;
-
+use egui_wgpu::{wgpu};
 pub struct App {
     #[cfg(target_arch = "wasm32")]
     proxy: Option<winit::event_loop::EventLoopProxy<State>>,
@@ -98,6 +98,11 @@ impl ApplicationHandler<World> for App {
         _window_id: winit::window::WindowId,
         event: WindowEvent,
     ) {
+        let state = self.state.as_mut().unwrap();
+        state
+            .egui_renderer
+            .handle_input(state.window.as_ref(), &event);
+
         let world = match &mut self.state {
             Some(canvas) => canvas,
             None => return,

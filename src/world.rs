@@ -1,7 +1,9 @@
 use std::sync::Arc;
+use egui_wgpu::wgpu;
 use wgpu::util::DeviceExt;
 use winit::window::Window;
 use crate::{Color, Rigidbody, Vec2, Vec4};
+use crate::egui_tools::EguiRenderer;
 use crate::spring::Spring;
 use crate::utility::date;
 
@@ -56,7 +58,7 @@ pub struct World {
     pub surface: wgpu::Surface<'static>,
     pub device: wgpu::Device,
     pub queue: wgpu::Queue,
-    config: wgpu::SurfaceConfiguration,
+    pub(crate) config: wgpu::SurfaceConfiguration,
     pub is_surface_configured: bool,
     pub render_pipeline: wgpu::RenderPipeline,
     // NEW!
@@ -93,6 +95,8 @@ pub struct World {
 
     pub parameters: Parameters,
     pub timer: f64,
+    pub egui_renderer: EguiRenderer,
+    pub is_pointer_used: bool,
 }
 
 impl World {
@@ -126,7 +130,7 @@ impl World {
                 compatible_surface: Some(&surface),
                 force_fallback_adapter: false,
             })
-            .await?;
+            .await.unwrap();
 
         let (device, queue) = adapter
             .request_device(&wgpu::DeviceDescriptor {
@@ -140,8 +144,7 @@ impl World {
                     wgpu::Limits::default()
                 },
                 memory_hints: Default::default(),
-                trace: wgpu::Trace::Off, // Trace path
-            })
+            }, None)
             .await?;
 
         let surface_caps = surface.get_capabilities(&adapter);
@@ -265,6 +268,7 @@ impl World {
         });
         let num_indices = indices.len() as u32;
 
+        let egui_renderer = EguiRenderer::new(&device, config.format, None, 1, &window);
 
         #[cfg(all(target_os = "windows", target_arch = "x86_64", target_env = "gnu"))]
         let scaling_factor = 0.1;
@@ -303,6 +307,8 @@ impl World {
             parameters,
             camera_pos: uniforms.camera_pos,
             timer: 0.0,
+            egui_renderer,
+            is_pointer_used: false,
         })
     }
 
@@ -319,31 +325,27 @@ impl World {
         if self.parameters.delta_time == 0.0 {
             self.delta_time = date::now() - self.start_time;
             self.start_time = date::now();
-
+            self.delta_time /= 2.0;
         }
         else{
             self.delta_time = self.parameters.delta_time;
         }
+        self.handle_input();
 
-
+        for i in 0..self.polygons.len(){
+            if i < self.polygons.len() && self.parameters.world_size > 0.0 && self.polygons[i].center.distance(&Vec2::zero()) > self.parameters.world_size {
+                self.remove_rigidbody(i);
+            }
+        }
         if self.is_running == true{
             for _i in 0..self.parameters.updates_per_frame {
                 self.update_physics();
             }
         }
-
-        for i in 0..self.polygons.len() {
-            if self.polygons[i].center.distance(&Vec2::zero()) > self.parameters.world_size {
-                self.remove_rigidbody(i);
-                break;
-            }
-        }
-
         self.frame_count += 1;
         if self.frame_count % 10 == 0 {
             self.fps = 10.0 / (date::now() - self.timer);
             self.timer = date::now();
-            println!("FPS: {}", self.fps);
         }
 
         self.total_energy = 0.0;

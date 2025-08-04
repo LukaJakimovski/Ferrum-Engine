@@ -49,9 +49,11 @@ impl World {
         else if y_sections == 0 {y_sections = 1}
         let section_count: usize = x_sections * y_sections;
         let x_range = x_max - x_min;
-        let x_interval = x_range / x_sections as f32;
+        let mut x_interval = x_range / x_sections as f32;
+        if x_interval <= 0.0001 {x_interval = 0.0001}
         let y_range = y_max - y_min;
-        let y_interval = y_range / y_sections as f32;
+        let mut y_interval = y_range / y_sections as f32;
+        if y_interval <= 0.0001 {y_interval = 0.0001}
 
         let mut sections: Vec<Vec<usize>> = Vec::with_capacity(x_sections as usize);
         for _i in 0..section_count {
@@ -106,19 +108,6 @@ impl World {
                 }
             }
         }
-
-        /*
-        for i in 0..self.polygons.len() {
-            if !self.polygons[i].collision {continue;};
-            for j in i+1..self.polygons.len() {
-                if !self.polygons[j].collision {continue;};
-                let (left, right) = self.polygons.split_at_mut(j);
-                let a = &mut left[i];
-                let b = &mut right[0];
-                Self::check_and_resolve(&self.parameters, a, b);
-            }
-        }
-        */
     }
     
     pub fn check_and_resolve(parameters: &Parameters, body1: &mut Rigidbody, body2: &mut Rigidbody) {

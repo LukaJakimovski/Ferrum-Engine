@@ -6,9 +6,11 @@ edition = "2024"
 [dependencies]
 rand = "0.9.2"
 anyhow = "1.0"
-winit = { version = "0.30", features = ["android-native-activity"] }
 env_logger = "0.11.8"
 log = "0.4"
-wgpu = "26.0.1"
 pollster = "0.4.0"
 bytemuck = "1.23.1"
+egui = "0.31.1"
+egui-wgpu = { version = "0.31.1",features = ["winit"] }
+egui-winit = "0.31.1"
+winit = "0.30.9"
