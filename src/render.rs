@@ -16,7 +16,6 @@ impl World {
                 springs.iter().map(|s| s.connector.indices.len()).sum::<usize>()
         );
         let mut start_index: u32 = 0;
-
         // Helper closure to process each connector-like structure
         let mut process = |verts: &[Vertex], center: Vec2, indices_src: &[u32]| {
             let color = verts[0].color;
@@ -116,7 +115,6 @@ impl World {
 
         self.queue.submit(iter::once(encoder.finish()));
         output.present();
-
         Ok(())
     }
 }

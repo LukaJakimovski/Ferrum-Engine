@@ -43,6 +43,6 @@ fn main() {
     ));
 
     
-    let parameters = Parameters {delta_time: 0.0, updates_per_frame: 1, angular_velocity: true, camera_pos: Vec4{ x: 0.0, y: 0.0, z: 0.0, w: -6.0}, gravity: false, world_size: 300.0 };
+    let parameters = Parameters {delta_time: 0.0, updates_per_frame: 1, angular_velocity: true, camera_pos: Vec4{ x: 0.0, y: 0.0, z: 0.0, w: -6.0}, gravity: false, world_size: 300.0, gravity_force: Vec2::new(0.0, -9.81)  };
     run(polygons, springs, parameters).unwrap();
 }

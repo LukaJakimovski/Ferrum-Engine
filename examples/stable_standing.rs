@@ -12,6 +12,6 @@ fn main() {
     for polygon in &mut polygons {
         polygon.rotate(1.0);
     }
-    let parameters = Parameters {delta_time: 0.00001, updates_per_frame: 25, angular_velocity: true, camera_pos: Vec4{ x: 0.0, y: 2.5, z: 0.0, w: -3.0}, gravity: true, world_size: 300.0 };
+    let parameters = Parameters {delta_time: 0.00001, updates_per_frame: 25, angular_velocity: true, camera_pos: Vec4{ x: 0.0, y: 2.5, z: 0.0, w: -3.0}, gravity: true, world_size: 300.0, gravity_force: Vec2::new(0.0, -9.81)  };
     run(polygons, vec![], parameters).unwrap();
 }

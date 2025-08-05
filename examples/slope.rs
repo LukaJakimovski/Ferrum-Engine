@@ -11,6 +11,6 @@ fn main() {
         polygons.push(Rigidbody::polygon(32, 0.3533, Vec2{x: 2.5, y: 6.0 + i as f32 * 2.0}, 1.0, 1.0, Color::random()));
     }
     
-    let parameters = Parameters {delta_time: 1.0 / 1000.0, updates_per_frame: 10, angular_velocity: true, camera_pos: Vec4{ x: 0.0, y: 0.0, z: 0.0, w: -10.0}, gravity: true, world_size: 300.0 };
+    let parameters = Parameters {delta_time: 1.0 / 1000.0, updates_per_frame: 10, angular_velocity: true, camera_pos: Vec4{ x: 0.0, y: 0.0, z: 0.0, w: -10.0}, gravity: true, world_size: 300.0, gravity_force: Vec2::new(0.0, -9.81)  };
     run(polygons, vec![], parameters).unwrap();
 }

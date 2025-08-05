@@ -4,7 +4,7 @@ use crate::{Parameters, Rigidbody};
 use crate::world::World;
 
 impl World {
-    pub fn separate_into_section(&mut self) -> Vec<Vec<usize>>{
+    pub fn separate_into_section(&mut self) -> Vec<Vec<u16>>{
         let mut x_min = f32::MAX;
         let mut x_max = f32::MIN;
         let mut y_min = f32::MAX;
@@ -55,7 +55,7 @@ impl World {
         let mut y_interval = y_range / y_sections as f32;
         if y_interval <= 0.0001 {y_interval = 0.0001}
 
-        let mut sections: Vec<Vec<usize>> = Vec::with_capacity(x_sections as usize);
+        let mut sections: Vec<Vec<u16>> = Vec::with_capacity(x_sections);
         for _i in 0..section_count {
             sections.push(vec![]);
         }
@@ -66,17 +66,39 @@ impl World {
         for i in 0..self.polygons.len() {
             let x_index: usize = (self.polygons[i].center.x / x_interval) as usize;
             let y_index: usize = (self.polygons[i].center.y / y_interval) as usize;
-            let mut index = x_index + y_index * x_sections as usize;
+            let mut index = x_index + y_index * x_sections;
             if index >= sections.len() {index = sections.len() - 1}
-            sections[index].push(i);
+            sections[index].push(i as u16);
         }
 
+        let x = x_sections;
         for i in 0..sections.len() - 1 {
             let (left, right) = sections.split_at_mut(i + 1);
-            if (i as i32) < section_count as i32 && x_sections > 1{ left[i].extend_from_slice(&*right[0]); }; // Right
-            if (i as i32) < section_count as i32 - x_sections as i32 { left[i].extend(&*right[x_sections - 1]); }; // Down
-            if (i as i32) < section_count as i32 - x_sections as i32 - 1 && x_sections > 1{ left[i].extend(&*right[x_sections]); }; // Down right
-            if (i as i32) < section_count as i32 - x_sections as i32 - 1 && x_sections > 1 { left[i].extend(&*right[x_sections - 2]); }; // Down left
+            let current = &mut left[i];
+
+            let is_not_right_edge = x > 1 && (i + 1) % x != 0;
+            let is_not_left_edge = x > 1 && i % x != 0;
+            let row_valid = i + x < section_count;
+
+            // Right neighbor
+            if is_not_right_edge {
+                current.extend_from_slice(&right[0]);
+            }
+
+            // Down neighbor
+            if row_valid {
+                current.extend_from_slice(&right[x - 1]);
+            }
+
+            // Down-right neighbor
+            if row_valid && is_not_right_edge {
+                current.extend_from_slice(&right[x]);
+            }
+
+            // Down-left neighbor
+            if row_valid && is_not_left_edge {
+                current.extend_from_slice(&right[x - 2]);
+            }
         }
         sections
     }
@@ -86,21 +108,21 @@ impl World {
         let sections = self.separate_into_section();
         for section in sections {
             for i in 0..section.len() {
-                if !self.polygons[section[i]].collision {continue;};
+                if !self.polygons[section[i] as usize].collision {continue;};
                 for j in i+1..section.len() {
-                    if !self.polygons[section[j]].collision {continue;};
+                    if !self.polygons[section[j] as usize].collision {continue;};
                     if section[i] == 0 && section[j] == 0{
                         continue;
                     }
                     else if section[j] > section[i] {
-                        let (left, right) = self.polygons.split_at_mut(section[j]);
-                        let a = &mut left[section[i]];
+                        let (left, right) = self.polygons.split_at_mut(section[j] as usize);
+                        let a = &mut left[section[i] as usize];
                         let b = &mut right[0];
                         Self::check_and_resolve(&self.parameters, a, b);
                     }
                     else if section[i] > section[j] {
-                        let (left, right) = self.polygons.split_at_mut(section[i]);
-                        let a = &mut left[section[j]];
+                        let (left, right) = self.polygons.split_at_mut(section[i]  as usize);
+                        let a = &mut left[section[j] as usize];
                         let b = &mut right[0];
                         Self::check_and_resolve(&self.parameters, a, b);
                     }
@@ -189,7 +211,7 @@ impl World {
         self.collision_resolution();
         let g: Vec2;
         if self.parameters.gravity == true{
-            g = Vec2 { x: 0.0, y: -9.81 };
+            g = self.parameters.gravity_force;
         } else{
             g = Vec2 { x: 0.0, y: 0.0 };
         }

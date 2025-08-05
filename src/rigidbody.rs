@@ -4,6 +4,7 @@ use crate::math::*;
 use crate::ode_solver::rk4_step;
 use crate::world::Vertex;
 #[derive(Clone)] #[derive(Default)]
+#[derive(Debug)]
 pub struct Rigidbody {
     pub center: Vec2,
     pub vertices: Vec<Vertex>,
@@ -19,6 +20,7 @@ pub struct Rigidbody {
     pub torque: f32,
     pub angle: f32,
     pub collision: bool,
+    pub gravity_multiplier: f32,
 }
 
 pub struct RigidbodyBuilder {
@@ -36,6 +38,7 @@ pub struct RigidbodyBuilder {
     pub(crate) velocity: Vec2,
     pub(crate) body_type: RigidBodyType,
     pub(crate) color_type: ColorType,
+    pub(crate) gravity_multiplier: f32,
 }
 
 impl RigidbodyBuilder {
@@ -62,6 +65,7 @@ impl RigidbodyBuilder {
         rigidbody.rotate(self.rotation);
         rigidbody.angular_velocity = self.angular_velocity;
         rigidbody.velocity = self.velocity;
+        rigidbody.gravity_multiplier = self.gravity_multiplier;
         rigidbody
     }
 }
@@ -90,6 +94,7 @@ impl Rigidbody {
             torque: 0.0,
             angle: 0.0,
             collision: true,
+            gravity_multiplier: 1.0,
         };
         polygon.calculate_properties();
         polygon
@@ -120,6 +125,7 @@ impl Rigidbody {
             torque: 0.0,
             angle: 0.0,
             collision: true,
+            gravity_multiplier: 1.0,
         };
         polygon.calculate_properties();
         polygon
@@ -162,6 +168,7 @@ impl Rigidbody {
             torque: 0.0,
             angle: 0.0,
             collision: true,
+            gravity_multiplier: 1.0,
         };
         polygon.calculate_properties();
         polygon
@@ -276,7 +283,7 @@ impl Rigidbody {
     }
 
     pub fn update_rigidbody(&mut self, g: Vec2, dt: f32) {
-        let force = |_: f32, _: Vec2, _: Vec2| g + self.force;
+        let force = |_: f32, _: Vec2, _: Vec2| g * self.mass * self.gravity_multiplier + self.force;
         let (new_x, new_v) = rk4_step(0.0, self.center, self.velocity, dt, self.mass, &force);
         self.rotate(self.angular_velocity * dt);
         self.angle += self.angular_velocity * dt;

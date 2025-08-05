@@ -1,9 +1,10 @@
 use winit::dpi::PhysicalPosition;
 use winit::event::{ElementState, MouseButton, MouseScrollDelta};
 use winit::event_loop::ActiveEventLoop;
-use crate::enums::{Keys, Mouse};
+use crate::enums::{InputMode, Keys, Mouse};
 use crate::{Color, Rigidbody, RigidbodyBuilder, Vec2, World};
 use crate::collision_detection::sat_collision;
+use crate::spring::Spring;
 
 impl World {
     pub(crate) fn handle_key(&mut self, event_loop: &ActiveEventLoop, key: winit::keyboard::KeyCode, _pressed: bool) {
@@ -69,6 +70,34 @@ impl World {
         if self.pressed_keys[Keys::A as usize] == 1 {self.camera_pos.x -= 5.0 * self.delta_time as f32;}
         if self.pressed_keys[Keys::S as usize] == 1 {self.camera_pos.y -= 5.0 * self.delta_time as f32;}
         if self.pressed_keys[Keys::D as usize] == 1 {self.camera_pos.x += 5.0 * self.delta_time as f32;}
+
+        if self.pressed_buttons[Mouse::Left as usize] == 1 && self.input_mode == InputMode::Drag {
+            if self.selected_polygon.is_some(){
+                let position = Vec2 {
+                    x: ((self.mouse_pos.0 * 2.0 - self.config.width as f32) / self.config.width as f32+ self.camera_pos.x / (-self.camera_pos.w + 1.0)) * (-self.camera_pos.w + 1.0),
+                    y: ((self.mouse_pos.1 * 2.0 - self.config.height as f32) /self.config.height as f32 + self.camera_pos.y / -(-self.camera_pos.w + 1.0)) * -(-self.camera_pos.w + 1.0) * self.config.height as f32 / self.config.width as f32};
+                let mut mouse_polygon = Rigidbody::rectangle(0.03, 0.03, position, 1000.0, 1.0, Color::random());
+                mouse_polygon.collision = false;
+                let selected_polygon = &mut self.polygons[self.selected_polygon.unwrap()];
+                if !self.dragging{
+                    self.anchor_pos = mouse_polygon.center - selected_polygon.center;
+                    self.polygons.push(mouse_polygon);
+                    let length = self.polygons.len() - 1;
+                    let spring = Spring::new(self.selected_polygon.unwrap(), length, self.anchor_pos, Vec2::zero(), 0.0, 10.0, 0.0, &self.polygons);
+                    self.springs.push(spring);
+                    self.temp_springs.push(self.springs.len() - 1);
+                    self.temp_polygons.push(self.polygons.len() - 1);
+                }
+                println!("Springs {:?}", self.springs.len());
+                let index = self.temp_polygons[0];
+                if index < self.polygons.len() {
+                    let diff = position - self.polygons[index].center;
+                    self.polygons[index].translate(diff);
+                }
+                self.dragging = true;
+
+            }
+        }
     }
 
     pub(crate) fn handle_scroll(&mut self, delta: MouseScrollDelta) {
@@ -98,13 +127,49 @@ impl World {
             x: ((self.mouse_pos.0 * 2.0 - size.width as f32) / size.width as f32+ self.camera_pos.x / (-self.camera_pos.w + 1.0)) * (-self.camera_pos.w + 1.0),
             y: ((self.mouse_pos.1 * 2.0 - size.height as f32) /size.height as f32 + self.camera_pos.y / -(-self.camera_pos.w + 1.0)) * -(-self.camera_pos.w + 1.0) * size.height as f32 / size.width as f32};
         if button == MouseButton::Left {
-            if state.is_pressed() && !self.is_pointer_used {
+            if state.is_pressed() && !self.is_pointer_used && self.input_mode == InputMode::Spawn {
                 self.pressed_buttons[Mouse::Left as usize] = 1;
                 self.polygons.push(RigidbodyBuilder::create_body(&self.spawn_parameters));
                 let length = self.polygons.len() - 1;
                 self.polygons[length].translate(position);
-            }
-            else { self.pressed_buttons[Mouse::Left as usize] = 0; }
+            } else if state.is_pressed() && !self.is_pointer_used && self.input_mode == InputMode::Select{
+                self.pressed_buttons[Mouse::Left as usize] = 1;
+                let mouse_polygon = Rigidbody::rectangle(0.03, 0.03, position, 1.0, 1.0, Color::random());
+                for i in 0..self.polygons.len() {
+                    let result = sat_collision(&self.polygons[i], &mouse_polygon);
+                    if result[1].y != 0.0{
+                        self.selected_polygon = Some(i);
+                        break;
+                    }
+                }
+            } else if state.is_pressed() && !self.is_pointer_used && self.input_mode == InputMode::Drag {
+                self.pressed_buttons[Mouse::Left as usize] = 1;
+                let position = Vec2 {
+                    x: ((self.mouse_pos.0 * 2.0 - self.config.width as f32) / self.config.width as f32 + self.camera_pos.x / (-self.camera_pos.w + 1.0)) * (-self.camera_pos.w + 1.0),
+                    y: ((self.mouse_pos.1 * 2.0 - self.config.height as f32) / self.config.height as f32 + self.camera_pos.y / -(-self.camera_pos.w + 1.0)) * -(-self.camera_pos.w + 1.0) * self.config.height as f32 / self.config.width as f32
+                };
+                let mouse_polygon = Rigidbody::rectangle(0.03, 0.03, position, 1.0, 1.0, Color::random());
+                for i in 0..self.polygons.len() {
+                    let result = sat_collision(&self.polygons[i], &mouse_polygon);
+                    if result[1].y != 0.0 {
+                        self.selected_polygon = Some(i);
+                        break;
+                    }
+                }
+            } else if !state.is_pressed() && self.input_mode != InputMode::Select {
+                println!("ERASED");
+                for index in &self.temp_polygons{
+                    self.polygons.remove(*index);
+                }
+                for index in &self.temp_springs{
+                    self.springs.remove(*index);
+                }
+                self.temp_springs.clear();
+                self.temp_polygons.clear();
+                self.dragging = false;
+                self.selected_polygon = None;
+                self.pressed_buttons[Mouse::Left as usize] = 0;
+            } else { self.pressed_buttons[Mouse::Left as usize] = 0; }
 
         }
         if button == MouseButton::Right {

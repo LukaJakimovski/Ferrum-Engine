@@ -4,7 +4,7 @@ use wgpu::util::DeviceExt;
 use winit::window::Window;
 use crate::{Color, Rigidbody, RigidbodyBuilder, Vec2, Vec4};
 use crate::egui_tools::EguiRenderer;
-use crate::enums::{ColorType, RigidBodyType};
+use crate::enums::{ColorType, InputMode, RigidBodyType};
 use crate::spring::Spring;
 use crate::utility::date;
 
@@ -16,6 +16,7 @@ pub struct Parameters{
     pub camera_pos: Vec4,
     pub gravity: bool,
     pub world_size: f32,
+    pub gravity_force: Vec2
 }
 
 #[repr(C)]
@@ -100,6 +101,13 @@ pub struct World {
 
     pub menus: [bool; 8],
     pub spawn_parameters: RigidbodyBuilder,
+
+    pub input_mode: InputMode,
+    pub selected_polygon: Option<usize>,
+    pub temp_polygons: Vec<usize>,
+    pub temp_springs: Vec<usize>,
+    pub anchor_pos: Vec2,
+    pub dragging: bool,
 }
 
 impl World {
@@ -289,6 +297,7 @@ impl World {
             velocity: Vec2::zero(),
             body_type: RigidBodyType::RegularPolygon,
             color_type: ColorType::Random,
+            gravity_multiplier: 1.0,
         };
         #[cfg(all(target_os = "windows", target_arch = "x86_64", target_env = "gnu"))]
         let scaling_factor = 0.1;
@@ -331,6 +340,12 @@ impl World {
             is_pointer_used: false,
             menus: [false; 8],
             spawn_parameters,
+            input_mode: InputMode::Spawn,
+            selected_polygon: None,
+            temp_polygons: vec![],
+            temp_springs: vec![],
+            anchor_pos: Vec2::new(0.0, 0.0),
+            dragging: false,
         })
     }
 
@@ -352,6 +367,10 @@ impl World {
         else{
             self.delta_time = self.parameters.delta_time;
         }
+        for spring in &mut self.springs{
+            spring.update_connector(&mut self.polygons);
+        }
+
         self.handle_input();
 
         for i in 0..self.polygons.len(){

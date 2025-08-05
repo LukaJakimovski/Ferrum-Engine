@@ -64,6 +64,8 @@ pub enum Menu{
     Energy = 2,
     Camera = 3,
     Spawner = 4,
+    Input = 5,
+    Editor = 6,
 }
 
 #[repr(usize)]
@@ -77,4 +79,11 @@ pub enum RigidBodyType{
 pub enum ColorType{
     Random = 0,
     Set = 1,
+}
+
+#[derive(Debug, PartialEq)]
+pub enum InputMode{
+    Spawn = 0,
+    Select = 1,
+    Drag = 2,
 }

@@ -14,6 +14,16 @@ impl World{
                 self.springs[i].body_b -= 1;
             }
         }
+        for i in 0..self.temp_springs.len(){
+            if self.temp_springs[i] > index{
+                self.temp_springs[i] -= 1;
+            }
+        }
+        for i in 0..self.temp_polygons.len(){
+            if self.temp_polygons[i] > index{
+                self.temp_polygons[i] -= 1;
+            }
+        }
     }
 }
 

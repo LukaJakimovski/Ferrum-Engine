@@ -3,7 +3,7 @@ use crate::math::*;
 use crate::ode_solver::{rk4_angular_step, rk4_step};
 use crate::rigidbody::Rigidbody;
 
-#[derive(Clone)] #[derive(Default)]
+#[derive(Clone, Debug)] #[derive(Default)]
 pub struct Spring {
     pub body_a: usize,         // Index or ID of first body
     pub body_b: usize,         // Index or ID of second body
@@ -33,7 +33,7 @@ impl Spring {
 
         let mut connector = Rigidbody::rectangle(0.1, distance, Vec2::new((world_anchor_a.x + world_anchor_b.x) / 2.0, (world_anchor_a.y + world_anchor_b.y) / 2.0), 1.0, 1.0, Color::white());
         let angle = direction.angle(&Vec2::new(0.0, -1.0));
-        if direction.x < 0.0 && direction.y < 0.0{
+        if direction.x < 0.0{
             connector.rotate(-angle);
         }
         else{
@@ -143,7 +143,11 @@ impl Spring {
         let diff = new_angle_b - self.angle_b;
         self.angle_b = new_angle_b;
         self.anchor_b.rotate(&Vec2::zero(), diff);
-
+    }
+    
+    pub fn update_connector(&mut self, rigidbodys: &Vec<Rigidbody>){
+        let a = &rigidbodys[self.body_a];
+        let b = &rigidbodys[self.body_b];
         let world_anchor_a = a.center + self.anchor_a;
         let world_anchor_b = b.center + self.anchor_b;
 
