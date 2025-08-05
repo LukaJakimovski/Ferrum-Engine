@@ -1,6 +1,6 @@
 #[repr(usize)]
 #[allow(dead_code)]
-pub enum Keys{
+pub enum Keys {
     A = 0,
     B = 1,
     C = 2,
@@ -51,14 +51,14 @@ pub enum Keys{
 }
 
 #[repr(usize)]
-pub enum Mouse{
+pub enum Mouse {
     Left = 0,
     Right = 1,
     Middle = 2,
 }
 
 #[repr(usize)]
-pub enum Menu{
+pub enum Menu {
     Config = 0,
     FPS = 1,
     Energy = 2,
@@ -71,20 +71,20 @@ pub enum Menu{
 
 #[repr(usize)]
 #[derive(Debug, PartialEq)]
-pub enum BodyType{
+pub enum BodyType {
     RegularPolygon = 0,
     Rectangle = 1,
     Spring = 2,
 }
 
 #[derive(Debug, PartialEq, Clone)]
-pub enum ColorType{
+pub enum ColorType {
     Random = 0,
     Set = 1,
 }
 
 #[derive(Debug, PartialEq)]
-pub enum InputMode{
+pub enum InputMode {
     Spawn = 0,
     Select = 1,
     Drag = 2,

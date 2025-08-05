@@ -1,19 +1,28 @@
+use crate::spring::Spring;
+use crate::{Rigidbody, Vec2, Vertex, World};
+use egui_wgpu::wgpu;
 use std::iter;
 use wgpu::util::DeviceExt;
-use crate::{Rigidbody, Vec2, Vertex, World};
-use crate::spring::Spring;
-use egui_wgpu::{wgpu};
 
 impl World {
-    pub fn get_vertices_and_indices(polygons: &Vec<Rigidbody>, springs: &Vec<Spring>) -> (Vec<Vertex>, Vec<u32>){
+    pub fn get_vertices_and_indices(
+        polygons: &Vec<Rigidbody>,
+        springs: &Vec<Spring>,
+    ) -> (Vec<Vertex>, Vec<u32>) {
         let mut vertices: Vec<Vertex> = Vec::with_capacity(
-            polygons.iter().map(|p| p.vertices.len() + 1).sum::<usize>() +
-                springs.iter().map(|s| s.connector.vertices.len() + 1).sum::<usize>()
+            polygons.iter().map(|p| p.vertices.len() + 1).sum::<usize>()
+                + springs
+                    .iter()
+                    .map(|s| s.connector.vertices.len() + 1)
+                    .sum::<usize>(),
         );
 
         let mut indices: Vec<u32> = Vec::with_capacity(
-            polygons.iter().map(|p| p.indices.len()).sum::<usize>() +
-                springs.iter().map(|s| s.connector.indices.len()).sum::<usize>()
+            polygons.iter().map(|p| p.indices.len()).sum::<usize>()
+                + springs
+                    .iter()
+                    .map(|s| s.connector.indices.len())
+                    .sum::<usize>(),
         );
         let mut start_index: u32 = 0;
         // Helper closure to process each connector-like structure
@@ -31,7 +40,11 @@ impl World {
         }
 
         for spring in springs {
-            process(&spring.connector.vertices, spring.connector.center, &spring.connector.indices);
+            process(
+                &spring.connector.vertices,
+                spring.connector.center,
+                &spring.connector.indices,
+            );
         }
 
         (vertices, indices)
@@ -82,7 +95,11 @@ impl World {
             let size = self.window.inner_size();
             self.uniforms.camera_pos = self.camera_pos;
             self.uniforms.aspect_ratio = size.width as f32 / size.height as f32;
-            self.queue.write_buffer(&self.uniforms_buffer, 0, bytemuck::cast_slice(&[self.uniforms]));
+            self.queue.write_buffer(
+                &self.uniforms_buffer,
+                0,
+                bytemuck::cast_slice(&[self.uniforms]),
+            );
             self.queue.submit(None);
 
             // Only update and draw if there are vertices/indices
@@ -90,23 +107,28 @@ impl World {
                 self.vertex_buffer.destroy();
                 self.index_buffer.destroy();
 
-                self.vertex_buffer = self.device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
-                    label: Some("Vertex Buffer"),
-                    contents: bytemuck::cast_slice(&vertices),
-                    usage: wgpu::BufferUsages::VERTEX | wgpu::BufferUsages::COPY_DST,
-                });
+                self.vertex_buffer =
+                    self.device
+                        .create_buffer_init(&wgpu::util::BufferInitDescriptor {
+                            label: Some("Vertex Buffer"),
+                            contents: bytemuck::cast_slice(&vertices),
+                            usage: wgpu::BufferUsages::VERTEX | wgpu::BufferUsages::COPY_DST,
+                        });
 
-                self.index_buffer = self.device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
-                    label: Some("Index Buffer"),
-                    contents: bytemuck::cast_slice(&indices),
-                    usage: wgpu::BufferUsages::INDEX | wgpu::BufferUsages::COPY_DST,
-                });
+                self.index_buffer =
+                    self.device
+                        .create_buffer_init(&wgpu::util::BufferInitDescriptor {
+                            label: Some("Index Buffer"),
+                            contents: bytemuck::cast_slice(&indices),
+                            usage: wgpu::BufferUsages::INDEX | wgpu::BufferUsages::COPY_DST,
+                        });
 
                 self.num_indices = indices.len() as u32;
                 render_pass.set_pipeline(&self.render_pipeline);
                 render_pass.set_bind_group(0, &self.uniforms_bind_group, &[]);
                 render_pass.set_vertex_buffer(0, self.vertex_buffer.slice(..));
-                render_pass.set_index_buffer(self.index_buffer.slice(..), wgpu::IndexFormat::Uint32);
+                render_pass
+                    .set_index_buffer(self.index_buffer.slice(..), wgpu::IndexFormat::Uint32);
                 render_pass.draw_indexed(0..self.num_indices, 0, 0..1);
             }
         }

@@ -1,20 +1,23 @@
-use std::ops::{Add, Sub, Mul, Div, AddAssign, SubAssign, MulAssign, DivAssign, Neg};
 use std::fmt;
+use std::ops::{Add, AddAssign, Div, DivAssign, Mul, MulAssign, Neg, Sub, SubAssign};
 
-#[repr(C)] #[derive(Clone, Debug, Default, Copy,  bytemuck::Pod, bytemuck::Zeroable)]
+#[repr(C)]
+#[derive(Clone, Debug, Default, Copy, bytemuck::Pod, bytemuck::Zeroable)]
 pub struct Vec2 {
     pub x: f32,
     pub y: f32,
 }
 
-#[repr(C)] #[derive(Clone, Debug, Default, Copy,  bytemuck::Pod, bytemuck::Zeroable)]
+#[repr(C)]
+#[derive(Clone, Debug, Default, Copy, bytemuck::Pod, bytemuck::Zeroable)]
 pub struct Vec3 {
     pub x: f32,
     pub y: f32,
     pub z: f32,
 }
 
-#[repr(C)] #[derive(Clone, Copy, Debug, Default, bytemuck::Pod, bytemuck::Zeroable)]
+#[repr(C)]
+#[derive(Clone, Copy, Debug, Default, bytemuck::Pod, bytemuck::Zeroable)]
 pub struct Vec4 {
     pub x: f32,
     pub y: f32,
@@ -84,14 +87,18 @@ impl Vec2 {
         self.x * other.x + self.y * other.y
     }
 
-    pub fn dot_float(&self, scalar: &f32) -> Vec2 { Vec2::new(self.x * scalar,self.y * scalar) }
+    pub fn dot_float(&self, scalar: &f32) -> Vec2 {
+        Vec2::new(self.x * scalar, self.y * scalar)
+    }
 
     /// Cross product of two vectors (returns the z-component since it's 2D)
     pub fn cross(&self, other: &Vec2) -> f32 {
         self.x * other.y - self.y * other.x
     }
 
-    pub fn cross_float(&self, scalar: &f32) -> Vec2 { Vec2::new(self.y * -scalar,self.x  * scalar) }
+    pub fn cross_float(&self, scalar: &f32) -> Vec2 {
+        Vec2::new(self.y * -scalar, self.x * scalar)
+    }
 
     /// Returns the distance between two vectors
     pub fn distance(&self, other: &Vec2) -> f32 {
@@ -159,9 +166,9 @@ impl Vec2 {
     }
 
     /// Rotates a point around another point
-    pub fn rotate(&mut self, other: &Self,  angle: f32) -> &mut Self{
-        let new_x = ((self.x - other.x) * angle.cos()  - (self.y - other.y) * angle.sin()) + other.x;
-        self.y = ((self.x - other.x) * angle.sin()  + (self.y - other.y) * angle.cos()) + other.y;
+    pub fn rotate(&mut self, other: &Self, angle: f32) -> &mut Self {
+        let new_x = ((self.x - other.x) * angle.cos() - (self.y - other.y) * angle.sin()) + other.x;
+        self.y = ((self.x - other.x) * angle.sin() + (self.y - other.y) * angle.cos()) + other.y;
         self.x = new_x;
         self
     }
@@ -183,7 +190,7 @@ impl Add<f32> for Vec2 {
     type Output = Self;
 
     fn add(self, rhs: f32) -> Self::Output {
-        Self{
+        Self {
             x: self.x + rhs,
             y: self.y + rhs,
         }
@@ -205,7 +212,7 @@ impl Sub<f32> for Vec2 {
     type Output = Vec2;
 
     fn sub(self, rhs: f32) -> Self::Output {
-        Self{
+        Self {
             x: self.x - rhs,
             y: self.y - rhs,
         }
@@ -326,9 +333,12 @@ impl Mul<f32> for Vec2 {
 
 impl Mul<Vec2> for f32 {
     type Output = Vec2;
-    
+
     fn mul(self, rhs: Vec2) -> Vec2 {
-        Vec2{x: self * rhs.x, y: self * rhs.y}
+        Vec2 {
+            x: self * rhs.x,
+            y: self * rhs.y,
+        }
     }
 }
 

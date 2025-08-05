@@ -1,13 +1,13 @@
+use crate::spring::Spring;
+use crate::world::Parameters;
+use crate::{Rigidbody, World};
+use egui_wgpu::wgpu;
 use std::sync::Arc;
 use winit::application::ApplicationHandler;
 use winit::event::{KeyEvent, WindowEvent};
 use winit::event_loop::{ActiveEventLoop, EventLoop};
 use winit::keyboard::PhysicalKey;
 use winit::window::Window;
-use crate::world::{Parameters};
-use crate::{Rigidbody, World};
-use crate::spring::Spring;
-use egui_wgpu::{wgpu};
 pub struct App {
     #[cfg(target_arch = "wasm32")]
     proxy: Option<winit::event_loop::EventLoopProxy<State>>,
@@ -18,10 +18,12 @@ pub struct App {
 }
 
 impl App {
-    pub fn new(#[cfg(target_arch = "wasm32")] event_loop: &EventLoop<State>,
-               polygons: Vec<Rigidbody>,
-               springs: Vec<Spring>,
-               parameters: Parameters,) -> Self {
+    pub fn new(
+        #[cfg(target_arch = "wasm32")] event_loop: &EventLoop<State>,
+        polygons: Vec<Rigidbody>,
+        springs: Vec<Spring>,
+        parameters: Parameters,
+    ) -> Self {
         #[cfg(target_arch = "wasm32")]
         let proxy = Some(event_loop.create_proxy());
         Self {
@@ -30,7 +32,7 @@ impl App {
             proxy,
             polygons,
             springs,
-            parameters
+            parameters,
         }
     }
 }
@@ -60,20 +62,30 @@ impl ApplicationHandler<World> for App {
         {
             // If we are not on web we can use pollster to
             // await the
-            self.state = Some(pollster::block_on(World::new(window, self.polygons.clone(), self.springs.clone(), self.parameters.clone())).unwrap());
+            self.state = Some(
+                pollster::block_on(World::new(
+                    window,
+                    self.polygons.clone(),
+                    self.springs.clone(),
+                    self.parameters.clone(),
+                ))
+                .unwrap(),
+            );
         }
 
         #[cfg(target_arch = "wasm32")]
         {
             if let Some(proxy) = self.proxy.take() {
                 wasm_bindgen_futures::spawn_local(async move {
-                    assert!(proxy
-                        .send_event(
-                            State::new(window)
-                                .await
-                                .expect("Unable to create canvas!!!")
-                        )
-                        .is_ok())
+                    assert!(
+                        proxy
+                            .send_event(
+                                State::new(window)
+                                    .await
+                                    .expect("Unable to create canvas!!!")
+                            )
+                            .is_ok()
+                    )
                 });
             }
         }
@@ -125,14 +137,16 @@ impl ApplicationHandler<World> for App {
                     }
                 }
             }
-            WindowEvent::MouseInput { state, button, .. } => world.handle_mouse_input(state, button),
+            WindowEvent::MouseInput { state, button, .. } => {
+                world.handle_mouse_input(state, button)
+            }
             WindowEvent::KeyboardInput {
                 event:
-                KeyEvent {
-                    physical_key: PhysicalKey::Code(code),
-                    state: key_state,
-                    ..
-                },
+                    KeyEvent {
+                        physical_key: PhysicalKey::Code(code),
+                        state: key_state,
+                        ..
+                    },
                 ..
             } => world.handle_key(event_loop, code, key_state.is_pressed()),
             WindowEvent::MouseWheel { delta, .. } => world.handle_scroll(delta),
@@ -142,7 +156,11 @@ impl ApplicationHandler<World> for App {
     }
 }
 
-pub fn run(rigidbodys: Vec<Rigidbody>, springs: Vec<Spring>, parameters: Parameters) -> anyhow::Result<()> {
+pub fn run(
+    rigidbodys: Vec<Rigidbody>,
+    springs: Vec<Spring>,
+    parameters: Parameters,
+) -> anyhow::Result<()> {
     #[cfg(not(target_arch = "wasm32"))]
     {
         env_logger::init();

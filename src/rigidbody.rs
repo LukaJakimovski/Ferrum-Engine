@@ -2,8 +2,7 @@ use crate::color::Color;
 use crate::math::*;
 use crate::ode_solver::rk4_step;
 use crate::world::Vertex;
-#[derive(Clone)] #[derive(Default)]
-#[derive(Debug)]
+#[derive(Clone, Default, Debug)]
 pub struct Rigidbody {
     pub center: Vec2,
     pub vertices: Vec<Vertex>,
@@ -22,12 +21,43 @@ pub struct Rigidbody {
     pub gravity_multiplier: f32,
 }
 impl Rigidbody {
-    pub fn rectangle(width: f32, height: f32, pos: Vec2, mass: f32, restitution: f32, color: Color) -> Self {
+    pub fn rectangle(
+        width: f32,
+        height: f32,
+        pos: Vec2,
+        mass: f32,
+        restitution: f32,
+        color: Color,
+    ) -> Self {
         let vertices: Vec<Vertex> = vec![
-            Vertex { pos : Vec2 { x: -width/2.0 + pos.x, y: -height/2.0 + pos.y }, color }, // Bottom Left
-            Vertex { pos : Vec2 { x:  width/2.0 + pos.x, y: -height/2.0 + pos.y  }, color }, // Bottom Right
-            Vertex { pos : Vec2 { x:  width/2.0 + pos.x, y:  height/2.0 + pos.y  }, color }, // Top Right
-            Vertex { pos : Vec2 { x: -width/2.0 + pos.x, y:  height/2.0 + pos.y  }, color }, // Top Left
+            Vertex {
+                pos: Vec2 {
+                    x: -width / 2.0 + pos.x,
+                    y: -height / 2.0 + pos.y,
+                },
+                color,
+            }, // Bottom Left
+            Vertex {
+                pos: Vec2 {
+                    x: width / 2.0 + pos.x,
+                    y: -height / 2.0 + pos.y,
+                },
+                color,
+            }, // Bottom Right
+            Vertex {
+                pos: Vec2 {
+                    x: width / 2.0 + pos.x,
+                    y: height / 2.0 + pos.y,
+                },
+                color,
+            }, // Top Right
+            Vertex {
+                pos: Vec2 {
+                    x: -width / 2.0 + pos.x,
+                    y: height / 2.0 + pos.y,
+                },
+                color,
+            }, // Top Left
         ];
 
         let indices: Vec<u32> = vec![0, 1, 2, 0, 2, 3];
@@ -53,13 +83,37 @@ impl Rigidbody {
     }
 
     #[allow(dead_code)]
-    pub fn triangle(width: f32, height: f32, pos: Vec2, mass: f32, restitution: f32, color: Color) -> Self {
+    pub fn triangle(
+        width: f32,
+        height: f32,
+        pos: Vec2,
+        mass: f32,
+        restitution: f32,
+        color: Color,
+    ) -> Self {
         let vertices: Vec<Vertex> = vec![
-            Vertex { pos: Vec2 { x: -width/2.0 + pos.x, y: -height/2.0 + pos.y }, color }, // Bottom Left
-            Vertex { pos : Vec2 { x:  width/2.0 + pos.x, y: -height/2.0 + pos.y  }, color }, // Bottom Right
-            Vertex { pos : Vec2 { x:  pos.x, y:  height/2.0 + pos.y  }, color }, // Top
+            Vertex {
+                pos: Vec2 {
+                    x: -width / 2.0 + pos.x,
+                    y: -height / 2.0 + pos.y,
+                },
+                color,
+            }, // Bottom Left
+            Vertex {
+                pos: Vec2 {
+                    x: width / 2.0 + pos.x,
+                    y: -height / 2.0 + pos.y,
+                },
+                color,
+            }, // Bottom Right
+            Vertex {
+                pos: Vec2 {
+                    x: pos.x,
+                    y: height / 2.0 + pos.y,
+                },
+                color,
+            }, // Top
         ];
-
 
         let indices: Vec<u32> = vec![0, 1, 2];
         let mut polygon = Rigidbody {
@@ -83,14 +137,27 @@ impl Rigidbody {
         polygon
     }
 
-    pub fn polygon(sides: u32, radius: f32, pos: Vec2, mass: f32, restitution: f32, color: Color) -> Self {
+    pub fn polygon(
+        sides: u32,
+        radius: f32,
+        pos: Vec2,
+        mass: f32,
+        restitution: f32,
+        color: Color,
+    ) -> Self {
         let mut vertices: Vec<Vertex> = vec![];
 
         for i in 0..sides {
             let angle = i as f32 * 2.0 * std::f32::consts::PI / sides as f32;
             let x = radius * angle.cos();
             let y = radius * angle.sin();
-            let vertex = Vertex { pos: Vec2 { x: x + pos.x, y: y + pos.y }, color };
+            let vertex = Vertex {
+                pos: Vec2 {
+                    x: x + pos.x,
+                    y: y + pos.y,
+                },
+                color,
+            };
             vertices.push(vertex);
         }
 
@@ -103,7 +170,7 @@ impl Rigidbody {
         }
         indices.push(0);
         indices.push(sides - 1);
-        indices.push(sides );
+        indices.push(sides);
 
         let mut polygon = Rigidbody {
             angular_velocity: 0.0,
@@ -126,13 +193,13 @@ impl Rigidbody {
         polygon
     }
 
-    pub fn calculate_properties(&mut self){
+    pub fn calculate_properties(&mut self) {
         self.calculate_area();
         self.calculate_center_of_mass();
         self.calculate_radius();
         self.calculate_moment_of_inertia();
     }
-    pub fn calculate_radius(&mut self){
+    pub fn calculate_radius(&mut self) {
         let mut max_radius = 0.0;
         for vertex in &self.vertices {
             let distance = vertex.pos.distance(&self.center);
@@ -143,11 +210,11 @@ impl Rigidbody {
         self.radius = max_radius;
     }
 
-    pub fn calculate_area(&mut self){
+    pub fn calculate_area(&mut self) {
         let n = self.vertices.len();
         let mut area = 0.0;
 
-        for i in 0..n{
+        for i in 0..n {
             let iv: &Vec2 = &self.vertices[i].pos;
             let jv: &Vec2 = &self.vertices[(i + 1) % n].pos;
 
@@ -158,9 +225,9 @@ impl Rigidbody {
         self.area = area;
     }
 
-    pub fn calculate_center_of_mass(&mut self){
+    pub fn calculate_center_of_mass(&mut self) {
         let n = self.vertices.len();
-        if n == 0{
+        if n == 0 {
             self.center = Vec2::zero();
             return;
         }
@@ -168,7 +235,7 @@ impl Rigidbody {
         let mut sum_cx = 0.0;
         let mut sum_cy = 0.0;
 
-        for i in 0..n{
+        for i in 0..n {
             let iv: &Vec2 = &self.vertices[i].pos;
             let jv: &Vec2 = &self.vertices[(i + 1) % n].pos;
 
@@ -177,7 +244,6 @@ impl Rigidbody {
             sum_cx += (iv.x + jv.x) * cross;
             sum_cy += (iv.y + jv.y) * cross;
         }
-
 
         if self.area == 0.0 {
             self.center = self.vertices[0].pos.clone();
@@ -188,7 +254,7 @@ impl Rigidbody {
         self.center = Vec2::new(centroid_x, centroid_y);
     }
 
-    pub fn calculate_moment_of_inertia(&mut self){
+    pub fn calculate_moment_of_inertia(&mut self) {
         let n = self.vertices.len();
 
         let mut inertia = 0.0;
@@ -211,7 +277,7 @@ impl Rigidbody {
         self.moment_of_inertia = inertia_centroid * (self.mass / self.area.abs());
     }
 
-    pub fn translate(&mut self, pos: Vec2) -> &mut Self{
+    pub fn translate(&mut self, pos: Vec2) -> &mut Self {
         for vertex in &mut self.vertices {
             vertex.pos += pos;
         }
@@ -219,16 +285,20 @@ impl Rigidbody {
         self
     }
 
-    pub fn rotate(&mut self, angle: f32) -> &mut Self{
+    pub fn rotate(&mut self, angle: f32) -> &mut Self {
         for vertex in &mut self.vertices {
-            let new_x = ((vertex.pos.x - self.center.x) * angle.cos()  - (vertex.pos.y - self.center.y) * angle.sin()) + self.center.x;
-            vertex.pos.y = ((vertex.pos.x - self.center.x) * angle.sin()  + (vertex.pos.y - self.center.y) * angle.cos()) + self.center.y;
+            let new_x = ((vertex.pos.x - self.center.x) * angle.cos()
+                - (vertex.pos.y - self.center.y) * angle.sin())
+                + self.center.x;
+            vertex.pos.y = ((vertex.pos.x - self.center.x) * angle.sin()
+                + (vertex.pos.y - self.center.y) * angle.cos())
+                + self.center.y;
             vertex.pos.x = new_x;
         }
         self
     }
 
-    pub fn change_color(&mut self, color: Color){
+    pub fn change_color(&mut self, color: Color) {
         for vertex in &mut self.vertices {
             vertex.color = color;
         }
@@ -244,11 +314,14 @@ impl Rigidbody {
         self.translate(diff);
     }
 
-    pub fn calculate_energy(&self) -> f64{
+    pub fn calculate_energy(&self) -> f64 {
         let mut kinetic_energy = 0.0;
         kinetic_energy += 0.5 * self.mass * self.velocity.dot(&self.velocity);
-        kinetic_energy += 0.5 * self.moment_of_inertia * self.angular_velocity * self.angular_velocity;
-        if kinetic_energy < 0.0 {return 0.0;}
+        kinetic_energy +=
+            0.5 * self.moment_of_inertia * self.angular_velocity * self.angular_velocity;
+        if kinetic_energy < 0.0 {
+            return 0.0;
+        }
         kinetic_energy as f64
     }
 }

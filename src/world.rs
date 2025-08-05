@@ -1,23 +1,23 @@
-use std::sync::Arc;
-use egui_wgpu::wgpu;
-use wgpu::util::DeviceExt;
-use winit::window::Window;
-use crate::{Color, Rigidbody, Vec2, Vec4};
 use crate::body_builder::{BodyBuilder, RigidbodyParams, SpringParams};
 use crate::egui_tools::EguiRenderer;
-use crate::enums::{ColorType, InputMode, Menu, BodyType};
+use crate::enums::{BodyType, ColorType, InputMode, Menu};
 use crate::spring::Spring;
 use crate::utility::date;
+use crate::{Color, Rigidbody, Vec2, Vec4};
+use egui_wgpu::wgpu;
+use std::sync::Arc;
+use wgpu::util::DeviceExt;
+use winit::window::Window;
 
 #[derive(Clone)]
-pub struct Parameters{
+pub struct Parameters {
     pub delta_time: f64,
     pub updates_per_frame: u32,
     pub angular_velocity: bool,
     pub camera_pos: Vec4,
     pub gravity: bool,
     pub world_size: f32,
-    pub gravity_force: Vec2
+    pub gravity_force: Vec2,
 }
 
 #[repr(C)]
@@ -26,7 +26,6 @@ pub struct Uniforms {
     pub camera_pos: Vec4,
     pub aspect_ratio: f32,
     pub padding: [f32; 7],
-
 }
 
 #[repr(C)]
@@ -113,13 +112,19 @@ pub struct World {
 }
 
 impl World {
-    pub(crate) async fn new(window: Arc<Window>,
-                            polygons: Vec<Rigidbody>,
-                            springs: Vec<Spring>,
-                            parameters: Parameters,) -> anyhow::Result<World> {
+    pub(crate) async fn new(
+        window: Arc<Window>,
+        polygons: Vec<Rigidbody>,
+        springs: Vec<Spring>,
+        parameters: Parameters,
+    ) -> anyhow::Result<World> {
         let size = window.inner_size();
         let aspect_ratio = size.width as f32 / size.height as f32;
-        let uniforms = Uniforms { camera_pos: parameters.camera_pos, aspect_ratio, padding: [0.0; 7] };
+        let uniforms = Uniforms {
+            camera_pos: parameters.camera_pos,
+            aspect_ratio,
+            padding: [0.0; 7],
+        };
         let (vertices, indices) = World::get_vertices_and_indices(&polygons, &springs);
         // The instance is a handle to our GPU
         // BackendBit::PRIMARY => Vulkan + Metal + DX12 + Browser WebGPU
@@ -143,21 +148,25 @@ impl World {
                 compatible_surface: Some(&surface),
                 force_fallback_adapter: false,
             })
-            .await.unwrap();
+            .await
+            .unwrap();
 
         let (device, queue) = adapter
-            .request_device(&wgpu::DeviceDescriptor {
-                label: None,
-                required_features: wgpu::Features::empty(),
-                // WebGL doesn't support all of wgpu's features, so if
-                // we're building for the web we'll have to disable some.
-                required_limits: if cfg!(target_arch = "wasm32") {
-                    wgpu::Limits::downlevel_webgl2_defaults()
-                } else {
-                    wgpu::Limits::default()
+            .request_device(
+                &wgpu::DeviceDescriptor {
+                    label: None,
+                    required_features: wgpu::Features::empty(),
+                    // WebGL doesn't support all of wgpu's features, so if
+                    // we're building for the web we'll have to disable some.
+                    required_limits: if cfg!(target_arch = "wasm32") {
+                        wgpu::Limits::downlevel_webgl2_defaults()
+                    } else {
+                        wgpu::Limits::default()
+                    },
+                    memory_hints: Default::default(),
                 },
-                memory_hints: Default::default(),
-            }, None)
+                None,
+            )
             .await?;
 
         let surface_caps = surface.get_capabilities(&adapter);
@@ -283,25 +292,24 @@ impl World {
 
         let egui_renderer = EguiRenderer::new(&device, config.format, None, 1, &window);
 
-
         let spawn_parameters = BodyBuilder {
             body_type: BodyType::RegularPolygon,
 
-            rigidbody_params: RigidbodyParams{
-            sides: 16,
-            radius: 0.3533,
-            pos: Vec2::zero(),
-            mass: 1.0,
-            width: 0.5,
-            height: 0.5,
-            restitution: 0.8,
-            color: None,
-            collides: true,
-            rotation: 0.0,
-            angular_velocity: 0.0,
-            velocity: Vec2::zero(),
-            color_type: ColorType::Random,
-            gravity_multiplier: 1.0,
+            rigidbody_params: RigidbodyParams {
+                sides: 16,
+                radius: 0.3533,
+                pos: Vec2::zero(),
+                mass: 1.0,
+                width: 0.5,
+                height: 0.5,
+                restitution: 0.8,
+                color: None,
+                collides: true,
+                rotation: 0.0,
+                angular_velocity: 0.0,
+                velocity: Vec2::zero(),
+                color_type: ColorType::Random,
+                gravity_multiplier: 1.0,
             },
 
             spring_params: SpringParams {
@@ -368,7 +376,7 @@ impl World {
                 stiffness: 10.0,
                 dampening: 1.0,
                 ..Default::default()
-            }
+            },
         })
     }
 
@@ -386,22 +394,24 @@ impl World {
             self.delta_time = date::now() - self.start_time;
             self.start_time = date::now();
             self.delta_time /= 2.0;
-        }
-        else{
+        } else {
             self.delta_time = self.parameters.delta_time;
         }
-        for spring in &mut self.springs{
+        for spring in &mut self.springs {
             spring.update_connector(&mut self.polygons);
         }
 
         self.handle_input();
 
-        for i in 0..self.polygons.len(){
-            if i < self.polygons.len() && self.parameters.world_size > 0.0 && self.polygons[i].center.distance(&Vec2::zero()) > self.parameters.world_size {
+        for i in 0..self.polygons.len() {
+            if i < self.polygons.len()
+                && self.parameters.world_size > 0.0
+                && self.polygons[i].center.distance(&Vec2::zero()) > self.parameters.world_size
+            {
                 self.remove_rigidbody(i);
             }
         }
-        if self.is_running == true{
+        if self.is_running == true {
             for _i in 0..self.parameters.updates_per_frame {
                 self.update_physics();
             }

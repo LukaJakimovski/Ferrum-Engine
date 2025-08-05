@@ -1,6 +1,6 @@
-use crate::{Color, Rigidbody, Vec2};
 use crate::enums::{BodyType, ColorType};
 use crate::spring::Spring;
+use crate::{Color, Rigidbody, Vec2};
 
 #[derive(Clone)]
 pub struct RigidbodyParams {
@@ -20,9 +20,8 @@ pub struct RigidbodyParams {
     pub(crate) gravity_multiplier: f32,
 }
 
-#[derive(Clone)]
-#[derive(Default)]
-pub struct SpringParams{
+#[derive(Clone, Default)]
+pub struct SpringParams {
     pub(crate) stiffness: f32,
     pub(crate) dampening: f32,
     pub(crate) rest_length: f32,
@@ -44,20 +43,46 @@ impl BodyBuilder {
         let mut rigidbody: Rigidbody;
         match self.body_type {
             BodyType::Rectangle => {
-                if body_params.color.is_some(){
-                    rigidbody = Rigidbody::rectangle(body_params.width, body_params.height, body_params.pos, body_params.mass, body_params.restitution, body_params.color.unwrap())
+                if body_params.color.is_some() {
+                    rigidbody = Rigidbody::rectangle(
+                        body_params.width,
+                        body_params.height,
+                        body_params.pos,
+                        body_params.mass,
+                        body_params.restitution,
+                        body_params.color.unwrap(),
+                    )
                 } else {
-                    rigidbody = Rigidbody::rectangle(body_params.width, body_params.height, body_params.pos, body_params.mass, body_params.restitution, Color::random())
+                    rigidbody = Rigidbody::rectangle(
+                        body_params.width,
+                        body_params.height,
+                        body_params.pos,
+                        body_params.mass,
+                        body_params.restitution,
+                        Color::random(),
+                    )
                 }
-
             }
             _ => {
-                if body_params.color.is_some(){
-                    rigidbody = Rigidbody::polygon(body_params.sides, body_params.radius, body_params.pos, body_params.mass, body_params.restitution, body_params.color.unwrap())
+                if body_params.color.is_some() {
+                    rigidbody = Rigidbody::polygon(
+                        body_params.sides,
+                        body_params.radius,
+                        body_params.pos,
+                        body_params.mass,
+                        body_params.restitution,
+                        body_params.color.unwrap(),
+                    )
                 } else {
-                    rigidbody = Rigidbody::polygon(body_params.sides, body_params.radius, body_params.pos, body_params.mass, body_params.restitution, Color::random())
+                    rigidbody = Rigidbody::polygon(
+                        body_params.sides,
+                        body_params.radius,
+                        body_params.pos,
+                        body_params.mass,
+                        body_params.restitution,
+                        Color::random(),
+                    )
                 }
-
             }
         };
         rigidbody.collision = body_params.collides;
@@ -71,6 +96,15 @@ impl BodyBuilder {
     pub fn create_spring(&self, rigidbodies: &mut Vec<Rigidbody>) -> Spring {
         assert_ne!(self.body_type, BodyType::Spring, "Body Type is not spring");
         let spring_params = &self.spring_params;
-        Spring::new(spring_params.body_a, spring_params.body_b, spring_params.anchor_a, spring_params.anchor_b, spring_params.rest_length, spring_params.stiffness, spring_params.dampening, rigidbodies)
+        Spring::new(
+            spring_params.body_a,
+            spring_params.body_b,
+            spring_params.anchor_a,
+            spring_params.anchor_b,
+            spring_params.rest_length,
+            spring_params.stiffness,
+            spring_params.dampening,
+            rigidbodies,
+        )
     }
 }

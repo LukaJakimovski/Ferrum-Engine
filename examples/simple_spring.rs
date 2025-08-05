@@ -1,5 +1,5 @@
-use ferrum_engine::*;
 use ferrum_engine::spring::Spring;
+use ferrum_engine::*;
 
 fn main() {
     let mut rigidbodies = vec![];
@@ -21,7 +21,7 @@ fn main() {
         Color::white(),
     ));
 
-    let mut springs= vec![];
+    let mut springs = vec![];
     springs.push(Spring::new(
         0,
         1,
@@ -33,6 +33,19 @@ fn main() {
         &rigidbodies,
     ));
 
-    let parameters = Parameters {delta_time: 0.0, updates_per_frame: 1, angular_velocity: true, camera_pos: Vec4{ x: 0.0, y: 0.0, z: 0.0, w: -1.0}, gravity: false, world_size: 100.0, gravity_force: Vec2::new(0.0, -9.81)  };
+    let parameters = Parameters {
+        delta_time: 0.0,
+        updates_per_frame: 1,
+        angular_velocity: true,
+        camera_pos: Vec4 {
+            x: 0.0,
+            y: 0.0,
+            z: 0.0,
+            w: -1.0,
+        },
+        gravity: false,
+        world_size: 100.0,
+        gravity_force: Vec2::new(0.0, -9.81),
+    };
     run(rigidbodies, springs, parameters).unwrap();
 }
