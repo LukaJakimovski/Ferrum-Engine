@@ -1,7 +1,7 @@
 use std::f32::consts::PI;
 use egui::Align2;
 use egui_wgpu::{wgpu, ScreenDescriptor};
-use crate::enums::{ColorType, InputMode, Menu, RigidBodyType};
+use crate::enums::{BodyType, ColorType, InputMode, Menu};
 use crate::{Color, World};
 
 impl World{
@@ -164,110 +164,117 @@ impl World{
             .show(self.egui_renderer.context(), |ui| {
                 ui.heading("Spawner");
                 egui::ComboBox::from_label("Color")
-                    .selected_text(format!("{:?}", self.spawn_parameters.color_type))
+                    .selected_text(format!("{:?}", self.spawn_parameters.rigidbody_params.color_type))
                     .show_ui(ui, |ui| {
-                        ui.selectable_value(&mut self.spawn_parameters.color_type, ColorType::Random, "Random Color");
-                        ui.selectable_value(&mut self.spawn_parameters.color_type, ColorType::Set, "Set Color");
+                        ui.selectable_value(&mut self.spawn_parameters.rigidbody_params.color_type, ColorType::Random, "Random Color");
+                        ui.selectable_value(&mut self.spawn_parameters.rigidbody_params.color_type, ColorType::Set, "Set Color");
                         }
                     );
 
                 egui::ComboBox::from_label("Body Type")
                     .selected_text(format!("{:?}", self.spawn_parameters.body_type))
                     .show_ui(ui, |ui| {
-                        ui.selectable_value(&mut self.spawn_parameters.body_type, RigidBodyType::RegularPolygon, "Regular Polygon");
-                        ui.selectable_value(&mut self.spawn_parameters.body_type, RigidBodyType::Rectangle, "Rectangle");
+                        ui.selectable_value(&mut self.spawn_parameters.body_type, BodyType::RegularPolygon, "Regular Polygon");
+                        ui.selectable_value(&mut self.spawn_parameters.body_type, BodyType::Rectangle, "Rectangle");
+                        ui.selectable_value(&mut self.spawn_parameters.body_type, BodyType::Spring, "Spring");
                     }
                     );
 
                 match self.spawn_parameters.body_type {
-                    RigidBodyType::RegularPolygon => {
+                    BodyType::RegularPolygon => {
                         ui.columns(2, | ui |{
                             ui[0].label("Side Count");
-                            ui[1].add(egui::DragValue::new(&mut self.spawn_parameters.sides).speed(1))
+                            ui[1].add(egui::DragValue::new(&mut self.spawn_parameters.rigidbody_params.sides).speed(1))
                             //.show_tooltip_text("Changes the amount of sides of the spawned polygon");;
                         });
                         ui.columns(2, | ui |{
                             ui[0].label("Radius");
-                            ui[1].add(egui::DragValue::new(&mut self.spawn_parameters.radius).speed(0.01));
-                            if self.spawn_parameters.radius < 0.0 {self.spawn_parameters.radius = 0.0};
+                            ui[1].add(egui::DragValue::new(&mut self.spawn_parameters.rigidbody_params.radius).speed(0.01));
+                            if self.spawn_parameters.rigidbody_params.radius < 0.0 {self.spawn_parameters.rigidbody_params.radius = 0.0};
                             //.show_tooltip_text("Changes the radius of the spawned polygon. Value in meters");;
                         });
                     }
-                    RigidBodyType::Rectangle => {
+                    BodyType::Rectangle => {
                         ui.columns(2, | ui |{
                             ui[0].label("Width");
-                            ui[1].add(egui::DragValue::new(&mut self.spawn_parameters.width).speed(0.01));
-                            if self.spawn_parameters.width < 0.0 {self.spawn_parameters.width = 0.0};
+                            ui[1].add(egui::DragValue::new(&mut self.spawn_parameters.rigidbody_params.width).speed(0.01));
+                            if self.spawn_parameters.rigidbody_params.width < 0.0 {self.spawn_parameters.rigidbody_params.width = 0.0};
                             //.show_tooltip_text("Changes the amount of sides of the spawned polygon");;
                         });
                         ui.columns(2, | ui |{
                             ui[0].label("Height");
-                            ui[1].add(egui::DragValue::new(&mut self.spawn_parameters.height).speed(0.01));
-                            if self.spawn_parameters.height < 0.0 {self.spawn_parameters.height = 0.0};
+                            ui[1].add(egui::DragValue::new(&mut self.spawn_parameters.rigidbody_params.height).speed(0.01));
+                            if self.spawn_parameters.rigidbody_params.height < 0.0 {self.spawn_parameters.rigidbody_params.height = 0.0};
                             //.show_tooltip_text("Changes the radius of the spawned polygon. Value in meters");;
                         });
                     }
+                    _ => {}
                 }
 
-
-                ui.columns(2, | ui |{
-                    ui[0].label("Restitution/Bounciness");
-                    ui[1].add(egui::DragValue::new(&mut self.spawn_parameters.restitution).speed(0.01))
+                if self.spawn_parameters.body_type != BodyType::Spring{
+                    ui.columns(2, | ui |{
+                        ui[0].label("Restitution/Bounciness");
+                        ui[1].add(egui::DragValue::new(&mut self.spawn_parameters.rigidbody_params.restitution).speed(0.01))
                         //.show_tooltip_text("Changes the amount of energy conserved in a collision\n0.0 -> No bounce, 1.0 -> Perfectly elastic >1.0 -> Gains energy <0.0 -> Accelerates into collision");;
-                });
-                ui.columns(3, | ui |{
-                    ui[0].label("Velocity");
-                    ui[1].add(egui::DragValue::new(&mut self.spawn_parameters.velocity.x).speed(0.01));
+                    });
+                    ui.columns(3, | ui |{
+                        ui[0].label("Velocity");
+                        ui[1].add(egui::DragValue::new(&mut self.spawn_parameters.rigidbody_params.velocity.x).speed(0.01));
                         //.show_tooltip_text("Changes the horizontal velocity of the spawned polygon. Value in m/s");;
-                    ui[2].add(egui::DragValue::new(&mut self.spawn_parameters.velocity.y).speed(0.01));
+                        ui[2].add(egui::DragValue::new(&mut self.spawn_parameters.rigidbody_params.velocity.y).speed(0.01));
                         //.show_tooltip_text("Changes the vertical velocity of the spawned polygon. Value in m/s");;
-                });
-                ui.columns(2, | ui |{
-                    ui[0].label("Angular Velocity");
-                    ui[1].add(egui::DragValue::new(&mut self.spawn_parameters.angular_velocity).speed(0.01))
+                    });
+                    ui.columns(2, | ui |{
+                        ui[0].label("Angular Velocity");
+                        ui[1].add(egui::DragValue::new(&mut self.spawn_parameters.rigidbody_params.angular_velocity).speed(0.01))
                         //.show_tooltip_text("Changes the orientation of the spawned polygon. Value in radians/sec");;
-                });
-                ui.columns(2, | ui |{
-                    ui[0].label("Mass");
-                    ui[1].add(egui::DragValue::new(&mut self.spawn_parameters.mass).speed(0.01));
-                    if self.spawn_parameters.mass < 0.0 {self.spawn_parameters.mass = 0.0};
+                    });
+                    ui.columns(2, | ui |{
+                        ui[0].label("Mass");
+                        ui[1].add(egui::DragValue::new(&mut self.spawn_parameters.rigidbody_params.mass).speed(0.01));
+                        if self.spawn_parameters.rigidbody_params.mass < 0.0 {self.spawn_parameters.rigidbody_params.mass = 0.0};
                         //.show_tooltip_text("Changes the mass of the spawned polygon. Value in kg");;
-                });
-                ui.columns(2, | ui |{
-                    ui[0].label("Rotation");
-                    ui[1].add(egui::DragValue::new(&mut self.spawn_parameters.rotation)
-                        .speed(0.01));
-                    if self.spawn_parameters.rotation > PI {self.spawn_parameters.rotation = PI};
-                    if self.spawn_parameters.rotation < -PI {self.spawn_parameters.rotation = -PI};
+                    });
+                    ui.columns(2, | ui |{
+                        ui[0].label("Rotation");
+                        ui[1].add(egui::DragValue::new(&mut self.spawn_parameters.rigidbody_params.rotation)
+                            .speed(0.01));
+                        if self.spawn_parameters.rigidbody_params.rotation > PI {self.spawn_parameters.rigidbody_params.rotation = PI};
+                        if self.spawn_parameters.rigidbody_params.rotation < -PI {self.spawn_parameters.rigidbody_params.rotation = -PI};
                         //.show_tooltip_text("Changes the orientation of the spawned polygon. Value in radians");
-                });
-                ui.columns(2, | ui |{
-                    ui[0].label("Gravity Multiplier");
-                    ui[1].add(egui::DragValue::new(&mut self.spawn_parameters.gravity_multiplier)
-                        .speed(0.01))
-                });
-                ui.columns(2, | ui |{
-                    ui[0].label("Collides");
-                    ui[1].add(egui::Checkbox::new(&mut self.spawn_parameters.collides, "Collides"));
-                });
-                match self.spawn_parameters.color_type {
-                    ColorType::Random => {
-                        self.spawn_parameters.color = None;
-                    },
-                    ColorType::Set => {
-                        if self.spawn_parameters.color.is_none() {
-                            self.spawn_parameters.color = Some(Color::random());
-                        }
-                        let param_color = &mut self.spawn_parameters.color.unwrap();
-                        let mut color: [f32; 3] = [param_color.r, param_color.g, param_color.b];
-                        ui.columns(2, | ui |{
-                            ui[0].label("Color");
-                            ui[1].color_edit_button_rgb(&mut color);
-                        });
+                    });
+                    ui.columns(2, | ui |{
+                        ui[0].label("Gravity Multiplier");
+                        ui[1].add(egui::DragValue::new(&mut self.spawn_parameters.rigidbody_params.gravity_multiplier)
+                            .speed(0.01))
+                    });
+                    ui.columns(2, | ui |{
+                        ui[0].label("Collides");
+                        ui[1].add(egui::Checkbox::new(&mut self.spawn_parameters.rigidbody_params.collides, "Collides"));
+                    });
+                    match self.spawn_parameters.rigidbody_params.color_type {
+                        ColorType::Random => {
+                            self.spawn_parameters.rigidbody_params.color = None;
+                        },
+                        ColorType::Set => {
+                            if self.spawn_parameters.rigidbody_params.color.is_none() {
+                                self.spawn_parameters.rigidbody_params.color = Some(Color::random());
+                            }
+                            let param_color = &mut self.spawn_parameters.rigidbody_params.color.unwrap();
+                            let mut color: [f32; 3] = [param_color.r, param_color.g, param_color.b];
+                            ui.columns(2, | ui |{
+                                ui[0].label("Color");
+                                ui[1].color_edit_button_rgb(&mut color);
+                            });
 
-                        self.spawn_parameters.color = Some(Color::new(color[0], color[1], color[2]));
+                            self.spawn_parameters.rigidbody_params.color = Some(Color::new(color[0], color[1], color[2]));
+                        }
                     }
                 }
+                else {
+
+                }
+
             });
     }
 
@@ -277,6 +284,7 @@ impl World{
             .vscroll(false)
             .default_open(true)
             .default_height(275.0)
+            .anchor(Align2::RIGHT_TOP, [0.0, 0.0])
             .title_bar(false)
             .show(self.egui_renderer.context(), |ui| {
                 ui.heading("Input Mode Selector");
@@ -289,6 +297,10 @@ impl World{
                     }
                     );
             });
+        if self.input_mode == InputMode::Drag {
+            self.menus[Menu::DragParams as usize] = true;
+        }
+        
     }
 
     fn editor_menu(&mut self) {
@@ -322,7 +334,7 @@ impl World{
                     ui.columns(2, |ui| {
                         ui[0].label("Mass");
                         ui[1].add(egui::DragValue::new(&mut selected_polygon.mass).speed(0.01));
-                        if self.spawn_parameters.mass < 0.0 { selected_polygon.mass = 0.0 };
+                        if self.spawn_parameters.rigidbody_params.mass < 0.0 { selected_polygon.mass = 0.0 };
                         //.show_tooltip_text("Changes the mass of the spawned polygon. Value in kg");;
                     });
                     ui.columns(2, |ui| {

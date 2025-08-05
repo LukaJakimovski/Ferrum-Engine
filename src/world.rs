@@ -2,9 +2,10 @@ use std::sync::Arc;
 use egui_wgpu::wgpu;
 use wgpu::util::DeviceExt;
 use winit::window::Window;
-use crate::{Color, Rigidbody, RigidbodyBuilder, Vec2, Vec4};
+use crate::{Color, Rigidbody, Vec2, Vec4};
+use crate::body_builder::{BodyBuilder, RigidbodyParams, SpringParams};
 use crate::egui_tools::EguiRenderer;
-use crate::enums::{ColorType, InputMode, RigidBodyType};
+use crate::enums::{ColorType, InputMode, Menu, BodyType};
 use crate::spring::Spring;
 use crate::utility::date;
 
@@ -100,7 +101,7 @@ pub struct World {
     pub is_pointer_used: bool,
 
     pub menus: [bool; 8],
-    pub spawn_parameters: RigidbodyBuilder,
+    pub spawn_parameters: BodyBuilder,
 
     pub input_mode: InputMode,
     pub selected_polygon: Option<usize>,
@@ -108,6 +109,7 @@ pub struct World {
     pub temp_springs: Vec<usize>,
     pub anchor_pos: Vec2,
     pub dragging: bool,
+    pub drag_params: SpringParams,
 }
 
 impl World {
@@ -282,7 +284,10 @@ impl World {
         let egui_renderer = EguiRenderer::new(&device, config.format, None, 1, &window);
 
 
-        let spawn_parameters = RigidbodyBuilder {
+        let spawn_parameters = BodyBuilder {
+            body_type: BodyType::RegularPolygon,
+
+            rigidbody_params: RigidbodyParams{
             sides: 16,
             radius: 0.3533,
             pos: Vec2::zero(),
@@ -295,14 +300,27 @@ impl World {
             rotation: 0.0,
             angular_velocity: 0.0,
             velocity: Vec2::zero(),
-            body_type: RigidBodyType::RegularPolygon,
             color_type: ColorType::Random,
             gravity_multiplier: 1.0,
+            },
+
+            spring_params: SpringParams {
+                dampening: 1.0,
+                stiffness: 10.0,
+                rest_length: 0.0,
+                body_a: 0,
+                body_b: 0,
+                anchor_a: Default::default(),
+                anchor_b: Default::default(),
+            },
         };
         #[cfg(all(target_os = "windows", target_arch = "x86_64", target_env = "gnu"))]
         let scaling_factor = 0.1;
         #[cfg(not(all(target_os = "windows", target_arch = "x86_64", target_env = "gnu")))]
         let scaling_factor = 10.0;
+        let mut menus = [false; 8];
+        menus[Menu::Input as usize] = true;
+        menus[Menu::Config as usize] = true;
         Ok(Self {
             surface,
             device,
@@ -338,7 +356,7 @@ impl World {
             timer: 0.0,
             egui_renderer,
             is_pointer_used: false,
-            menus: [false; 8],
+            menus,
             spawn_parameters,
             input_mode: InputMode::Spawn,
             selected_polygon: None,
@@ -346,6 +364,11 @@ impl World {
             temp_springs: vec![],
             anchor_pos: Vec2::new(0.0, 0.0),
             dragging: false,
+            drag_params: SpringParams {
+                stiffness: 10.0,
+                dampening: 1.0,
+                ..Default::default()
+            }
         })
     }
 

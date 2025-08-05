@@ -1,13 +1,9 @@
 For version 0.2.0
 
 Allow user to spawn spring
-    - Click to set anchor 1
-    - Connector linked to mouse
-    - Click to set anchor 2
     - Cancel with Esc
     - Allow user to change spring parameters
 
-Allow user to drag rigidbodies by connecting a spring between it and the mouse.
 
 Allow the creation of anchors to connect two objects together
     - Anchor will make it so that the two objects will no longer collide
@@ -21,5 +17,3 @@ Allow the creation of bearings where two objects are connected but are free to r
 Double pendulum?
 
 Create rad README
-
-Allow user to see the properties of a body by clicking on it.

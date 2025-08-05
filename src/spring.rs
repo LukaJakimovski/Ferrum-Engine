@@ -9,7 +9,7 @@ pub struct Spring {
     pub body_b: usize,         // Index or ID of second body
     pub connector: Rigidbody,
     anchor_a: Vec2,  // Local offset on body A
-    anchor_b: Vec2,  // Local offset on body B
+    pub(crate) anchor_b: Vec2,  // Local offset on body B
     angle_a: f32,
     angle_b: f32,
     rest_length: f32,
@@ -144,7 +144,7 @@ impl Spring {
         self.angle_b = new_angle_b;
         self.anchor_b.rotate(&Vec2::zero(), diff);
     }
-    
+
     pub fn update_connector(&mut self, rigidbodys: &Vec<Rigidbody>){
         let a = &rigidbodys[self.body_a];
         let b = &rigidbodys[self.body_b];

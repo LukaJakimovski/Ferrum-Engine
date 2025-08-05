@@ -66,16 +66,18 @@ pub enum Menu{
     Spawner = 4,
     Input = 5,
     Editor = 6,
+    DragParams = 7,
 }
 
 #[repr(usize)]
 #[derive(Debug, PartialEq)]
-pub enum RigidBodyType{
+pub enum BodyType{
     RegularPolygon = 0,
-    Rectangle = 1
+    Rectangle = 1,
+    Spring = 2,
 }
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Clone)]
 pub enum ColorType{
     Random = 0,
     Set = 1,

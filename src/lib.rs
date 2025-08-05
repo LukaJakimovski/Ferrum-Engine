@@ -13,6 +13,7 @@ mod input;
 mod app;
 mod egui_tools;
 mod gui;
+mod body_builder;
 
 pub use crate::rigidbody::*;
 pub use crate::world::*;
