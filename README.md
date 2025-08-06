@@ -11,9 +11,9 @@ A 2D physics engine written in Rust with minimal libraries.
 Install Rust
 run the following command:
 ```
-cargo run --package ferrum_engine --bin ferrum_engine
+cargo build
 ```
-# Building Examples
+# Running Examples
 Examples can be run with the following command:
 ```
 cargo run --example pi

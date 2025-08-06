@@ -1,1 +1,5 @@
 /target
+/videos
+/builds
+/.idea
+Cargo.lock
