@@ -1,6 +1,6 @@
 use crate::body_builder::{BodyBuilder, RigidbodyParams, SpringParams};
 use crate::egui_tools::EguiRenderer;
-use crate::enums::{BodyType, ColorType, InputMode, Menu};
+use crate::enums::{BodyType, ColorType, DraggingState, InputMode, Menu};
 use crate::spring::Spring;
 use crate::utility::date;
 use crate::{Color, Rigidbody, Vec2, Vec4};
@@ -107,7 +107,7 @@ pub struct World {
     pub temp_polygons: Vec<usize>,
     pub temp_springs: Vec<usize>,
     pub anchor_pos: Vec2,
-    pub dragging: bool,
+    pub dragging: DraggingState,
     pub drag_params: SpringParams,
 }
 
@@ -371,7 +371,7 @@ impl World {
             temp_polygons: vec![],
             temp_springs: vec![],
             anchor_pos: Vec2::new(0.0, 0.0),
-            dragging: false,
+            dragging: DraggingState::NotDragging,
             drag_params: SpringParams {
                 stiffness: 10.0,
                 dampening: 1.0,

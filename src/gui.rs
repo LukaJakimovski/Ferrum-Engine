@@ -179,24 +179,6 @@ impl World {
             .title_bar(false)
             .show(self.egui_renderer.context(), |ui| {
                 ui.heading("Spawner");
-                egui::ComboBox::from_label("Color")
-                    .selected_text(format!(
-                        "{:?}",
-                        self.spawn_parameters.rigidbody_params.color_type
-                    ))
-                    .show_ui(ui, |ui| {
-                        ui.selectable_value(
-                            &mut self.spawn_parameters.rigidbody_params.color_type,
-                            ColorType::Random,
-                            "Random Color",
-                        );
-                        ui.selectable_value(
-                            &mut self.spawn_parameters.rigidbody_params.color_type,
-                            ColorType::Set,
-                            "Set Color",
-                        );
-                    });
-
                 egui::ComboBox::from_label("Body Type")
                     .selected_text(format!("{:?}", self.spawn_parameters.body_type))
                     .show_ui(ui, |ui| {
@@ -216,9 +198,25 @@ impl World {
                             "Spring",
                         );
                     });
-
                 match self.spawn_parameters.body_type {
                     BodyType::RegularPolygon => {
+                        egui::ComboBox::from_label("Color")
+                            .selected_text(format!(
+                                "{:?}",
+                                self.spawn_parameters.rigidbody_params.color_type
+                            ))
+                            .show_ui(ui, |ui| {
+                                ui.selectable_value(
+                                    &mut self.spawn_parameters.rigidbody_params.color_type,
+                                    ColorType::Random,
+                                    "Random Color",
+                                );
+                                ui.selectable_value(
+                                    &mut self.spawn_parameters.rigidbody_params.color_type,
+                                    ColorType::Set,
+                                    "Set Color",
+                                );
+                            });
                         ui.columns(2, |ui| {
                             ui[0].label("Side Count");
                             ui[1].add(
@@ -244,6 +242,23 @@ impl World {
                         });
                     }
                     BodyType::Rectangle => {
+                        egui::ComboBox::from_label("Color")
+                            .selected_text(format!(
+                                "{:?}",
+                                self.spawn_parameters.rigidbody_params.color_type
+                            ))
+                            .show_ui(ui, |ui| {
+                                ui.selectable_value(
+                                    &mut self.spawn_parameters.rigidbody_params.color_type,
+                                    ColorType::Random,
+                                    "Random Color",
+                                );
+                                ui.selectable_value(
+                                    &mut self.spawn_parameters.rigidbody_params.color_type,
+                                    ColorType::Set,
+                                    "Set Color",
+                                );
+                            });
                         ui.columns(2, |ui| {
                             ui[0].label("Width");
                             ui[1].add(
@@ -377,6 +392,42 @@ impl World {
                         }
                     }
                 } else {
+                    ui.columns(2, |ui| {
+                        ui[0].label("Pull Strength/Stiffness");
+                        ui[1].add(
+                            egui::DragValue::new(
+                                &mut self.spawn_parameters.spring_params.stiffness,
+                            )
+                                .speed(0.01),
+                        );
+                        if self.spawn_parameters.spring_params.stiffness < 0.0 {
+                            self.spawn_parameters.spring_params.stiffness = 0.0
+                        };
+                    });
+                    ui.columns(2, |ui| {
+                        ui[0].label("Dampening");
+                        ui[1].add(
+                            egui::DragValue::new(
+                                &mut self.spawn_parameters.spring_params.dampening,
+                            )
+                                .speed(0.01),
+                        );
+                        if self.spawn_parameters.spring_params.dampening < 0.0 {
+                            self.spawn_parameters.spring_params.dampening = 0.0
+                        };
+                    });
+                    ui.columns(2, |ui| {
+                        ui[0].label("Rest length");
+                        ui[1].add(
+                            egui::DragValue::new(
+                                &mut self.spawn_parameters.spring_params.rest_length,
+                            )
+                                .speed(0.01),
+                        );
+                        if self.spawn_parameters.spring_params.rest_length < 0.0 {
+                            self.spawn_parameters.spring_params.rest_length = 0.0
+                        };
+                    });
                 }
             });
     }

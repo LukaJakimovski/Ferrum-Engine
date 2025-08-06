@@ -1,6 +1,6 @@
+
 use crate::body_builder::BodyBuilder;
-use crate::collision_detection::sat_collision;
-use crate::enums::{BodyType, InputMode, Keys, Mouse};
+use crate::enums::{BodyType, DraggingState, InputMode, Keys, Mouse};
 use crate::spring::Spring;
 use crate::{Color, Rigidbody, Vec2, World};
 use winit::dpi::PhysicalPosition;
@@ -77,6 +77,33 @@ impl World {
                     self.polygons[i].velocity = Vec2::zero();
                 }
             }
+            winit::keyboard::KeyCode::Digit1 => {
+                if _pressed && self.pressed_keys[Keys::Num1 as usize] == 0 {
+                    self.pressed_keys[Keys::Num1 as usize] = 1;
+                    self.input_mode = InputMode::Spawn;
+                } else if _pressed && self.pressed_keys[Keys::Num1 as usize] == 1 {
+                    self.pressed_keys[Keys::Num1 as usize] = 0;
+                    self.input_mode = InputMode::Spawn;
+                }
+            }
+            winit::keyboard::KeyCode::Digit2 => {
+                if _pressed && self.pressed_keys[Keys::Num2 as usize] == 0 {
+                    self.pressed_keys[Keys::Num2 as usize] = 1;
+                    self.input_mode = InputMode::Select;
+                } else if _pressed && self.pressed_keys[Keys::Num2 as usize] == 1 {
+                    self.pressed_keys[Keys::Num2 as usize] = 0;
+                    self.input_mode = InputMode::Select;
+                }
+            }
+            winit::keyboard::KeyCode::Digit3 => {
+                if _pressed && self.pressed_keys[Keys::Num3 as usize] == 0 {
+                    self.pressed_keys[Keys::Num3 as usize] = 1;
+                    self.input_mode = InputMode::Drag;
+                } else if _pressed && self.pressed_keys[Keys::Num3 as usize] == 1 {
+                    self.pressed_keys[Keys::Num3 as usize] = 0;
+                    self.input_mode = InputMode::Drag;
+                }
+            }
             winit::keyboard::KeyCode::Escape => {
                 event_loop.exit();
             }
@@ -84,17 +111,7 @@ impl World {
         }
     }
     pub fn handle_input(&mut self) {
-        let size = self.window.inner_size();
-        let position = Vec2 {
-            x: ((self.mouse_pos.0 * 2.0 - size.width as f32) / size.width as f32
-                + self.camera_pos.x / (-self.camera_pos.w + 1.0))
-                * (-self.camera_pos.w + 1.0),
-            y: ((self.mouse_pos.1 * 2.0 - size.height as f32) / size.height as f32
-                + self.camera_pos.y / -(-self.camera_pos.w + 1.0))
-                * -(-self.camera_pos.w + 1.0)
-                * size.height as f32
-                / size.width as f32,
-        };
+        let position = self.get_mouse_world_position();
         if self.pressed_keys[Keys::L as usize] == 1 {
             self.polygons
                 .push(BodyBuilder::create_rigidbody(&self.spawn_parameters));
@@ -117,27 +134,18 @@ impl World {
 
         if self.pressed_buttons[Mouse::Left as usize] == 1
             && (self.input_mode == InputMode::Drag
-                || (self.input_mode == InputMode::Select
+                || (self.input_mode == InputMode::Spawn
                     && self.spawn_parameters.body_type == BodyType::Spring))
+            &&  (self.dragging == DraggingState::Dragging
+                || self.dragging == DraggingState::StartDragging)
         {
             if self.selected_polygon.is_some() {
-                let position = Vec2 {
-                    x: ((self.mouse_pos.0 * 2.0 - self.config.width as f32)
-                        / self.config.width as f32
-                        + self.camera_pos.x / (-self.camera_pos.w + 1.0))
-                        * (-self.camera_pos.w + 1.0),
-                    y: ((self.mouse_pos.1 * 2.0 - self.config.height as f32)
-                        / self.config.height as f32
-                        + self.camera_pos.y / -(-self.camera_pos.w + 1.0))
-                        * -(-self.camera_pos.w + 1.0)
-                        * self.config.height as f32
-                        / self.config.width as f32,
-                };
+                let position = self.get_mouse_world_position();
                 let mut mouse_polygon =
                     Rigidbody::rectangle(0.03, 0.03, position, 1000.0, 1.0, Color::random());
                 mouse_polygon.collision = false;
                 let selected_polygon = &mut self.polygons[self.selected_polygon.unwrap()];
-                if !self.dragging {
+                if self.dragging == DraggingState::StartDragging {
                     self.anchor_pos = mouse_polygon.center - selected_polygon.center;
                     self.polygons.push(mouse_polygon);
                     let length = self.polygons.len() - 1;
@@ -160,7 +168,7 @@ impl World {
                     let diff = position - self.polygons[index].center;
                     self.polygons[index].translate(diff);
                 }
-                self.dragging = true;
+                self.dragging = DraggingState::Dragging;
             }
         }
     }
@@ -185,144 +193,57 @@ impl World {
     }
 
     pub fn handle_mouse_input(&mut self, state: ElementState, button: MouseButton) {
-        let size = self.window.inner_size();
-        let position = Vec2 {
-            x: ((self.mouse_pos.0 * 2.0 - size.width as f32) / size.width as f32
-                + self.camera_pos.x / (-self.camera_pos.w + 1.0))
-                * (-self.camera_pos.w + 1.0),
-            y: ((self.mouse_pos.1 * 2.0 - size.height as f32) / size.height as f32
-                + self.camera_pos.y / -(-self.camera_pos.w + 1.0))
-                * -(-self.camera_pos.w + 1.0)
-                * size.height as f32
-                / size.width as f32,
-        };
+        let position = self.get_mouse_world_position();
         if button == MouseButton::Left {
             if state.is_pressed() && !self.is_pointer_used && self.input_mode == InputMode::Spawn {
-                self.pressed_buttons[Mouse::Left as usize] = 1;
-                self.polygons
-                    .push(BodyBuilder::create_rigidbody(&self.spawn_parameters));
-                let length = self.polygons.len() - 1;
-                self.polygons[length].translate(position);
+                if self.spawn_parameters.body_type == BodyType::Spring {
+                    self.pressed_buttons[Mouse::Left as usize] = 1;
+                    self.selected_polygon = self.get_polygon_under_mouse();
+                    if self.selected_polygon.is_some() { self.dragging = DraggingState::StartDragging }
+                } else {
+                    self.pressed_buttons[Mouse::Left as usize] = 1;
+                    self.polygons
+                        .push(BodyBuilder::create_rigidbody(&self.spawn_parameters));
+                    let length = self.polygons.len() - 1;
+                    self.polygons[length].translate(position);
+                }
             } else if state.is_pressed()
                 && !self.is_pointer_used
                 && self.input_mode == InputMode::Select
             {
                 self.pressed_buttons[Mouse::Left as usize] = 1;
-                let mouse_polygon =
-                    Rigidbody::rectangle(0.03, 0.03, position, 1.0, 1.0, Color::random());
-                for i in 0..self.polygons.len() {
-                    let result = sat_collision(&self.polygons[i], &mouse_polygon);
-                    if result[1].y != 0.0 {
-                        self.selected_polygon = Some(i);
-                        break;
-                    }
-                }
+                self.selected_polygon = self.get_polygon_under_mouse();
             } else if state.is_pressed()
                 && !self.is_pointer_used
                 && self.input_mode == InputMode::Drag
             {
                 self.pressed_buttons[Mouse::Left as usize] = 1;
-                let position = Vec2 {
-                    x: ((self.mouse_pos.0 * 2.0 - self.config.width as f32)
-                        / self.config.width as f32
-                        + self.camera_pos.x / (-self.camera_pos.w + 1.0))
-                        * (-self.camera_pos.w + 1.0),
-                    y: ((self.mouse_pos.1 * 2.0 - self.config.height as f32)
-                        / self.config.height as f32
-                        + self.camera_pos.y / -(-self.camera_pos.w + 1.0))
-                        * -(-self.camera_pos.w + 1.0)
-                        * self.config.height as f32
-                        / self.config.width as f32,
-                };
-                let mouse_polygon =
-                    Rigidbody::rectangle(0.03, 0.03, position, 1.0, 1.0, Color::random());
-                for i in 0..self.polygons.len() {
-                    let result = sat_collision(&self.polygons[i], &mouse_polygon);
-                    if result[1].y != 0.0 {
-                        self.selected_polygon = Some(i);
-                        break;
-                    }
-                }
-            } else if state.is_pressed()
-                && !self.is_pointer_used
-                && self.input_mode == InputMode::Select
-                && self.spawn_parameters.body_type == BodyType::Spring
-            {
-                self.pressed_buttons[Mouse::Left as usize] = 1;
-                let position = Vec2 {
-                    x: ((self.mouse_pos.0 * 2.0 - self.config.width as f32)
-                        / self.config.width as f32
-                        + self.camera_pos.x / (-self.camera_pos.w + 1.0))
-                        * (-self.camera_pos.w + 1.0),
-                    y: ((self.mouse_pos.1 * 2.0 - self.config.height as f32)
-                        / self.config.height as f32
-                        + self.camera_pos.y / -(-self.camera_pos.w + 1.0))
-                        * -(-self.camera_pos.w + 1.0)
-                        * self.config.height as f32
-                        / self.config.width as f32,
-                };
-                let mouse_polygon =
-                    Rigidbody::rectangle(0.03, 0.03, position, 1.0, 1.0, Color::random());
-                for i in 0..self.polygons.len() {
-                    let result = sat_collision(&self.polygons[i], &mouse_polygon);
-                    if result[1].y != 0.0 {
-                        self.selected_polygon = Some(i);
-                        break;
-                    }
-                }
-            } else if !state.is_pressed() && self.input_mode != InputMode::Select {
-                for index in self.temp_polygons.clone() {
-                    self.remove_rigidbody(index);
-                }
-                for index in self.temp_springs.clone() {
-                    self.springs.remove(index);
-                }
+                self.selected_polygon = self.get_polygon_under_mouse();
+                if self.selected_polygon.is_some() { self.dragging = DraggingState::StartDragging }
+            } else if !state.is_pressed() && self.input_mode == InputMode::Drag {
+                for index in self.temp_polygons.clone() { self.remove_rigidbody(index); }
+                for index in self.temp_springs.clone() { self.remove_spring(index); }
                 self.temp_springs.clear();
                 self.temp_polygons.clear();
-                self.dragging = false;
+                self.dragging = DraggingState::NotDragging;
                 self.selected_polygon = None;
                 self.pressed_buttons[Mouse::Left as usize] = 0;
-            } else if !state.is_pressed() && self.input_mode == InputMode::Select {
+            } else if !state.is_pressed() && self.input_mode == InputMode::Spawn && self.dragging == DraggingState::Dragging {
                 self.pressed_buttons[Mouse::Left as usize] = 1;
-                let position = Vec2 {
-                    x: ((self.mouse_pos.0 * 2.0 - self.config.width as f32)
-                        / self.config.width as f32
-                        + self.camera_pos.x / (-self.camera_pos.w + 1.0))
-                        * (-self.camera_pos.w + 1.0),
-                    y: ((self.mouse_pos.1 * 2.0 - self.config.height as f32)
-                        / self.config.height as f32
-                        + self.camera_pos.y / -(-self.camera_pos.w + 1.0))
-                        * -(-self.camera_pos.w + 1.0)
-                        * self.config.height as f32
-                        / self.config.width as f32,
-                };
-                for index in self.temp_polygons.clone() {
-                    self.remove_rigidbody(index);
-                }
-                let mouse_polygon =
-                    Rigidbody::rectangle(0.03, 0.03, position, 1.0, 1.0, Color::random());
-                let mut polygon2_index = None;
-                for i in 0..self.polygons.len() {
-                    let result = sat_collision(&self.polygons[i], &mouse_polygon);
-                    if result[1].y != 0.0 {
-                        polygon2_index = Some(i);
-                        break;
-                    }
-                }
-                if polygon2_index.is_some() && self.temp_springs.len() > 0 {
+                let mouse_polygon = Rigidbody::rectangle(0.03, 0.03, position, 1.0, 1.0, Color::random());
+                let polygon2_index = self.get_polygon_under_mouse();
+                if polygon2_index.is_some() && self.temp_springs.len() > 0 && self.selected_polygon.unwrap() != polygon2_index.unwrap() {
                     let polygon2 = &mut self.polygons[polygon2_index.unwrap()];
-
                     let anchor_pos = mouse_polygon.center - polygon2.center;
                     self.springs[self.temp_springs[0]].body_b = polygon2_index.unwrap();
                     self.springs[self.temp_springs[0]].anchor_b = anchor_pos;
                 } else {
-                    for spring_index in self.temp_springs.clone() {
-                        self.springs.remove(spring_index);
-                    }
+                    for rigidbody_index in self.temp_polygons.clone() { self.remove_rigidbody(rigidbody_index); }
+                    for spring_index in self.temp_springs.clone() { self.remove_spring(spring_index); }
                 }
                 self.temp_springs.clear();
                 self.temp_polygons.clear();
-                self.dragging = false;
+                self.dragging = DraggingState::NotDragging;
                 self.pressed_buttons[Mouse::Left as usize] = 0;
             } else {
                 self.pressed_buttons[Mouse::Left as usize] = 0;
@@ -331,15 +252,8 @@ impl World {
         if button == MouseButton::Right {
             if state.is_pressed() && !self.is_pointer_used {
                 self.pressed_buttons[Mouse::Right as usize] = 1;
-                let mouse_polygon =
-                    Rigidbody::rectangle(0.03, 0.03, position, 1.0, 1.0, Color::random());
-                for i in 0..self.polygons.len() {
-                    let result = sat_collision(&self.polygons[i], &mouse_polygon);
-                    if result[1].y != 0.0 {
-                        self.remove_rigidbody(i);
-                        break;
-                    }
-                }
+                let polygon_under_mouse = self.get_polygon_under_mouse();
+                if polygon_under_mouse.is_some() {self.remove_rigidbody(polygon_under_mouse.unwrap()); }
             } else {
                 self.pressed_buttons[Mouse::Right as usize] = 0;
             }

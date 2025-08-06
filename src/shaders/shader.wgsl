@@ -23,7 +23,7 @@ fn vs_main(
 ) -> VertexOutput {
     var out: VertexOutput;
     out.color = model.color;
-    out.clip_position = vec4<f32>(model.position.x, model.position.y * uniforms.aspect_ratio, 0.0, 0.0) - uniforms.camera_position;
+    out.clip_position = vec4<f32>(model.position.x, model.position.y * uniforms.aspect_ratio, 0.0, 1.0) - uniforms.camera_position;
     return out;
 }
 

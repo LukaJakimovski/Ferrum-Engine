@@ -89,3 +89,10 @@ pub enum InputMode {
     Select = 1,
     Drag = 2,
 }
+
+#[derive(Debug, PartialEq)]
+pub enum DraggingState {
+    NotDragging = 0,
+    Dragging = 1,
+    StartDragging = 2,
+}
