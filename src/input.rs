@@ -149,16 +149,31 @@ impl World {
                     self.anchor_pos = mouse_polygon.center - selected_polygon.center;
                     self.polygons.push(mouse_polygon);
                     let length = self.polygons.len() - 1;
-                    let spring = Spring::new(
-                        self.selected_polygon.unwrap(),
-                        length,
-                        self.anchor_pos,
-                        Vec2::zero(),
-                        0.0,
-                        10.0,
-                        0.0,
-                        &self.polygons,
-                    );
+                    let spring;
+                    if self.input_mode == InputMode::Spawn {
+                        spring = Spring::new(
+                            self.selected_polygon.unwrap(),
+                            length,
+                            self.anchor_pos,
+                            Vec2::zero(),
+                            self.spawn_parameters.spring_params.rest_length,
+                            self.spawn_parameters.spring_params.stiffness,
+                            self.spawn_parameters.spring_params.dampening,
+                            &self.polygons,
+                        );
+                    } else  {
+                        spring = Spring::new(
+                            self.selected_polygon.unwrap(),
+                            length,
+                            self.anchor_pos,
+                            Vec2::zero(),
+                            0.0,
+                            self.polygons[self.selected_polygon.unwrap()].mass * 5.0,
+                            1.0 * (11.0 * self.polygons[self.selected_polygon.unwrap()].mass).sqrt() ,
+                            &self.polygons,
+                        );
+                    }
+
                     self.springs.push(spring);
                     self.temp_springs.push(self.springs.len() - 1);
                     self.temp_polygons.push(self.polygons.len() - 1);
@@ -195,58 +210,57 @@ impl World {
     pub fn handle_mouse_input(&mut self, state: ElementState, button: MouseButton) {
         let position = self.get_mouse_world_position();
         if button == MouseButton::Left {
-            if state.is_pressed() && !self.is_pointer_used && self.input_mode == InputMode::Spawn {
-                if self.spawn_parameters.body_type == BodyType::Spring {
+            if state.is_pressed() && !self.is_pointer_used {
+                if self.input_mode == InputMode::Spawn{
+                    if self.spawn_parameters.body_type == BodyType::Spring {
+                        self.pressed_buttons[Mouse::Left as usize] = 1;
+                        self.selected_polygon = self.get_polygon_under_mouse();
+                        if self.selected_polygon.is_some() { self.dragging = DraggingState::StartDragging }
+                    } else if self.spawn_parameters.body_type == BodyType::Rectangle || self.spawn_parameters.body_type == BodyType::RegularPolygon{
+                        self.pressed_buttons[Mouse::Left as usize] = 1;
+                        self.polygons
+                            .push(BodyBuilder::create_rigidbody(&self.spawn_parameters));
+                        let length = self.polygons.len() - 1;
+                        self.polygons[length].translate(position);
+                    }
+                }
+                else if self.input_mode == InputMode::Select {
+                    self.pressed_buttons[Mouse::Left as usize] = 1;
+                    self.selected_polygon = self.get_polygon_under_mouse();
+                } else if self.input_mode == InputMode::Drag {
                     self.pressed_buttons[Mouse::Left as usize] = 1;
                     self.selected_polygon = self.get_polygon_under_mouse();
                     if self.selected_polygon.is_some() { self.dragging = DraggingState::StartDragging }
-                } else {
+                }
+            }  else if !state.is_pressed(){
+                if self.input_mode == InputMode::Drag {
+                    for index in self.temp_polygons.clone() { self.remove_rigidbody(index); }
+                    for index in self.temp_springs.clone() { self.remove_spring(index); }
+                    self.temp_springs.clear();
+                    self.temp_polygons.clear();
+                    self.dragging = DraggingState::NotDragging;
+                    self.selected_polygon = None;
+                    self.pressed_buttons[Mouse::Left as usize] = 0;
+                } else if self.input_mode == InputMode::Spawn && self.dragging == DraggingState::Dragging {
                     self.pressed_buttons[Mouse::Left as usize] = 1;
-                    self.polygons
-                        .push(BodyBuilder::create_rigidbody(&self.spawn_parameters));
-                    let length = self.polygons.len() - 1;
-                    self.polygons[length].translate(position);
-                }
-            } else if state.is_pressed()
-                && !self.is_pointer_used
-                && self.input_mode == InputMode::Select
-            {
-                self.pressed_buttons[Mouse::Left as usize] = 1;
-                self.selected_polygon = self.get_polygon_under_mouse();
-            } else if state.is_pressed()
-                && !self.is_pointer_used
-                && self.input_mode == InputMode::Drag
-            {
-                self.pressed_buttons[Mouse::Left as usize] = 1;
-                self.selected_polygon = self.get_polygon_under_mouse();
-                if self.selected_polygon.is_some() { self.dragging = DraggingState::StartDragging }
-            } else if !state.is_pressed() && self.input_mode == InputMode::Drag {
-                for index in self.temp_polygons.clone() { self.remove_rigidbody(index); }
-                for index in self.temp_springs.clone() { self.remove_spring(index); }
-                self.temp_springs.clear();
-                self.temp_polygons.clear();
-                self.dragging = DraggingState::NotDragging;
-                self.selected_polygon = None;
-                self.pressed_buttons[Mouse::Left as usize] = 0;
-            } else if !state.is_pressed() && self.input_mode == InputMode::Spawn && self.dragging == DraggingState::Dragging {
-                self.pressed_buttons[Mouse::Left as usize] = 1;
-                let mouse_polygon = Rigidbody::rectangle(0.03, 0.03, position, 1.0, 1.0, Color::random());
-                let polygon2_index = self.get_polygon_under_mouse();
-                if polygon2_index.is_some() && self.temp_springs.len() > 0 && self.selected_polygon.unwrap() != polygon2_index.unwrap() {
-                    let polygon2 = &mut self.polygons[polygon2_index.unwrap()];
-                    let anchor_pos = mouse_polygon.center - polygon2.center;
-                    self.springs[self.temp_springs[0]].body_b = polygon2_index.unwrap();
-                    self.springs[self.temp_springs[0]].anchor_b = anchor_pos;
-                } else {
+                    let mouse_polygon = Rigidbody::rectangle(0.03, 0.03, position, 1.0, 1.0, Color::random());
+                    let polygon2_index = self.get_polygon_under_mouse();
+                    if polygon2_index.is_some() && self.temp_springs.len() > 0 && self.selected_polygon.unwrap() != polygon2_index.unwrap() {
+                        let polygon2 = &mut self.polygons[polygon2_index.unwrap()];
+                        let anchor_pos = mouse_polygon.center - polygon2.center;
+                        self.springs[self.temp_springs[0]].body_b = polygon2_index.unwrap();
+                        self.springs[self.temp_springs[0]].anchor_b = anchor_pos;
+                    } else {
+                        for spring_index in self.temp_springs.clone() { self.remove_spring(spring_index); }
+                    }
                     for rigidbody_index in self.temp_polygons.clone() { self.remove_rigidbody(rigidbody_index); }
-                    for spring_index in self.temp_springs.clone() { self.remove_spring(spring_index); }
+                    self.temp_springs.clear();
+                    self.temp_polygons.clear();
+                    self.dragging = DraggingState::NotDragging;
+                    self.pressed_buttons[Mouse::Left as usize] = 0;
+                } else {
+                    self.pressed_buttons[Mouse::Left as usize] = 0;
                 }
-                self.temp_springs.clear();
-                self.temp_polygons.clear();
-                self.dragging = DraggingState::NotDragging;
-                self.pressed_buttons[Mouse::Left as usize] = 0;
-            } else {
-                self.pressed_buttons[Mouse::Left as usize] = 0;
             }
         }
         if button == MouseButton::Right {

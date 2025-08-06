@@ -501,12 +501,15 @@ impl World {
                         //.show_tooltip_text("Changes the orientation of the spawned polygon. Value in radians/sec");;
                     });
                     ui.columns(2, |ui| {
+                        let old_mass = selected_polygon.mass;
                         ui[0].label("Mass");
                         ui[1].add(egui::DragValue::new(&mut selected_polygon.mass).speed(0.01));
+                        if old_mass != selected_polygon.mass {
+                            selected_polygon.calculate_moment_of_inertia();
+                        }
                         if self.spawn_parameters.rigidbody_params.mass < 0.0 {
                             selected_polygon.mass = 0.0
                         };
-                        //.show_tooltip_text("Changes the mass of the spawned polygon. Value in kg");;
                     });
                     ui.columns(2, |ui| {
                         ui[0].label("Gravity Multiplier");

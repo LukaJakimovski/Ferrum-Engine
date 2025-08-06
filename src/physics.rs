@@ -10,7 +10,6 @@ impl World {
         let mut y_min = f32::MAX;
         let mut y_max = f32::MIN;
         let mut rad_max = f32::MIN;
-
         for i in 0..self.polygons.len() {
             if self.polygons[i].center.x < x_min {
                 x_min = self.polygons[i].center.x;
@@ -28,6 +27,7 @@ impl World {
                 rad_max = self.polygons[i].radius;
             }
         }
+        rad_max *= 2.0;
         if x_max > self.parameters.world_size {
             x_max = self.parameters.world_size;
         }
