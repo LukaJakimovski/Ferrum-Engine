@@ -178,10 +178,14 @@ impl World {
                     self.temp_springs.push(self.springs.len() - 1);
                     self.temp_polygons.push(self.polygons.len() - 1);
                 }
-                let index = self.temp_polygons[0];
-                if index < self.polygons.len() {
-                    let diff = position - self.polygons[index].center;
-                    self.polygons[index].translate(diff);
+                if self.temp_polygons.len() > 0 {
+                    let index = self.temp_polygons[0];
+                    if index < self.polygons.len() {
+                        let diff = position - self.polygons[index].center;
+                        self.polygons[index].translate(diff);
+                    }
+                } else {
+                    self.dragging = DraggingState::StopDragging;
                 }
                 self.dragging = DraggingState::Dragging;
             }
@@ -232,7 +236,7 @@ impl World {
                     self.selected_polygon = self.get_polygon_under_mouse();
                     if self.selected_polygon.is_some() { self.dragging = DraggingState::StartDragging }
                 }
-            }  else if !state.is_pressed(){
+            }  else if !state.is_pressed() || self.dragging == DraggingState::StopDragging {
                 if self.input_mode == InputMode::Drag {
                     for index in self.temp_polygons.clone() { self.remove_rigidbody(index); }
                     for index in self.temp_springs.clone() { self.remove_spring(index); }

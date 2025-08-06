@@ -95,4 +95,5 @@ pub enum DraggingState {
     NotDragging = 0,
     Dragging = 1,
     StartDragging = 2,
+    StopDragging = 3,
 }

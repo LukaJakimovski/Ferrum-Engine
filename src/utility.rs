@@ -4,14 +4,28 @@ use crate::collision_detection::sat_collision;
 impl World {
     pub fn remove_rigidbody(&mut self, index: usize) {
         self.polygons.remove(index);
-        for i in 0..self.springs.len() {
-            if self.springs[i].body_a == index || self.springs[i].body_b == index {
+        let mut i = 0;
+        loop {
+            if i >= self.springs.len() {
+                break;
+            }
+            if  self.springs[i].body_a == index || self.springs[i].body_b == index {
                 self.remove_spring(i);
-            } else if self.springs[i].body_a > index {
+                if i > 0 {
+                    i -= 1;
+                }
+                continue;
+            }
+            if self.springs[i].body_a > index {
                 self.springs[i].body_a -= 1;
-            } else if self.springs[i].body_b > index {
+            }
+            if self.springs[i].body_b > index {
                 self.springs[i].body_b -= 1;
             }
+            if self.springs[i].body_a == self.springs[i].body_b{
+                self.remove_spring(i);
+            }
+            i += 1;
         }
         for i in 0..self.temp_springs.len() {
             if self.temp_springs[i] > index {
@@ -21,7 +35,10 @@ impl World {
         for i in 0..self.temp_polygons.len() {
             if self.temp_polygons[i] > index {
                 self.temp_polygons[i] -= 1;
+            } else if self.temp_polygons[i] == index {
+                self.temp_polygons.remove(i);
             }
+
         }
     }
 

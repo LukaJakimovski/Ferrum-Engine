@@ -1,10 +1,5 @@
 For version 0.2.0
 
-Allow user to spawn spring
-    - Cancel with Esc
-    - Allow user to change spring parameters
-
-
 Allow the creation of anchors to connect two objects together
     - Anchor will make it so that the two objects will no longer collide
     - This will require a sort of blacklist to prevent two objects from colliding
