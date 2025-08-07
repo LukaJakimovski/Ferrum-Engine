@@ -474,12 +474,20 @@ impl World {
                 .title_bar(false)
                 .show(self.egui_renderer.context(), |ui| {
                     ui.heading("Rigidbody Editor");
-                    ui.columns(2, |ui| {
-                        ui[0].label("Restitution/Bounciness");
+                    ui.columns(3, |ui| {
+                        let mut new_center = selected_polygon.center;
+                        ui[0].label("Position");
                         ui[1].add(
-                            egui::DragValue::new(&mut selected_polygon.restitution).speed(0.01),
-                        )
-                        //.show_tooltip_text("Changes the amount of energy conserved in a collision\n0.0 -> No bounce, 1.0 -> Perfectly elastic >1.0 -> Gains energy <0.0 -> Accelerates into collision");;
+                            egui::DragValue::new(&mut new_center.x).speed(0.01),
+                        );
+                        //.show_tooltip_text("Changes the horizontal velocity of the spawned polygon. Value in m/s");;
+                        ui[2].add(
+                            egui::DragValue::new(&mut new_center.y).speed(0.01),
+                        );
+                        if new_center != selected_polygon.center {
+                            selected_polygon.move_to(new_center);
+                        }
+                        //.show_tooltip_text("Changes the vertical velocity of the spawned polygon. Value in m/s");;
                     });
                     ui.columns(3, |ui| {
                         ui[0].label("Velocity");
@@ -512,6 +520,13 @@ impl World {
                         };
                     });
                     ui.columns(2, |ui| {
+                        ui[0].label("Restitution/Bounciness");
+                        ui[1].add(
+                            egui::DragValue::new(&mut selected_polygon.restitution).speed(0.01),
+                        )
+                        //.show_tooltip_text("Changes the amount of energy conserved in a collision\n0.0 -> No bounce, 1.0 -> Perfectly elastic >1.0 -> Gains energy <0.0 -> Accelerates into collision");;
+                    });
+                    ui.columns(2, |ui| {
                         ui[0].label("Gravity Multiplier");
                         ui[1].add(
                             egui::DragValue::new(&mut selected_polygon.gravity_multiplier)
@@ -524,6 +539,10 @@ impl World {
                             &mut selected_polygon.collision,
                             "Collides",
                         ));
+                    });
+                    ui.columns(2, |ui| {
+                        ui[0].label("Eternal");
+                        ui[1].add(egui::Checkbox::new(&mut selected_polygon.eternal, "Eternal"));
                     });
                     let param_color = &mut selected_polygon.vertices[0].color;
                     let mut color: [f32; 3] = [param_color.r, param_color.g, param_color.b];

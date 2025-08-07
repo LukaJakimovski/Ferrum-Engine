@@ -12,15 +12,16 @@ fn main() {
         Color::white(),
     ));
     rigidbodies[0].collision = false;
+    rigidbodies[0].eternal = true;
     rigidbodies.push(Rigidbody::polygon(
         64,
         3.533,
         Vec2::new(25.0, 0.0),
-        50000.0,
+        5000000.0,
         1.0,
         Color::white(),
     ));
-
+    rigidbodies[1].eternal = true;
     let mut springs = vec![];
     springs.push(Spring::new(
         0,
@@ -28,7 +29,7 @@ fn main() {
         Vec2::new(0.0, 0.0),
         Vec2::new(0.0, 0.0),
         0.0,
-        1000000.0,
+        500000000.0,
         10.0,
         &rigidbodies,
     ));

@@ -18,6 +18,7 @@ pub struct RigidbodyParams {
     pub(crate) velocity: Vec2,
     pub(crate) color_type: ColorType,
     pub(crate) gravity_multiplier: f32,
+    pub(crate) eternal: bool,
 }
 
 #[derive(Clone, Default)]
@@ -85,6 +86,7 @@ impl BodyBuilder {
                 }
             }
         };
+        rigidbody.eternal = body_params.eternal;
         rigidbody.collision = body_params.collides;
         rigidbody.rotate(body_params.rotation);
         rigidbody.angular_velocity = body_params.angular_velocity;

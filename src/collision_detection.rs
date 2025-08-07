@@ -58,8 +58,8 @@ pub fn sat_collision(shape1: &Rigidbody, shape2: &Rigidbody) -> [Vec2; 2] {
             Vec2 { x: -133.7, y: 0.0 },
         ];
     }
-    // Treat shapes with more than 15 vertices as circles
-    if shape1.vertices.len() >= 16 && shape2.vertices.len() >= 16 {
+    // Treat shapes with more than 31 vertices as circles
+    if shape1.vertices.len() >= 32 && shape2.vertices.len() >= 32 {
         let delta = shape2.center - shape1.center;
         let dist = delta.magnitude();
         let overlap = shape1.radius + shape2.radius - dist; // Total overlap amount

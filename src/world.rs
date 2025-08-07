@@ -296,7 +296,7 @@ impl World {
             body_type: BodyType::RegularPolygon,
 
             rigidbody_params: RigidbodyParams {
-                sides: 16,
+                sides: 32,
                 radius: 0.3533,
                 pos: Vec2::zero(),
                 mass: 1.0,
@@ -310,6 +310,7 @@ impl World {
                 velocity: Vec2::zero(),
                 color_type: ColorType::Random,
                 gravity_multiplier: 1.0,
+                eternal: false,
             },
 
             spring_params: SpringParams {
@@ -407,6 +408,7 @@ impl World {
             if i < self.polygons.len()
                 && self.parameters.world_size > 0.0
                 && self.polygons[i].center.distance(&Vec2::zero()) > self.parameters.world_size
+                && self.polygons[i].eternal == false
             {
                 self.remove_rigidbody(i);
             }

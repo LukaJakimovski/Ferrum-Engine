@@ -19,6 +19,7 @@ pub struct Rigidbody {
     pub angle: f32,
     pub collision: bool,
     pub gravity_multiplier: f32,
+    pub eternal: bool,
 }
 impl Rigidbody {
     pub fn rectangle(
@@ -77,6 +78,7 @@ impl Rigidbody {
             angle: 0.0,
             collision: true,
             gravity_multiplier: 1.0,
+            eternal: false,
         };
         polygon.calculate_properties();
         polygon
@@ -132,6 +134,7 @@ impl Rigidbody {
             angle: 0.0,
             collision: true,
             gravity_multiplier: 1.0,
+            eternal: false,
         };
         polygon.calculate_properties();
         polygon
@@ -188,6 +191,7 @@ impl Rigidbody {
             angle: 0.0,
             collision: true,
             gravity_multiplier: 1.0,
+            eternal: false,
         };
         polygon.calculate_properties();
         polygon
@@ -284,7 +288,16 @@ impl Rigidbody {
         self.center += pos;
         self
     }
-
+    
+    pub fn move_to(&mut self, pos: Vec2) -> &mut Self {
+        let diff = pos - self.center;
+        for vertex in &mut self.vertices {
+            vertex.pos += diff;
+        }
+        self.center += diff;
+        self
+    }
+    
     pub fn rotate(&mut self, angle: f32) -> &mut Self {
         for vertex in &mut self.vertices {
             let new_x = ((vertex.pos.x - self.center.x) * angle.cos()

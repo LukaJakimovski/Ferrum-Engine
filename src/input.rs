@@ -1,6 +1,6 @@
 
 use crate::body_builder::BodyBuilder;
-use crate::enums::{BodyType, DraggingState, InputMode, Keys, Mouse};
+use crate::enums::{BodyType, DraggingState, InputMode, Keys, Menu, Mouse};
 use crate::spring::Spring;
 use crate::{Color, Rigidbody, Vec2, World};
 use winit::dpi::PhysicalPosition;
@@ -104,6 +104,20 @@ impl World {
                     self.input_mode = InputMode::Drag;
                 }
             }
+            winit::keyboard::KeyCode::Equal => {
+                if _pressed {
+                    self.pressed_keys[Keys::Plus as usize] = 1
+                } else if !_pressed {
+                    self.pressed_keys[Keys::Plus as usize] = 0
+                }
+            }
+            winit::keyboard::KeyCode::Minus => {
+                if _pressed {
+                    self.pressed_keys[Keys::Minus as usize] = 1
+                } else if !_pressed {
+                    self.pressed_keys[Keys::Minus as usize] = 0
+                }
+            }
             winit::keyboard::KeyCode::Escape => {
                 event_loop.exit();
             }
@@ -131,6 +145,12 @@ impl World {
         if self.pressed_keys[Keys::D as usize] == 1 {
             self.camera_pos.x += 5.0 * self.delta_time as f32;
         }
+        if self.pressed_keys[Keys::Plus as usize] == 1 {
+            self.camera_pos.w += 5.0 * self.scaling_factor * self.delta_time as f32;
+        }
+        if self.pressed_keys[Keys::Minus as usize] == 1 {
+            self.camera_pos.w -= 5.0 * self.scaling_factor * self.delta_time as f32;
+        }
 
         if self.pressed_buttons[Mouse::Left as usize] == 1
             && (self.input_mode == InputMode::Drag
@@ -142,9 +162,16 @@ impl World {
             if self.selected_polygon.is_some() {
                 let position = self.get_mouse_world_position();
                 let mut mouse_polygon =
-                    Rigidbody::rectangle(0.03, 0.03, position, 1000.0, 1.0, Color::random());
+                    Rigidbody::rectangle(0.03, 0.03, position, f32::MAX / 10000.0, 1.0, Color::random());
                 mouse_polygon.collision = false;
-                let selected_polygon = &mut self.polygons[self.selected_polygon.unwrap()];
+                let selected_polygon;
+                if self.selected_polygon.unwrap() < self.polygons.len(){
+                    selected_polygon = &mut self.polygons[self.selected_polygon.unwrap()];
+                } else {
+                    self.selected_polygon = None;
+                    return
+                }
+
                 if self.dragging == DraggingState::StartDragging {
                     self.anchor_pos = mouse_polygon.center - selected_polygon.center;
                     self.polygons.push(mouse_polygon);
@@ -231,6 +258,7 @@ impl World {
                 else if self.input_mode == InputMode::Select {
                     self.pressed_buttons[Mouse::Left as usize] = 1;
                     self.selected_polygon = self.get_polygon_under_mouse();
+                    if self.selected_polygon.is_some() { self.menus[Menu::Editor as usize] = true}
                 } else if self.input_mode == InputMode::Drag {
                     self.pressed_buttons[Mouse::Left as usize] = 1;
                     self.selected_polygon = self.get_polygon_under_mouse();
@@ -247,7 +275,7 @@ impl World {
                     self.pressed_buttons[Mouse::Left as usize] = 0;
                 } else if self.input_mode == InputMode::Spawn && self.dragging == DraggingState::Dragging {
                     self.pressed_buttons[Mouse::Left as usize] = 1;
-                    let mouse_polygon = Rigidbody::rectangle(0.03, 0.03, position, 1.0, 1.0, Color::random());
+                    let mouse_polygon = Rigidbody::rectangle(0.03, 0.03, position, f32::MAX / 100000.0, 1.0, Color::random());
                     let polygon2_index = self.get_polygon_under_mouse();
                     if polygon2_index.is_some() && self.temp_springs.len() > 0 && self.selected_polygon.unwrap() != polygon2_index.unwrap() {
                         let polygon2 = &mut self.polygons[polygon2_index.unwrap()];

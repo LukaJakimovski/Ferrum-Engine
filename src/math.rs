@@ -2,7 +2,7 @@ use std::fmt;
 use std::ops::{Add, AddAssign, Div, DivAssign, Mul, MulAssign, Neg, Sub, SubAssign};
 
 #[repr(C)]
-#[derive(Clone, Debug, Default, Copy, bytemuck::Pod, bytemuck::Zeroable)]
+#[derive(Clone, Debug, Default, Copy, bytemuck::Pod, bytemuck::Zeroable, PartialEq)]
 pub struct Vec2 {
     pub x: f32,
     pub y: f32,
