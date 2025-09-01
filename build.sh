@@ -9,7 +9,7 @@ fi
 
 # Create builds folder if it doesn't exist
 mkdir -p builds
-mkdir -p builds/linux_x86_64
+mkdir -p builds/linux_x86-64
 mkdir -p builds/windows_x86-64
 
 # Get list of example names from Cargo
