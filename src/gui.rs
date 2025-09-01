@@ -572,7 +572,7 @@ impl World {
                     });
                     selected_polygon.change_color(Color::new(color[0], color[1], color[2]));
                 });
-        } else if self.selected_polygon.is_some() {
+        } else if self.selected_spring.is_some() {
             let selected_spring = &mut self.springs[self.selected_spring.unwrap()];
             egui::Window::new("Spring Editor")
                 .resizable(false)

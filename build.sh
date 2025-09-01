@@ -9,6 +9,8 @@ fi
 
 # Create builds folder if it doesn't exist
 mkdir -p builds
+mkdir -p builds/linux_x86_64
+mkdir -p builds/windows_x86-64
 
 # Get list of example names from Cargo
 examples=$(cargo metadata --no-deps --format-version=1 \
@@ -48,3 +50,7 @@ for example in $examples; do
 done
 
 echo "All examples built and copied to ./builds/"
+cd builds
+
+tar -czf linux_x86-64.tar.gz linux_x86-64
+zip -r windows_x86-64.zip windows_x86-64
