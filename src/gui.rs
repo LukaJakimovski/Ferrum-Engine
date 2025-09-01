@@ -603,7 +603,7 @@ impl World {
                     ui.columns(3, |ui| {
                         ui[0].label("Stiffness");
                         ui[1].add(
-                            egui::DragValue::new(&mut selected_spring.rest_length).speed(0.01),
+                            egui::DragValue::new(&mut selected_spring.stiffness).speed(0.01),
                         );
                     });
                     ui.columns(3, |ui| {
