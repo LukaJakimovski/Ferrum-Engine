@@ -40,6 +40,15 @@ impl World {
             }
 
         }
+        
+        if self.selected_polygon.is_some() {
+            if self.selected_polygon.unwrap() > index {
+                self.selected_polygon = Some(self.selected_polygon.unwrap() - 1);
+            }
+            if self.selected_polygon.unwrap() == index {
+                self.selected_polygon = None;
+            }
+        }
     }
 
     pub fn remove_spring(&mut self, index: usize) {
@@ -79,6 +88,21 @@ impl World {
             }
         }
         polygon_index
+    }
+    
+    pub fn get_spring_under_mouse(&self) -> Option<usize> {
+        let mut spring_index = None;
+        let position = self.get_mouse_world_position();
+        let mouse_spring =
+            Rigidbody::rectangle(0.03, 0.03, position, 1.0, 1.0, Color::random());
+        for i in 0..self.springs.len() {
+            let result = sat_collision(&mouse_spring, &self.springs[i].connector);
+            if result[1].y != 0.0 && (self.temp_polygons.len() == 0 || i != self.temp_polygons[0]) {
+                spring_index = Some(i);
+                break;
+            }
+        }
+        spring_index
     }
 }
 

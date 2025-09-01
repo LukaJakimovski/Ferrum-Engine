@@ -486,7 +486,7 @@ impl World {
     fn editor_menu(&mut self) {
         if self.selected_polygon.is_some() {
             let selected_polygon = &mut self.polygons[self.selected_polygon.unwrap()];
-            egui::Window::new("Rigidbody Editor")
+            egui::Window::new("Body Editor")
                 .resizable(false)
                 .vscroll(false)
                 .default_open(true)
@@ -571,6 +571,47 @@ impl World {
                         ui[1].color_edit_button_rgb(&mut color);
                     });
                     selected_polygon.change_color(Color::new(color[0], color[1], color[2]));
+                });
+        } else if self.selected_polygon.is_some() {
+            let selected_spring = &mut self.springs[self.selected_spring.unwrap()];
+            egui::Window::new("Spring Editor")
+                .resizable(false)
+                .vscroll(false)
+                .default_open(true)
+                .default_height(275.0)
+                .title_bar(false)
+                .show(self.egui_renderer.context(), |ui| {
+                    ui.heading("Spring Editor");
+                    ui.columns(3, |ui| {
+                        ui[0].label("Anchor A");
+                        ui[1].add(
+                            egui::DragValue::new(&mut selected_spring.anchor_a.x).speed(0.01),
+                        );
+                        ui[2].add(
+                            egui::DragValue::new(&mut selected_spring.anchor_a.y).speed(0.01),
+                        );
+                    });
+                    ui.columns(3, |ui| {
+                        ui[0].label("Anchor B");
+                        ui[1].add(
+                            egui::DragValue::new(&mut selected_spring.anchor_b.x).speed(0.01),
+                        );
+                        ui[2].add(
+                            egui::DragValue::new(&mut selected_spring.anchor_b.y).speed(0.01),
+                        );
+                    });
+                    ui.columns(3, |ui| {
+                        ui[0].label("Stiffness");
+                        ui[1].add(
+                            egui::DragValue::new(&mut selected_spring.rest_length).speed(0.01),
+                        );
+                    });
+                    ui.columns(3, |ui| {
+                        ui[0].label("Rest Length");
+                        ui[1].add(
+                            egui::DragValue::new(&mut selected_spring.rest_length).speed(0.01),
+                        );
+                    });
                 });
         } else {
             egui::Window::new("Rigidbody Editor")

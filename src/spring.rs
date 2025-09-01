@@ -8,13 +8,13 @@ pub struct Spring {
     pub body_a: usize, // Index or ID of first body
     pub body_b: usize, // Index or ID of second body
     pub connector: Rigidbody,
-    anchor_a: Vec2,            // Local offset on body A
+    pub(crate) anchor_a: Vec2,            // Local offset on body A
     pub(crate) anchor_b: Vec2, // Local offset on body B
     angle_a: f32,
     angle_b: f32,
-    rest_length: f32,
-    stiffness: f32,
-    damping: f32,
+    pub(crate) rest_length: f32,
+    pub(crate) stiffness: f32,
+    pub(crate) damping: f32,
 }
 
 impl Spring {
@@ -127,12 +127,15 @@ impl Spring {
 
         let diff = new_pos_b - b.center;
         b.translate(diff);
-
+        
+        let torque_damping = -self.damping * (b.angular_velocity + a.angular_velocity);
         // Step angular motion using RK4
         let torque_fn_a = move |_t: f32, _theta: f32, _omega: f32| -> f32 {
-            torque_a // constant during dt
+            torque_a + torque_damping// constant during dt
         };
-        let torque_fn_b = move |_t: f32, _theta: f32, _omega: f32| -> f32 { torque_b };
+        let torque_fn_b = move |_t: f32, _theta: f32, _omega: f32| -> f32 { 
+            torque_b + torque_damping
+        };
 
         let (new_angle_a, new_omega_a) = rk4_angular_step(
             0.0,

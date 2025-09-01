@@ -105,6 +105,7 @@ pub struct World {
 
     pub input_mode: InputMode,
     pub selected_polygon: Option<usize>,
+    pub selected_spring: Option<usize>,
     pub temp_polygons: Vec<usize>,
     pub temp_springs: Vec<usize>,
     pub anchor_pos: Vec2,
@@ -370,6 +371,7 @@ impl World {
             spawn_parameters,
             input_mode: InputMode::Spawn,
             selected_polygon: None,
+            selected_spring: None,
             temp_polygons: vec![],
             temp_springs: vec![],
             anchor_pos: Vec2::new(0.0, 0.0),

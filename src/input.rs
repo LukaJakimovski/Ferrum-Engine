@@ -259,6 +259,10 @@ impl World {
                     self.pressed_buttons[Mouse::Left as usize] = 1;
                     self.selected_polygon = self.get_polygon_under_mouse();
                     if self.selected_polygon.is_some() { self.menus[Menu::Editor as usize] = true}
+                    else {
+                        self.selected_polygon = None;
+                        self.selected_spring = self.get_spring_under_mouse();
+                    }
                 } else if self.input_mode == InputMode::Drag {
                     self.pressed_buttons[Mouse::Left as usize] = 1;
                     self.selected_polygon = self.get_polygon_under_mouse();
@@ -300,6 +304,8 @@ impl World {
                 self.pressed_buttons[Mouse::Right as usize] = 1;
                 let polygon_under_mouse = self.get_polygon_under_mouse();
                 if polygon_under_mouse.is_some() {self.remove_rigidbody(polygon_under_mouse.unwrap()); }
+                let spring_under_mouse = self.get_spring_under_mouse();
+                if spring_under_mouse.is_some() {self.remove_spring(spring_under_mouse.unwrap());}
             } else {
                 self.pressed_buttons[Mouse::Right as usize] = 0;
             }
