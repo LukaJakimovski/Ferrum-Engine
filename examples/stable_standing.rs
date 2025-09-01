@@ -54,6 +54,7 @@ fn main() {
         Color::random(),
     ));
     polygons[5].rotate(-1.0);
+    polygons[5].gravity_multiplier = 0.0;
     for polygon in &mut polygons {
         polygon.rotate(1.0);
     }
@@ -67,6 +68,7 @@ fn main() {
             z: 0.0,
             w: -3.0,
         },
+        time_multiplier: 1.0,
         gravity: true,
         world_size: 300.0,
         gravity_force: Vec2::new(0.0, -9.81),

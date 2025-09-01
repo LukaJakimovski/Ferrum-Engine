@@ -20,21 +20,13 @@ impl World {
             .show(self.egui_renderer.context(), |ui| {
                 ui.heading("Menu Selector");
                 ui.checkbox(&mut self.menus[Menu::Config as usize], "World Config");
-                ui.checkbox(
-                    &mut self.menus[Menu::Energy as usize],
-                    "Kinetic Energy Info",
-                );
+                ui.checkbox(&mut self.menus[Menu::Energy as usize], "Kinetic Energy Info", );
                 ui.checkbox(&mut self.menus[Menu::FPS as usize], "Show FPS");
                 ui.checkbox(&mut self.menus[Menu::Camera as usize], "Camera Position");
-                ui.checkbox(
-                    &mut self.menus[Menu::Spawner as usize],
-                    "Spawned Body Properties",
-                );
+                ui.checkbox(&mut self.menus[Menu::Spawner as usize], "Spawned Body Properties", );
                 ui.checkbox(&mut self.menus[Menu::Input as usize], "Change Input Mode");
-                ui.checkbox(
-                    &mut self.menus[Menu::Editor as usize],
-                    "Edit Selected Polygon",
-                );
+                ui.checkbox(&mut self.menus[Menu::Editor as usize], "Edit Selected Polygon", );
+                ui.checkbox(&mut self.menus[Menu::Advanced as usize], "Advanced Settings");
             });
 
         if self.menus[Menu::Config as usize] {
@@ -57,6 +49,9 @@ impl World {
         }
         if self.menus[Menu::Editor as usize] {
             self.editor_menu()
+        }
+        if self.menus[Menu::Advanced as usize] {
+            self.advanced_menu()
         }
 
         self.is_pointer_used = self.egui_renderer.context().is_pointer_over_area();
@@ -148,19 +143,44 @@ impl World {
                         self.parameters.world_size = 0.0;
                     }
                 });
-                ui.columns(2, |ui| {
-                    ui[0].label("Time Step");
-                    ui[1].add(egui::DragValue::new(&mut self.parameters.delta_time).speed(0.0001));
-                    if self.parameters.delta_time < 0.0 {
-                        self.parameters.delta_time = 0.0;
-                    }
-                });
+                if self.parameters.delta_time == 0.0 {
+                    ui.columns(2, |ui| {
+                        ui[0].label("Time multiplier");
+                        ui[1].add(egui::DragValue::new(&mut self.parameters.time_multiplier).speed(0.01));
+                        if self.parameters.time_multiplier < 0.0 {
+                            self.parameters.time_multiplier = 0.0;
+                        }
+                    });
+                }
                 ui.columns(3, |ui| {
                     ui[0].label("Gravity Force");
                     ui[1]
                         .add(egui::DragValue::new(&mut self.parameters.gravity_force.x).speed(0.1));
                     ui[1]
                         .add(egui::DragValue::new(&mut self.parameters.gravity_force.y).speed(0.1));
+                });
+            });
+    }
+
+    fn advanced_menu(&mut self) {
+        egui::Window::new("Spawner")
+            .resizable(false)
+            .vscroll(false)
+            .default_open(true)
+            .default_height(275.0)
+            .title_bar(false)
+            .show(self.egui_renderer.context(), |ui| {
+                ui.heading("Advanced");
+                ui.label("If you don't know what these mean don't change them");
+                ui.columns(2, |ui| {
+                    ui[0].label("Time Step");
+                    ui[1].add(egui::DragValue::new(&mut self.parameters.delta_time).speed(0.00001));
+                    if self.parameters.delta_time < 0.0 {
+                        self.parameters.delta_time = 0.0;
+                    }
+                    if self.parameters.delta_time > 0.005 {
+                        self.parameters.delta_time = 0.005;
+                    }
                 });
                 ui.columns(2, |ui| {
                     ui[0].label("Physics Updates Per Frame");

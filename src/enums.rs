@@ -67,6 +67,7 @@ pub enum Menu {
     Input = 5,
     Editor = 6,
     DragParams = 7,
+    Advanced = 8,
 }
 
 #[repr(usize)]

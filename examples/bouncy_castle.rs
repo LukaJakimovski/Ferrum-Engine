@@ -16,9 +16,11 @@ fn main() {
         0.5,
         Vec2::new(0.0, 0.0),
         f32::MAX / 10000000000.0,
-        1.1,
+        1.4,
         Color::random(),
     ));
+    rigidbodies[0].gravity_multiplier = 0.0;
+    rigidbodies[1].gravity_multiplier = 0.0;
 
     let mut springs = vec![];
     springs.push(Spring::new(
@@ -142,6 +144,7 @@ fn main() {
             z: 0.0,
             w: -6.0,
         },
+        time_multiplier: 1.0,
         gravity: true,
         world_size: 500.0,
         gravity_force: Vec2::new(0.0, -9.81),

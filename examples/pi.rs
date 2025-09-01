@@ -38,6 +38,7 @@ fn main() {
             z: 0.0,
             w: -5.0,
         },
+        time_multiplier: 1.0,
         gravity: false,
         world_size: 300.0,
         gravity_force: Vec2::new(0.0, 0.0),

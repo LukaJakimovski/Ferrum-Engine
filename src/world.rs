@@ -18,6 +18,7 @@ pub struct Parameters {
     pub gravity: bool,
     pub world_size: f32,
     pub gravity_force: Vec2,
+    pub time_multiplier: f32
 }
 
 #[repr(C)]
@@ -99,7 +100,7 @@ pub struct World {
     pub egui_renderer: EguiRenderer,
     pub is_pointer_used: bool,
 
-    pub menus: [bool; 8],
+    pub menus: [bool; 16],
     pub spawn_parameters: BodyBuilder,
 
     pub input_mode: InputMode,
@@ -327,7 +328,7 @@ impl World {
         let scaling_factor = 0.1;
         #[cfg(not(all(target_os = "windows", target_arch = "x86_64", target_env = "gnu")))]
         let scaling_factor = 10.0;
-        let mut menus = [false; 8];
+        let mut menus = [false; 16];
         menus[Menu::Input as usize] = true;
         menus[Menu::Config as usize] = true;
         Ok(Self {
@@ -394,7 +395,7 @@ impl World {
         if self.parameters.delta_time == 0.0 {
             self.delta_time = date::now() - self.start_time;
             self.start_time = date::now();
-            self.delta_time /= 2.0;
+            self.delta_time *= self.parameters.time_multiplier as f64;
         } else {
             self.delta_time = self.parameters.delta_time;
         }
