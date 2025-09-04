@@ -1,4 +1,4 @@
-For version 0.2.0
+For version 0.3.0
 
 Allow the creation of anchors to connect two objects together
     - Anchor will make it so that the two objects will no longer collide
@@ -9,11 +9,10 @@ Allow the creation of bearings where two objects are connected but are free to r
     - Unconstrained in terms of angular motion
     - This should make a double pendulum
 
-Double pendulum?
-
-Create rad README
-
-
-Editing spring properties
-Ease of use?
-Improve read me a bit.
+Double pendulum
+Non Convex shapes
+Motors
+Calculation of potential energy
+Make it so that things dont phase
+Asynchronous physics and rendering
+Warning for slow frame time.

@@ -200,7 +200,8 @@ impl World {
                             &self.polygons,
                         );
                     }
-
+                    self.polygons[spring.body_a.clone()].gravity_divider += 1.0;
+                    self.polygons[spring.body_b.clone()].gravity_divider += 1.0;
                     self.springs.push(spring);
                     self.temp_springs.push(self.springs.len() - 1);
                     self.temp_polygons.push(self.polygons.len() - 1);
@@ -286,6 +287,7 @@ impl World {
                         let anchor_pos = mouse_polygon.center - polygon2.center;
                         self.springs[self.temp_springs[0]].body_b = polygon2_index.unwrap();
                         self.springs[self.temp_springs[0]].anchor_b = anchor_pos;
+                        self.polygons[self.springs[self.temp_springs[0]].body_b.clone()].gravity_divider += 1.0;
                     } else {
                         for spring_index in self.temp_springs.clone() { self.remove_spring(spring_index); }
                     }

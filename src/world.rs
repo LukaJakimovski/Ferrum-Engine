@@ -6,6 +6,8 @@ use crate::utility::date;
 use crate::{Color, Rigidbody, Vec2, Vec4};
 use egui_wgpu::wgpu;
 use std::sync::Arc;
+use std::thread;
+use std::thread::JoinHandle;
 use wgpu::util::DeviceExt;
 use winit::window::Window;
 
@@ -111,6 +113,8 @@ pub struct World {
     pub anchor_pos: Vec2,
     pub dragging: DraggingState,
     pub drag_params: SpringParams,
+    
+    pub handles: Option<JoinHandle<i8>>
 }
 
 impl World {
@@ -381,6 +385,7 @@ impl World {
                 dampening: 1.0,
                 ..Default::default()
             },
+            handles: None,
         })
     }
 
@@ -404,9 +409,11 @@ impl World {
         for spring in &mut self.springs {
             spring.update_connector(&mut self.polygons);
         }
-
-        self.handle_input();
-
+        
+        if self.is_pointer_used == false {
+            self.handle_input();
+        }
+        
         for i in 0..self.polygons.len() {
             if i < self.polygons.len()
                 && self.parameters.world_size > 0.0
