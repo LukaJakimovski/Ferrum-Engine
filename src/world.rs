@@ -6,7 +6,6 @@ use crate::utility::date;
 use crate::{Color, Rigidbody, Vec2, Vec4};
 use egui_wgpu::wgpu;
 use std::sync::Arc;
-use std::thread;
 use std::thread::JoinHandle;
 use wgpu::util::DeviceExt;
 use winit::window::Window;
