@@ -113,20 +113,15 @@ impl Spring {
             -spring_force - damping_force // constant during step
         };
 
-        let force_b = move |_t: f32, _x: Vec2, _v: Vec2| -> Vec2 { spring_force + damping_force };
+        let force_b = move |_t: f32, _x: Vec2, _v: Vec2| -> Vec2 {
+            spring_force + damping_force
+        };
 
-        let (new_pos_a, new_vel_a) = rk4_step(0.0, a.center, a.velocity, dt, a.mass, &force_a);
-        let (new_pos_b, new_vel_b) = rk4_step(0.0, b.center, b.velocity, dt, b.mass, &force_b);
+        let (_new_pos_a, new_vel_a) = rk4_step(0.0, a.center, a.velocity, dt, a.mass, &force_a);
+        let (_new_pos_b, new_vel_b) = rk4_step(0.0, b.center, b.velocity, dt, b.mass, &force_b);
 
         a.velocity = new_vel_a;
-
-        let diff = new_pos_a - a.center;
-        a.translate(diff);
-
         b.velocity = new_vel_b;
-
-        let diff = new_pos_b - b.center;
-        b.translate(diff);
         
         let torque_damping = -self.damping * (b.angular_velocity + a.angular_velocity);
         // Step angular motion using RK4
@@ -154,20 +149,14 @@ impl Spring {
             &torque_fn_b,
         );
 
-        let old_angle_a = a.angle;
         a.angle = new_angle_a;
-        let diff = new_angle_a - old_angle_a;
-        a.rotate(diff);
         a.angular_velocity = new_omega_a;
 
         let diff = new_angle_a - self.angle_a;
         self.angle_a = new_angle_a;
         self.anchor_a.rotate(&Vec2::zero(), diff);
 
-        let old_angle_b = b.angle;
         b.angle = new_angle_b;
-        let diff = new_angle_b - old_angle_b;
-        b.rotate(diff);
         b.angular_velocity = new_omega_b;
 
         let diff = new_angle_b - self.angle_b;

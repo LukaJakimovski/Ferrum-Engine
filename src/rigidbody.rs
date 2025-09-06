@@ -20,7 +20,6 @@ pub struct Rigidbody {
     pub collision: bool,
     pub gravity_multiplier: f32,
     pub eternal: bool,
-    pub gravity_divider: f32,
 }
 impl Rigidbody {
     pub fn rectangle(
@@ -80,7 +79,6 @@ impl Rigidbody {
             collision: true,
             gravity_multiplier: 1.0,
             eternal: false,
-            gravity_divider: 1.0,
         };
         polygon.calculate_properties();
         polygon
@@ -137,7 +135,6 @@ impl Rigidbody {
             collision: true,
             gravity_multiplier: 1.0,
             eternal: false,
-            gravity_divider: 1.0,
         };
         polygon.calculate_properties();
         polygon
@@ -195,7 +192,6 @@ impl Rigidbody {
             collision: true,
             gravity_multiplier: 1.0,
             eternal: false,
-            gravity_divider: 1.0,
         };
         polygon.calculate_properties();
         polygon
@@ -322,7 +318,7 @@ impl Rigidbody {
     }
 
     pub fn update_rigidbody(&mut self, g: Vec2, dt: f32) {
-        let force = |_: f32, _: Vec2, _: Vec2| g * self.mass * self.gravity_multiplier / self.gravity_divider + self.force;
+        let force = |_: f32, _: Vec2, _: Vec2| g * self.mass * self.gravity_multiplier + self.force;
         let (new_x, new_v) = rk4_step(0.0, self.center, self.velocity, dt, self.mass, &force);
         self.rotate(self.angular_velocity * dt);
         self.angle += self.angular_velocity * dt;
@@ -342,3 +338,4 @@ impl Rigidbody {
         kinetic_energy as f64
     }
 }
+// I don't get it a rigidbody falls faster if attached to a spring but it doesn't change it's physics at all in theory?

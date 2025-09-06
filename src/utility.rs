@@ -52,8 +52,6 @@ impl World {
     }
 
     pub fn remove_spring(&mut self, index: usize) {
-        self.polygons[self.springs[index].body_a].gravity_divider -= 1.0;
-        self.polygons[self.springs[index].body_b].gravity_divider -= 1.0;
         self.springs.remove(index);
         for i in 0..self.temp_springs.len() {
             if self.temp_springs[i] == index{
