@@ -198,7 +198,7 @@ impl Spring {
         // Rotate anchors into world space
         let world_anchor_a = a.center + self.anchor_a;
         let world_anchor_b = b.center + self.anchor_b;
-        
+
         let distance = world_anchor_a.distance(&world_anchor_b);
         let stretch = distance - self.rest_length;
 

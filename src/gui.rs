@@ -521,6 +521,19 @@ impl World {
                         //.show_tooltip_text("Changes the vertical velocity of the spawned polygon. Value in m/s");;
                     });
                     ui.columns(2, |ui| {
+                        let mut angle_degrees = selected_polygon.angle * 360.0 / (2.0 * std::f32::consts::PI);
+                        let old_angle = selected_polygon.angle;
+                        ui[0].label("Angle");
+                        ui[1].add(
+                            egui::DragValue::new(&mut angle_degrees)
+                                .speed(0.1),
+                        );
+                        let angle_radians = angle_degrees * 2.0 * std::f32::consts::PI / 360.0;
+                        selected_polygon.rotate(angle_radians - old_angle);
+                        selected_polygon.angle += angle_radians - old_angle;
+                        //.show_tooltip_text("Changes the orientation of the spawned polygon. Value in radians/sec");;
+                    });
+                    ui.columns(2, |ui| {
                         ui[0].label("Angular Velocity");
                         ui[1].add(
                             egui::DragValue::new(&mut selected_polygon.angular_velocity)
