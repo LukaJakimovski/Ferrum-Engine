@@ -58,6 +58,9 @@ impl World {
                 self.temp_springs.remove(i);
             }
         }
+        if self.selected_spring.is_some() {
+            self.selected_spring = None;
+        }
     }
 
     pub fn get_mouse_world_position(&self) -> Vec2 {

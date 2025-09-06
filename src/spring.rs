@@ -92,9 +92,7 @@ impl Spring {
 
         let delta = world_anchor_b - world_anchor_a;
         let distance = world_anchor_a.distance(&world_anchor_b);
-
         let direction = delta / distance;
-
         let stretch = distance - self.rest_length;
 
         let relative_velocity = b.velocity - a.velocity;
@@ -149,16 +147,23 @@ impl Spring {
             &torque_fn_b,
         );
 
-        a.angle = new_angle_a;
-        a.angular_velocity = new_omega_a;
 
+        let old_angle_a = a.angle;
+        a.angle = new_angle_a;
+        let diff = new_angle_a - old_angle_a;
+        a.rotate(diff);
+
+        a.angular_velocity = new_omega_a;
         let diff = new_angle_a - self.angle_a;
         self.angle_a = new_angle_a;
         self.anchor_a.rotate(&Vec2::zero(), diff);
 
+        let old_angle_b = b.angle;
         b.angle = new_angle_b;
-        b.angular_velocity = new_omega_b;
+        let diff = new_angle_b - old_angle_b;
+        b.rotate(diff);
 
+        b.angular_velocity = new_omega_b;
         let diff = new_angle_b - self.angle_b;
         self.angle_b = new_angle_b;
         self.anchor_b.rotate(&Vec2::zero(), diff);
@@ -191,5 +196,19 @@ impl Spring {
         } else {
             self.connector.rotate(angle);
         }
+    }
+
+    pub fn calculate_energy(&self, rigidbodys: &Vec<Rigidbody>) -> f64 {
+        let a = &rigidbodys[self.body_a];
+        let b = &rigidbodys[self.body_b];
+
+        // Rotate anchors into world space
+        let world_anchor_a = a.center + self.anchor_a;
+        let world_anchor_b = b.center + self.anchor_b;
+
+        let delta = world_anchor_b - world_anchor_a;
+        let distance = world_anchor_a.distance(&world_anchor_b);
+
+        (0.5 * self.stiffness * distance * distance) as f64
     }
 }

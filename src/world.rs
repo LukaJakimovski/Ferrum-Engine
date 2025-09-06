@@ -6,7 +6,6 @@ use crate::utility::date;
 use crate::{Color, Rigidbody, Vec2, Vec4};
 use egui_wgpu::wgpu;
 use std::sync::Arc;
-use std::thread;
 use std::thread::JoinHandle;
 use wgpu::util::DeviceExt;
 use winit::window::Window;
@@ -437,6 +436,9 @@ impl World {
         self.total_energy = 0.0;
         for polygon in &self.polygons {
             self.total_energy += polygon.calculate_energy();
+        }
+        for spring in &mut self.springs {
+            self.total_energy += spring.calculate_energy(&self.polygons);
         }
     }
 }
