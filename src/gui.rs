@@ -607,6 +607,12 @@ impl World {
                         );
                     });
                     ui.columns(3, |ui| {
+                        ui[0].label("Damping");
+                        ui[1].add(
+                            egui::DragValue::new(&mut selected_spring.damping).speed(0.01),
+                        );
+                    });
+                    ui.columns(3, |ui| {
                         ui[0].label("Rest Length");
                         ui[1].add(
                             egui::DragValue::new(&mut selected_spring.rest_length).speed(0.01),
