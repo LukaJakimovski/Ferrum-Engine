@@ -27,6 +27,7 @@ impl World {
                 ui.checkbox(&mut self.menus[Menu::Input as usize], "Change Input Mode");
                 ui.checkbox(&mut self.menus[Menu::Editor as usize], "Edit Selected Polygon", );
                 ui.checkbox(&mut self.menus[Menu::Advanced as usize], "Advanced Settings");
+                ui.checkbox(&mut self.menus[Menu::Debug as usize], "Debug Menu");
             });
 
         if self.menus[Menu::Config as usize] {
@@ -52,6 +53,9 @@ impl World {
         }
         if self.menus[Menu::Advanced as usize] {
             self.advanced_menu()
+        }
+        if self.menus[Menu::Debug as usize] {
+            self.debug_menu()
         }
 
         self.is_pointer_used = self.egui_renderer.context().is_pointer_over_area();
@@ -244,7 +248,10 @@ impl World {
                                     &mut self.spawn_parameters.rigidbody_params.sides,
                                 )
                                 .speed(1),
-                            )
+                            );
+                            if self.spawn_parameters.rigidbody_params.sides < 3 {
+                                self.spawn_parameters.rigidbody_params.sides = 3
+                            }
                             //.show_tooltip_text("Changes the amount of sides of the spawned polygon");;
                         });
                         ui.columns(2, |ui| {
@@ -644,5 +651,21 @@ impl World {
                     ui.label("No Rigidbody Selected");
                 });
         }
+    }
+
+    fn debug_menu(&mut self){
+        egui::Window::new("Debug Menu")
+            .resizable(false)
+            .vscroll(false)
+            .default_open(true)
+            .default_height(275.0)
+            .title_bar(false)
+            .show(self.egui_renderer.context(), |ui| {
+                ui.heading("Debug Menu");
+                ui.label(format!("Polygons: {}", self.polygons.len()));
+                if self.spawn_ghost_polygon.is_some(){
+                    ui.label(format!("Ghost polygon: {}", self.spawn_ghost_polygon.unwrap()));
+                }
+            });
     }
 }

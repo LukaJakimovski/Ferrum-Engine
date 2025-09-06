@@ -203,11 +203,11 @@ impl World {
                         );
                     }
                     self.springs.push(spring);
-                    self.temp_springs.push(self.springs.len() - 1);
-                    self.temp_polygons.push(self.polygons.len() - 1);
+                    self.mouse_spring = Some(self.springs.len() - 1);
+                    self.spring_polygon = Some(self.polygons.len() - 1);
                 }
-                if self.temp_polygons.len() > 0 {
-                    let index = self.temp_polygons[0];
+                if self.spring_polygon.is_some() {
+                    let index = self.spring_polygon.unwrap();
                     if index < self.polygons.len() {
                         let diff = position - self.polygons[index].center;
                         self.polygons[index].translate(diff);
@@ -273,10 +273,10 @@ impl World {
                 }
             }  else if !state.is_pressed() || self.dragging == DraggingState::StopDragging {
                 if self.input_mode == InputMode::Drag {
-                    for index in self.temp_polygons.clone() { self.remove_rigidbody(index); }
-                    for index in self.temp_springs.clone() { self.remove_spring(index); }
-                    self.temp_springs.clear();
-                    self.temp_polygons.clear();
+                    if self.spring_polygon.is_some() {self.remove_rigidbody(self.spring_polygon.unwrap()); }
+                    if self.mouse_spring.is_some() {self.remove_spring(self.mouse_spring.unwrap()); }
+                    self.mouse_spring = None;
+                    self.spring_polygon = None;
                     self.dragging = DraggingState::NotDragging;
                     self.selected_polygon = None;
                     self.pressed_buttons[Mouse::Left as usize] = 0;
@@ -284,17 +284,17 @@ impl World {
                     self.pressed_buttons[Mouse::Left as usize] = 1;
                     let mouse_polygon = Rigidbody::rectangle(0.03, 0.03, position, f32::MAX / 100000.0, 1.0, Color::random());
                     let polygon2_index = self.get_polygon_under_mouse();
-                    if polygon2_index.is_some() && self.temp_springs.len() > 0 && self.selected_polygon.unwrap() != polygon2_index.unwrap() {
+                    if polygon2_index.is_some() && self.mouse_spring.is_some() && self.selected_polygon.unwrap() != polygon2_index.unwrap() {
                         let polygon2 = &mut self.polygons[polygon2_index.unwrap()];
                         let anchor_pos = mouse_polygon.center - polygon2.center;
-                        self.springs[self.temp_springs[0]].body_b = polygon2_index.unwrap();
-                        self.springs[self.temp_springs[0]].anchor_b = anchor_pos;
-                    } else {
-                        for spring_index in self.temp_springs.clone() { self.remove_spring(spring_index); }
+                        self.springs[self.mouse_spring.unwrap()].body_b = polygon2_index.unwrap();
+                        self.springs[self.mouse_spring.unwrap()].anchor_b = anchor_pos;
+                    } else if self.mouse_spring.is_some() {
+                        self.remove_spring(self.mouse_spring.unwrap());
                     }
-                    for rigidbody_index in self.temp_polygons.clone() { self.remove_rigidbody(rigidbody_index); }
-                    self.temp_springs.clear();
-                    self.temp_polygons.clear();
+                    if self.spring_polygon.is_some() {self.remove_rigidbody(self.spring_polygon.unwrap()); }
+                    self.mouse_spring = None;
+                    self.spring_polygon = None;
                     self.dragging = DraggingState::NotDragging;
                     self.pressed_buttons[Mouse::Left as usize] = 0;
                 } else {
@@ -306,7 +306,9 @@ impl World {
             if state.is_pressed() && !self.is_pointer_used {
                 self.pressed_buttons[Mouse::Right as usize] = 1;
                 let polygon_under_mouse = self.get_polygon_under_mouse();
-                if polygon_under_mouse.is_some() {self.remove_rigidbody(polygon_under_mouse.unwrap()); }
+                if polygon_under_mouse.is_some() {
+                    self.remove_rigidbody(polygon_under_mouse.unwrap());
+                }
                 let spring_under_mouse = self.get_spring_under_mouse();
                 if spring_under_mouse.is_some() {self.remove_spring(spring_under_mouse.unwrap());}
             } else {

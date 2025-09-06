@@ -6,7 +6,6 @@ use crate::utility::date;
 use crate::{Color, Rigidbody, Vec2, Vec4};
 use egui_wgpu::wgpu;
 use std::sync::Arc;
-use std::thread::JoinHandle;
 use wgpu::util::DeviceExt;
 use winit::window::Window;
 
@@ -107,13 +106,12 @@ pub struct World {
     pub input_mode: InputMode,
     pub selected_polygon: Option<usize>,
     pub selected_spring: Option<usize>,
-    pub temp_polygons: Vec<usize>,
-    pub temp_springs: Vec<usize>,
+    pub spring_polygon: Option<usize>,
+    pub mouse_spring: Option<usize>,
+    pub spawn_ghost_polygon: Option<usize>,
     pub anchor_pos: Vec2,
     pub dragging: DraggingState,
     pub drag_params: SpringParams,
-    
-    pub handles: Option<JoinHandle<i8>>
 }
 
 impl World {
@@ -375,8 +373,9 @@ impl World {
             input_mode: InputMode::Spawn,
             selected_polygon: None,
             selected_spring: None,
-            temp_polygons: vec![],
-            temp_springs: vec![],
+            spring_polygon: None,
+            mouse_spring: None,
+            spawn_ghost_polygon: None,
             anchor_pos: Vec2::new(0.0, 0.0),
             dragging: DraggingState::NotDragging,
             drag_params: SpringParams {
@@ -384,7 +383,6 @@ impl World {
                 dampening: 1.0,
                 ..Default::default()
             },
-            handles: None,
         })
     }
 
@@ -440,5 +438,6 @@ impl World {
         for spring in &mut self.springs {
             self.total_energy += spring.calculate_energy(&self.polygons);
         }
+        self.create_mouse_ghost();
     }
 }

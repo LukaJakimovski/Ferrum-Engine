@@ -95,7 +95,6 @@ impl Spring {
         let direction = delta / distance;
         let stretch = distance - self.rest_length;
 
-        //let relative_velocity = b.velocity - a.velocity;
         let vel_a = a.velocity + cross_vec(a.angular_velocity, world_anchor_a - a.center);
         let vel_b = b.velocity + cross_vec(b.angular_velocity, world_anchor_b - b.center);
         let relative_velocity = vel_b - vel_a;
