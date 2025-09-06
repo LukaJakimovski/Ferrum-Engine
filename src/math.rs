@@ -388,3 +388,10 @@ impl fmt::Display for Vec2 {
         write!(f, "({}, {})", self.x, self.y)
     }
 }
+
+pub fn cross_vec(omega: f32, r: Vec2) -> Vec2 {
+    Vec2 {
+        x: -omega * r.y,
+        y:  omega * r.x,
+    }
+}

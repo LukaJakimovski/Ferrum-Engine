@@ -95,7 +95,11 @@ impl Spring {
         let direction = delta / distance;
         let stretch = distance - self.rest_length;
 
-        let relative_velocity = b.velocity - a.velocity;
+        //let relative_velocity = b.velocity - a.velocity;
+        let vel_a = a.velocity + cross_vec(a.angular_velocity, world_anchor_a - a.center);
+        let vel_b = b.velocity + cross_vec(b.angular_velocity, world_anchor_b - b.center);
+        let relative_velocity = vel_b - vel_a;
+
         let spring_force = -self.stiffness * stretch * direction;
         let damping_force = -self.damping * relative_velocity.dot(&direction) * direction;
         let total_force = spring_force + damping_force;
@@ -108,11 +112,11 @@ impl Spring {
 
         // Step linear motion using RK4
         let force_a = move |_t: f32, _x: Vec2, _v: Vec2| -> Vec2 {
-            -spring_force - damping_force // constant during step
+            -total_force
         };
 
         let force_b = move |_t: f32, _x: Vec2, _v: Vec2| -> Vec2 {
-            spring_force + damping_force
+            total_force
         };
 
         let (_new_pos_a, new_vel_a) = rk4_step(0.0, a.center, a.velocity, dt, a.mass, &force_a);
@@ -121,13 +125,13 @@ impl Spring {
         a.velocity = new_vel_a;
         b.velocity = new_vel_b;
         
-        let torque_damping = -self.damping * (b.angular_velocity + a.angular_velocity);
+        //let torque_damping = -self.damping * (b.angular_velocity + a.angular_velocity);
         // Step angular motion using RK4
         let torque_fn_a = move |_t: f32, _theta: f32, _omega: f32| -> f32 {
-            torque_a + torque_damping// constant during dt
+            torque_a //+ torque_damping// constant during dt
         };
         let torque_fn_b = move |_t: f32, _theta: f32, _omega: f32| -> f32 { 
-            torque_b + torque_damping
+            torque_b //+ torque_damping
         };
 
         let (new_angle_a, new_omega_a) = rk4_angular_step(
@@ -147,21 +151,10 @@ impl Spring {
             &torque_fn_b,
         );
 
-
-        let old_angle_a = a.angle;
-        a.angle = new_angle_a;
-        let diff = new_angle_a - old_angle_a;
-        a.rotate(diff);
-
         a.angular_velocity = new_omega_a;
         let diff = new_angle_a - self.angle_a;
         self.angle_a = new_angle_a;
         self.anchor_a.rotate(&Vec2::zero(), diff);
-
-        let old_angle_b = b.angle;
-        b.angle = new_angle_b;
-        let diff = new_angle_b - old_angle_b;
-        b.rotate(diff);
 
         b.angular_velocity = new_omega_b;
         let diff = new_angle_b - self.angle_b;
@@ -205,8 +198,6 @@ impl Spring {
         // Rotate anchors into world space
         let world_anchor_a = a.center + self.anchor_a;
         let world_anchor_b = b.center + self.anchor_b;
-
-        let delta = world_anchor_b - world_anchor_a;
         let distance = world_anchor_a.distance(&world_anchor_b);
 
         (0.5 * self.stiffness * distance * distance) as f64
