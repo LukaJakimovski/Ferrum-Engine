@@ -1,4 +1,5 @@
 use crate::{Color, Rigidbody, Vec2, World};
+use crate::body_builder::BodyBuilder;
 use crate::collision_detection::sat_collision;
 
 impl World {
@@ -83,6 +84,22 @@ impl World {
         let position = self.get_mouse_world_position();
         let mouse_polygon =
             Rigidbody::rectangle(0.03, 0.03, position, 1.0, 1.0, Color::random());
+        for i in 0..self.polygons.len() {
+            let result = sat_collision(&self.polygons[i], &mouse_polygon);
+            if result[1].y != 0.0 && (self.temp_polygons.len() == 0 || i != self.temp_polygons[0]) {
+                polygon_index = Some(i);
+                break;
+            }
+        }
+        polygon_index
+    }
+
+    pub fn under_mouse_is_clear(&self) -> Option<usize>{
+        let mut polygon_index = None;
+        let position = self.get_mouse_world_position();
+        let mut mouse_polygon =
+            BodyBuilder::create_rigidbody(&self.spawn_parameters);
+        mouse_polygon.translate(position);
         for i in 0..self.polygons.len() {
             let result = sat_collision(&self.polygons[i], &mouse_polygon);
             if result[1].y != 0.0 && (self.temp_polygons.len() == 0 || i != self.temp_polygons[0]) {

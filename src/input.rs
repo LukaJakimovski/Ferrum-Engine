@@ -127,10 +127,12 @@ impl World {
     pub fn handle_input(&mut self) {
         let position = self.get_mouse_world_position();
         if self.pressed_keys[Keys::L as usize] == 1 {
-            self.polygons
-                .push(BodyBuilder::create_rigidbody(&self.spawn_parameters));
-            let length = self.polygons.len() - 1;
-            self.polygons[length].translate(position);
+            if self.under_mouse_is_clear().is_none() {
+                self.polygons
+                    .push(BodyBuilder::create_rigidbody(&self.spawn_parameters));
+                let length = self.polygons.len() - 1;
+                self.polygons[length].translate(position);
+            }
         }
 
         if self.pressed_keys[Keys::W as usize] == 1 {
@@ -247,11 +249,13 @@ impl World {
                         self.selected_polygon = self.get_polygon_under_mouse();
                         if self.selected_polygon.is_some() { self.dragging = DraggingState::StartDragging }
                     } else if self.spawn_parameters.body_type == BodyType::Rectangle || self.spawn_parameters.body_type == BodyType::RegularPolygon{
-                        self.pressed_buttons[Mouse::Left as usize] = 1;
-                        self.polygons
-                            .push(BodyBuilder::create_rigidbody(&self.spawn_parameters));
-                        let length = self.polygons.len() - 1;
-                        self.polygons[length].translate(position);
+                        if self.under_mouse_is_clear().is_none() {
+                            self.pressed_buttons[Mouse::Left as usize] = 1;
+                            self.polygons
+                                .push(BodyBuilder::create_rigidbody(&self.spawn_parameters));
+                            let length = self.polygons.len() - 1;
+                            self.polygons[length].translate(position);
+                        }
                     }
                 }
                 else if self.input_mode == InputMode::Select {
