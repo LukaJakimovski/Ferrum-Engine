@@ -408,14 +408,14 @@ impl World {
                             }
                             let param_color =
                                 &mut self.spawn_parameters.rigidbody_params.color.unwrap();
-                            let mut color: [f32; 3] = [param_color.r, param_color.g, param_color.b];
+                            let mut color: [f32; 4] = [param_color.r, param_color.g, param_color.b, param_color.a];
                             ui.columns(2, |ui| {
                                 ui[0].label("Color");
-                                ui[1].color_edit_button_rgb(&mut color);
+                                ui[1].color_edit_button_rgba_unmultiplied(&mut color);
                             });
 
                             self.spawn_parameters.rigidbody_params.color =
-                                Some(Color::new(color[0], color[1], color[2]));
+                                Some(Color::new(color[0], color[1], color[2], color[3]));
                         }
                     }
                 } else {
@@ -585,12 +585,12 @@ impl World {
                         ui[1].add(egui::Checkbox::new(&mut selected_polygon.eternal, "Eternal"));
                     });
                     let param_color = &mut selected_polygon.color;
-                    let mut color: [f32; 3] = [param_color.r, param_color.g, param_color.b];
+                    let mut color: [f32; 4] = [param_color.r, param_color.g, param_color.b, param_color.a];
                     ui.columns(2, |ui| {
                         ui[0].label("Color");
-                        ui[1].color_edit_button_rgb(&mut color);
+                        ui[1].color_edit_button_rgba_unmultiplied(&mut color);
                     });
-                    selected_polygon.change_color(Color::new(color[0], color[1], color[2]));
+                    selected_polygon.change_color(Color::new(color[0], color[1], color[2], color[3]));
                 });
         } else if self.selected_spring.is_some() {
             let selected_spring = &mut self.springs[self.selected_spring.unwrap()];
