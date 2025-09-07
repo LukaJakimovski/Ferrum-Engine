@@ -225,7 +225,10 @@ impl World {
             MouseScrollDelta::LineDelta(_, y) => y,
             MouseScrollDelta::PixelDelta(pos) => pos.y as f32 / 20.0,
         };
-        self.camera_pos.w += change * self.scaling_factor / 10.0;
+        if !self.is_pointer_used{
+            self.camera_pos.w += change * self.scaling_factor / 10.0;
+        }
+
     }
 
     pub fn handle_cursor_movement(&mut self, position: PhysicalPosition<f64>) {
@@ -307,7 +310,7 @@ impl World {
                 self.pressed_buttons[Mouse::Right as usize] = 1;
                 let polygon_under_mouse = self.get_polygon_under_mouse();
                 if polygon_under_mouse.is_some() {
-                    self.remove_rigidbody(polygon_under_mouse.unwrap());
+                self.remove_rigidbody(polygon_under_mouse.unwrap());
                 }
                 let spring_under_mouse = self.get_spring_under_mouse();
                 if spring_under_mouse.is_some() {self.remove_spring(spring_under_mouse.unwrap());}

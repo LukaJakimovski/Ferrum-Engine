@@ -148,7 +148,7 @@ impl ApplicationHandler<World> for App {
                         ..
                     },
                 ..
-            } => world.handle_key(event_loop, code, key_state.is_pressed()),
+            } => if  !world.is_pointer_used {world.handle_key(event_loop, code, key_state.is_pressed())},
             WindowEvent::MouseWheel { delta, .. } => world.handle_scroll(delta),
             WindowEvent::CursorMoved { position, .. } => world.handle_cursor_movement(position),
             _ => {}
