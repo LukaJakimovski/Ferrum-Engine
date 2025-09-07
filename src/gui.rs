@@ -584,7 +584,7 @@ impl World {
                         ui[0].label("Eternal");
                         ui[1].add(egui::Checkbox::new(&mut selected_polygon.eternal, "Eternal"));
                     });
-                    let param_color = &mut selected_polygon.vertices[0].color;
+                    let param_color = &mut selected_polygon.color;
                     let mut color: [f32; 3] = [param_color.r, param_color.g, param_color.b];
                     ui.columns(2, |ui| {
                         ui[0].label("Color");

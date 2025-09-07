@@ -4,13 +4,13 @@ use crate::rigidbody::Rigidbody;
 fn get_axes(shape: &Rigidbody) -> Vec<Vec2> {
     let mut axes: Vec<Vec2> = vec![];
     for i in 0..shape.vertices.len() {
-        let p1: &Vec2 = &shape.vertices[i].pos;
+        let p1: &Vec2 = &shape.vertices[i];
         let p2: &Vec2 = &shape.vertices[if i + 1 == shape.vertices.len() {
             0
         } else {
             i + 1
         }]
-        .pos;
+        ;
 
         let edge = p1 - p2;
         let normal = edge.perpendicular();
@@ -20,11 +20,11 @@ fn get_axes(shape: &Rigidbody) -> Vec<Vec2> {
 }
 
 fn project(shape: &Rigidbody, axis: &Vec2) -> Vec2 {
-    let mut min: f32 = axis.dot(&shape.vertices[0].pos);
+    let mut min: f32 = axis.dot(&shape.vertices[0]);
     let mut max: f32 = min;
 
     for i in 1..shape.vertices.len() {
-        let p: f32 = axis.dot(&shape.vertices[i].pos);
+        let p: f32 = axis.dot(&shape.vertices[i]);
         if p < min {
             min = p;
         } else if p > max {
@@ -170,16 +170,16 @@ fn best_edge(polygon: &Rigidbody, normal: Vec2) -> (Vec2, Vec2, Vec2) {
     let mut max = f32::MIN;
     let mut index = 0;
     for i in 0..c {
-        let projection = normal.dot(&polygon.vertices[i].pos);
+        let projection = normal.dot(&polygon.vertices[i]);
         if projection > max {
             max = projection;
             index = i
         }
     }
 
-    let v = polygon.vertices[index].pos;
-    let v1 = polygon.vertices[(index + 1) % c].pos;
-    let v0 = polygon.vertices[(index + c - 1) % c].pos;
+    let v = polygon.vertices[index];
+    let v1 = polygon.vertices[(index + 1) % c];
+    let v0 = polygon.vertices[(index + c - 1) % c];
 
     let mut l = v - v1;
     let mut r = v - v0;

@@ -1,11 +1,11 @@
 use crate::color::Color;
 use crate::math::*;
 use crate::ode_solver::{rk4_angular_step, rk4_step};
-use crate::world::Vertex;
 #[derive(Clone, Default, Debug)]
 pub struct Rigidbody {
     pub center: Vec2,
-    pub vertices: Vec<Vertex>,
+    pub vertices: Vec<Vec2>,
+    pub color: Color,
     pub indices: Vec<u32>,
     pub radius: f32,
     pub mass: f32,
@@ -30,34 +30,22 @@ impl Rigidbody {
         restitution: f32,
         color: Color,
     ) -> Self {
-        let vertices: Vec<Vertex> = vec![
-            Vertex {
-                pos: Vec2 {
-                    x: -width / 2.0 + pos.x,
-                    y: -height / 2.0 + pos.y,
-                },
-                color,
+        let vertices: Vec<Vec2> = vec![
+            Vec2 {
+                x: -width / 2.0 + pos.x,
+                y: -height / 2.0 + pos.y,
             }, // Bottom Left
-            Vertex {
-                pos: Vec2 {
-                    x: width / 2.0 + pos.x,
-                    y: -height / 2.0 + pos.y,
-                },
-                color,
+            Vec2 {
+                x: width / 2.0 + pos.x,
+                y: -height / 2.0 + pos.y,
             }, // Bottom Right
-            Vertex {
-                pos: Vec2 {
-                    x: width / 2.0 + pos.x,
-                    y: height / 2.0 + pos.y,
-                },
-                color,
+            Vec2 {
+                x: width / 2.0 + pos.x,
+                y: height / 2.0 + pos.y,
             }, // Top Right
-            Vertex {
-                pos: Vec2 {
-                    x: -width / 2.0 + pos.x,
-                    y: height / 2.0 + pos.y,
-                },
-                color,
+            Vec2 {
+                x: -width / 2.0 + pos.x,
+                y: height / 2.0 + pos.y,
             }, // Top Left
         ];
 
@@ -71,6 +59,7 @@ impl Rigidbody {
             radius: 0.0,
             center: Vec2::zero(),
             vertices,
+            color,
             indices,
             restitution,
             force: Vec2::zero(),
@@ -93,27 +82,18 @@ impl Rigidbody {
         restitution: f32,
         color: Color,
     ) -> Self {
-        let vertices: Vec<Vertex> = vec![
-            Vertex {
-                pos: Vec2 {
-                    x: -width / 2.0 + pos.x,
-                    y: -height / 2.0 + pos.y,
-                },
-                color,
+        let vertices: Vec<Vec2> = vec![
+            Vec2 {
+                x: -width / 2.0 + pos.x,
+                y: -height / 2.0 + pos.y,
             }, // Bottom Left
-            Vertex {
-                pos: Vec2 {
-                    x: width / 2.0 + pos.x,
-                    y: -height / 2.0 + pos.y,
-                },
-                color,
+            Vec2 {
+                x: width / 2.0 + pos.x,
+                y: -height / 2.0 + pos.y,
             }, // Bottom Right
-            Vertex {
-                pos: Vec2 {
-                    x: pos.x,
-                    y: height / 2.0 + pos.y,
-                },
-                color,
+            Vec2 {
+                x: pos.x,
+                y: height / 2.0 + pos.y,
             }, // Top
         ];
 
@@ -121,6 +101,7 @@ impl Rigidbody {
         let mut polygon = Rigidbody {
             angular_velocity: 0.0,
             area: 0.0,
+            color,
             moment_of_inertia: 0.0,
             mass,
             velocity: Vec2::zero(),
@@ -148,18 +129,15 @@ impl Rigidbody {
         restitution: f32,
         color: Color,
     ) -> Self {
-        let mut vertices: Vec<Vertex> = vec![];
+        let mut vertices: Vec<Vec2> = vec![];
 
         for i in 0..sides {
             let angle = i as f32 * 2.0 * std::f32::consts::PI / sides as f32;
             let x = radius * angle.cos();
             let y = radius * angle.sin();
-            let vertex = Vertex {
-                pos: Vec2 {
-                    x: x + pos.x,
-                    y: y + pos.y,
-                },
-                color,
+            let vertex = Vec2 {
+                x: x + pos.x,
+                y: y + pos.y,
             };
             vertices.push(vertex);
         }
@@ -181,6 +159,7 @@ impl Rigidbody {
             moment_of_inertia: 0.0,
             mass,
             velocity: Vec2::zero(),
+            color,
             radius,
             center: pos,
             vertices,
@@ -206,7 +185,7 @@ impl Rigidbody {
     pub fn calculate_radius(&mut self) {
         let mut max_radius = 0.0;
         for vertex in &self.vertices {
-            let distance = vertex.pos.distance(&self.center);
+            let distance = vertex.distance(&self.center);
             if distance > max_radius {
                 max_radius = distance;
             }
@@ -219,8 +198,8 @@ impl Rigidbody {
         let mut area = 0.0;
 
         for i in 0..n {
-            let iv: &Vec2 = &self.vertices[i].pos;
-            let jv: &Vec2 = &self.vertices[(i + 1) % n].pos;
+            let iv: &Vec2 = &self.vertices[i];
+            let jv: &Vec2 = &self.vertices[(i + 1) % n];
 
             let cross = iv.cross(&jv);
             area += cross;
@@ -240,8 +219,8 @@ impl Rigidbody {
         let mut sum_cy = 0.0;
 
         for i in 0..n {
-            let iv: &Vec2 = &self.vertices[i].pos;
-            let jv: &Vec2 = &self.vertices[(i + 1) % n].pos;
+            let iv: &Vec2 = &self.vertices[i];
+            let jv: &Vec2 = &self.vertices[(i + 1) % n];
 
             let cross = iv.cross(&jv);
 
@@ -250,7 +229,7 @@ impl Rigidbody {
         }
 
         if self.area == 0.0 {
-            self.center = self.vertices[0].pos.clone();
+            self.center = self.vertices[0].clone();
             return;
         }
         let centroid_x = sum_cx / (6.0 * self.area);
@@ -264,8 +243,8 @@ impl Rigidbody {
         let mut inertia = 0.0;
 
         for i in 0..n {
-            let p0 = self.vertices[i].pos;
-            let p1 = self.vertices[(i + 1) % n].pos;
+            let p0 = self.vertices[i];
+            let p1 = self.vertices[(i + 1) % n];
             let cross = Vec2::cross(&p0, &p1);
 
             let dx2 = p0.x * p0.x + p0.x * p1.x + p1.x * p1.x;
@@ -283,7 +262,7 @@ impl Rigidbody {
 
     pub fn translate(&mut self, pos: Vec2) -> &mut Self {
         for vertex in &mut self.vertices {
-            vertex.pos += pos;
+            *vertex += pos;
         }
         self.center += pos;
         self
@@ -292,7 +271,7 @@ impl Rigidbody {
     pub fn move_to(&mut self, pos: Vec2) -> &mut Self {
         let diff = pos - self.center;
         for vertex in &mut self.vertices {
-            vertex.pos += diff;
+            *vertex += diff;
         }
         self.center += diff;
         self
@@ -300,21 +279,19 @@ impl Rigidbody {
     
     pub fn rotate(&mut self, angle: f32) -> &mut Self {
         for vertex in &mut self.vertices {
-            let new_x = ((vertex.pos.x - self.center.x) * angle.cos()
-                - (vertex.pos.y - self.center.y) * angle.sin())
+            let new_x = ((vertex.x - self.center.x) * angle.cos()
+                - (vertex.y - self.center.y) * angle.sin())
                 + self.center.x;
-            vertex.pos.y = ((vertex.pos.x - self.center.x) * angle.sin()
-                + (vertex.pos.y - self.center.y) * angle.cos())
+            vertex.y = ((vertex.x - self.center.x) * angle.sin()
+                + (vertex.y - self.center.y) * angle.cos())
                 + self.center.y;
-            vertex.pos.x = new_x;
+            vertex.x = new_x;
         }
         self
     }
 
     pub fn change_color(&mut self, color: Color) {
-        for vertex in &mut self.vertices {
-            vertex.color = color;
-        }
+        self.color = color
     }
 
     pub fn update_rigidbody(&mut self, g: Vec2, dt: f32) {

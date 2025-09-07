@@ -1,5 +1,5 @@
 use crate::spring::Spring;
-use crate::{Rigidbody, Vec2, Vertex, World};
+use crate::{Color, Rigidbody, Vec2, Vertex, World};
 use egui_wgpu::wgpu;
 use std::iter;
 use wgpu::util::DeviceExt;
@@ -26,9 +26,10 @@ impl World {
         );
         let mut start_index: u32 = 0;
         // Helper closure to process each connector-like structure
-        let mut process = |verts: &[Vertex], center: Vec2, indices_src: &[u32]| {
-            let color = verts[0].color;
-            vertices.extend_from_slice(verts);
+        let mut process = |verts: &[Vec2], color: Color, center: Vec2, indices_src: &[u32]| {
+            for vert in verts {
+                vertices.push(Vertex {pos: vert.clone(), color});
+            }
             vertices.push(Vertex { pos: center, color });
 
             indices.extend(indices_src.iter().map(|i| i + start_index));
@@ -36,12 +37,13 @@ impl World {
         };
 
         for polygon in polygons {
-            process(&polygon.vertices, polygon.center, &polygon.indices);
+            process(&polygon.vertices, polygon.color, polygon.center, &polygon.indices);
         }
 
         for spring in springs {
             process(
                 &spring.connector.vertices,
+                spring.connector.color,
                 spring.connector.center,
                 &spring.connector.indices,
             );
