@@ -3,9 +3,10 @@ use crate::egui_tools::EguiRenderer;
 use crate::enums::{DraggingState, InputMode};
 use crate::spring::Spring;
 use crate::utility::date;
-use crate::{Color, Rigidbody, Vec2, Vec4};
+use crate::{Color, Rigidbody};
 use egui_wgpu::wgpu;
 use std::sync::Arc;
+use glam::{Vec2, Vec4};
 use winit::window::Window;
 
 #[derive(Clone)]
@@ -142,7 +143,7 @@ impl World {
         for i in 0..self.polygons.len() {
             if i < self.polygons.len()
                 && self.parameters.world_size > 0.0
-                && self.polygons[i].center.distance(&Vec2::zero()) > self.parameters.world_size
+                && self.polygons[i].center.distance(Vec2::ZERO) > self.parameters.world_size
                 && self.polygons[i].eternal == false
             {
                 self.remove_rigidbody(i);

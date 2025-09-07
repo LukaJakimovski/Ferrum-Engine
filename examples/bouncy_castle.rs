@@ -1,3 +1,4 @@
+use glam::{Vec2, Vec4};
 use ferrum_engine::spring::Spring;
 use ferrum_engine::*;
 
@@ -138,12 +139,7 @@ fn main() {
         delta_time: 0.0,
         updates_per_frame: 1,
         angular_velocity: true,
-        camera_pos: Vec4 {
-            x: 0.0,
-            y: 0.0,
-            z: 0.0,
-            w: -6.0,
-        },
+        camera_pos: Vec4::new(0.0,0.0,0.0,-6.0),
         time_multiplier: 1.0,
         gravity: true,
         world_size: 500.0,

@@ -1,5 +1,5 @@
+use glam::Vec2;
 use crate::color::Color;
-use crate::math::*;
 use crate::ode_solver::{rk4_angular_step, rk4_step};
 #[derive(Clone, Default, Debug)]
 pub struct Rigidbody {
@@ -55,14 +55,14 @@ impl Rigidbody {
             area: 0.0,
             moment_of_inertia: 0.0,
             mass,
-            velocity: Vec2::zero(),
+            velocity: Vec2::ZERO,
             radius: 0.0,
-            center: Vec2::zero(),
+            center: Vec2::ZERO,
             vertices,
             color,
             indices,
             restitution,
-            force: Vec2::zero(),
+            force: Vec2::ZERO,
             torque: 0.0,
             angle: 0.0,
             collision: true,
@@ -104,13 +104,13 @@ impl Rigidbody {
             color,
             moment_of_inertia: 0.0,
             mass,
-            velocity: Vec2::zero(),
+            velocity: Vec2::ZERO,
             radius: 0.0,
-            center: Vec2::zero(),
+            center: Vec2::ZERO,
             vertices,
             indices,
             restitution,
-            force: Vec2::zero(),
+            force: Vec2::ZERO,
             torque: 0.0,
             angle: 0.0,
             collision: true,
@@ -158,14 +158,14 @@ impl Rigidbody {
             area: 0.0,
             moment_of_inertia: 0.0,
             mass,
-            velocity: Vec2::zero(),
+            velocity: Vec2::ZERO,
             color,
             radius,
             center: pos,
             vertices,
             indices,
             restitution,
-            force: Vec2::zero(),
+            force: Vec2::ZERO,
             torque: 0.0,
             angle: 0.0,
             collision: true,
@@ -185,7 +185,7 @@ impl Rigidbody {
     pub fn calculate_radius(&mut self) {
         let mut max_radius = 0.0;
         for vertex in &self.vertices {
-            let distance = vertex.distance(&self.center);
+            let distance = vertex.distance(self.center);
             if distance > max_radius {
                 max_radius = distance;
             }
@@ -201,7 +201,7 @@ impl Rigidbody {
             let iv: &Vec2 = &self.vertices[i];
             let jv: &Vec2 = &self.vertices[(i + 1) % n];
 
-            let cross = iv.cross(&jv);
+            let cross = iv.perp_dot(*jv);
             area += cross;
         }
         area *= 0.5;
@@ -211,7 +211,7 @@ impl Rigidbody {
     pub fn calculate_center_of_mass(&mut self) {
         let n = self.vertices.len();
         if n == 0 {
-            self.center = Vec2::zero();
+            self.center = Vec2::ZERO;
             return;
         }
 
@@ -222,7 +222,7 @@ impl Rigidbody {
             let iv: &Vec2 = &self.vertices[i];
             let jv: &Vec2 = &self.vertices[(i + 1) % n];
 
-            let cross = iv.cross(&jv);
+            let cross = iv.perp_dot(*jv);
 
             sum_cx += (iv.x + jv.x) * cross;
             sum_cy += (iv.y + jv.y) * cross;
@@ -245,7 +245,7 @@ impl Rigidbody {
         for i in 0..n {
             let p0 = self.vertices[i];
             let p1 = self.vertices[(i + 1) % n];
-            let cross = Vec2::cross(&p0, &p1);
+            let cross = Vec2::perp_dot(p0, p1);
 
             let dx2 = p0.x * p0.x + p0.x * p1.x + p1.x * p1.x;
             let dy2 = p0.y * p0.y + p0.y * p1.y + p1.y * p1.y;
@@ -318,7 +318,7 @@ impl Rigidbody {
 
     pub fn calculate_energy(&self) -> f64 {
         let mut kinetic_energy = 0.0;
-        kinetic_energy += 0.5 * self.mass * self.velocity.dot(&self.velocity);
+        kinetic_energy += 0.5 * self.mass * self.velocity.dot(self.velocity);
         kinetic_energy +=
             0.5 * self.moment_of_inertia * self.angular_velocity * self.angular_velocity;
         if kinetic_energy < 0.0 {

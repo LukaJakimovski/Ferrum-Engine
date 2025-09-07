@@ -1,7 +1,8 @@
 use crate::spring::Spring;
-use crate::{Color, Rigidbody, Vec2, Vertex, World};
+use crate::{Color, Rigidbody, Vertex, World};
 use egui_wgpu::wgpu;
 use std::iter;
+use glam::Vec2;
 use wgpu::util::DeviceExt;
 
 impl World {
@@ -81,9 +82,9 @@ impl World {
                     resolve_target: None,
                     ops: wgpu::Operations {
                         load: wgpu::LoadOp::Clear(wgpu::Color {
-                            r: 0.01,
-                            g: 0.01,
-                            b: 0.01,
+                            r: 0.0,
+                            g: 0.0,
+                            b: 0.0,
                             a: 1.0,
                         }),
                         store: wgpu::StoreOp::Store,

@@ -1,8 +1,8 @@
-
+use glam::Vec2;
 use crate::body_builder::BodyBuilder;
 use crate::enums::{BodyType, DraggingState, InputMode, Keys, Menu, Mouse};
 use crate::spring::Spring;
-use crate::{Color, Rigidbody, Vec2, World};
+use crate::{Color, Rigidbody, World};
 use winit::dpi::PhysicalPosition;
 use winit::event::{ElementState, MouseButton, MouseScrollDelta};
 use winit::event_loop::ActiveEventLoop;
@@ -74,7 +74,7 @@ impl World {
             winit::keyboard::KeyCode::KeyM => {
                 for i in 0..self.polygons.len() {
                     self.polygons[i].angular_velocity = 0.0;
-                    self.polygons[i].velocity = Vec2::zero();
+                    self.polygons[i].velocity = Vec2::ZERO;
                 }
             }
             winit::keyboard::KeyCode::Digit1 => {
@@ -184,7 +184,7 @@ impl World {
                             self.selected_polygon.unwrap(),
                             length,
                             self.anchor_pos,
-                            Vec2::zero(),
+                            Vec2::ZERO,
                             self.spawn_parameters.spring_params.rest_length,
                             self.spawn_parameters.spring_params.stiffness,
                             self.spawn_parameters.spring_params.dampening,
@@ -195,7 +195,7 @@ impl World {
                             self.selected_polygon.unwrap(),
                             length,
                             self.anchor_pos,
-                            Vec2::zero(),
+                            Vec2::ZERO,
                             0.0,
                             self.polygons[self.selected_polygon.unwrap()].mass * 5.0,
                             1.0 * (11.0 * self.polygons[self.selected_polygon.unwrap()].mass).sqrt() ,

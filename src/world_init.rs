@@ -1,8 +1,9 @@
 use std::sync::Arc;
 use egui_wgpu::wgpu;
 use egui_wgpu::wgpu::util::DeviceExt;
+use glam::Vec2;
 use winit::window::Window;
-use crate::{Parameters, Rigidbody, Uniforms, Vec2, Vertex, World};
+use crate::{Parameters, Rigidbody, Uniforms, Vertex, World};
 use crate::body_builder::{BodyBuilder, RigidbodyParams, SpringParams};
 use crate::egui_tools::EguiRenderer;
 use crate::enums::{BodyType, ColorType, DraggingState, InputMode, Menu};
@@ -81,7 +82,7 @@ impl World{
             format: surface_format,
             width: size.width,
             height: size.height,
-            present_mode: surface_caps.present_modes[1],
+            present_mode: surface_caps.present_modes[2],
             alpha_mode: surface_caps.alpha_modes[0],
             view_formats: vec![],
             desired_maximum_frame_latency: 2,
@@ -203,7 +204,7 @@ impl World{
             rigidbody_params: RigidbodyParams {
                 sides: 32,
                 radius: 0.3533,
-                pos: Vec2::zero(),
+                pos: Vec2::ZERO,
                 mass: 1.0,
                 width: 0.5,
                 height: 0.5,
@@ -212,7 +213,7 @@ impl World{
                 collides: true,
                 rotation: 0.0,
                 angular_velocity: 0.0,
-                velocity: Vec2::zero(),
+                velocity: Vec2::ZERO,
                 color_type: ColorType::Random,
                 gravity_multiplier: 1.0,
                 eternal: false,

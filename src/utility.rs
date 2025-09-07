@@ -1,4 +1,5 @@
-use crate::{Color, Rigidbody, Vec2, World};
+use glam::{Mat2, Vec2};
+use crate::{Color, Rigidbody, World};
 use crate::body_builder::BodyBuilder;
 use crate::collision_detection::sat_collision;
 use crate::enums::{BodyType, InputMode};
@@ -131,6 +132,12 @@ impl World {
             self.spawn_ghost_polygon = Some(length);
         }
     }
+}
+
+pub fn rotate(to_rotate: &mut Vec2, center: Vec2, angle: f32) -> &mut Vec2 {
+    let rot = Mat2::from_angle(angle);
+    *to_rotate = rot.mul_vec2(*to_rotate - center) + center;
+    to_rotate
 }
 
 pub mod date {

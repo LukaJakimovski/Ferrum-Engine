@@ -28,12 +28,7 @@ fn main() {
         delta_time: 0.0,
         updates_per_frame: 1,
         angular_velocity: true,
-        camera_pos: Vec4 {
-            x: 9.0,
-            y: 9.0,
-            z: 0.0,
-            w: -50.0,
-        },
+        camera_pos: Vec4::new(9.0, 9.0, 0.0, -50.0),
         time_multiplier: 1.0,
         gravity: false,
         world_size: 300.0,
