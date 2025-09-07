@@ -49,7 +49,7 @@ impl Vertex {
                 wgpu::VertexAttribute {
                     offset: size_of::<[f32; 2]>() as wgpu::BufferAddress,
                     shader_location: 1,
-                    format: wgpu::VertexFormat::Float32x3,
+                    format: wgpu::VertexFormat::Float32x4,
                 },
             ],
         }

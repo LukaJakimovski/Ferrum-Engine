@@ -126,7 +126,7 @@ impl World {
             let length = self.polygons.len() - 1;
             let position = self.get_mouse_world_position();
             self.polygons[length].move_to(position);
-            self.polygons[length].change_color(Color::white());
+            self.polygons[length].change_color(Color::new(1.0, 1.0, 1.0, 0.3));
             self.polygons[length].collision = false;
             self.spawn_ghost_polygon = Some(length);
         }

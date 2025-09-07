@@ -415,7 +415,7 @@ impl World {
                             });
 
                             self.spawn_parameters.rigidbody_params.color =
-                                Some(Color::new(color[0], color[1], color[2]));
+                                Some(Color::new(color[0], color[1], color[2], 1.0));
                         }
                     }
                 } else {
@@ -590,7 +590,7 @@ impl World {
                         ui[0].label("Color");
                         ui[1].color_edit_button_rgb(&mut color);
                     });
-                    selected_polygon.change_color(Color::new(color[0], color[1], color[2]));
+                    selected_polygon.change_color(Color::new(color[0], color[1], color[2], 1.0));
                 });
         } else if self.selected_spring.is_some() {
             let selected_spring = &mut self.springs[self.selected_spring.unwrap()];

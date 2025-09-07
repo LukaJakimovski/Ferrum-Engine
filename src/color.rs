@@ -6,6 +6,7 @@ pub struct Color {
     pub r: f32,
     pub g: f32,
     pub b: f32,
+    pub a: f32,
 }
 
 #[allow(dead_code)]
@@ -15,6 +16,7 @@ impl Color {
             r: 1.0,
             g: 0.0,
             b: 0.0,
+            a: 1.0,
         }
     }
     pub const fn white() -> Self {
@@ -22,6 +24,7 @@ impl Color {
             r: 1.0,
             g: 1.0,
             b: 1.0,
+            a: 1.0,
         }
     }
     pub const fn black() -> Self {
@@ -29,6 +32,7 @@ impl Color {
             r: 0.0,
             g: 0.0,
             b: 0.0,
+            a: 1.0,
         }
     }
     pub const fn gray() -> Self {
@@ -36,6 +40,7 @@ impl Color {
             r: 0.5,
             g: 0.5,
             b: 0.50,
+            a: 1.0,
         }
     }
     pub const fn orange() -> Self {
@@ -43,6 +48,7 @@ impl Color {
             r: 1.0,
             g: 0.5,
             b: 0.2,
+            a: 1.0,
         }
     }
     pub const fn blue() -> Self {
@@ -50,6 +56,7 @@ impl Color {
             r: 0.0,
             g: 0.0,
             b: 1.0,
+            a: 1.0,
         }
     }
     pub const fn transparent() -> Self {
@@ -57,6 +64,7 @@ impl Color {
             r: 0.0,
             g: 0.0,
             b: 0.0,
+            a: 0.5,
         }
     }
     pub fn random() -> Self {
@@ -64,9 +72,10 @@ impl Color {
             r: rand::random::<f32>(),
             g: rand::random::<f32>(),
             b: rand::random::<f32>(),
+            a: 1.0,
         }
     }
-    pub const fn new(r: f32, g: f32, b: f32) -> Self {
-        Self { r, g, b }
+    pub const fn new(r: f32, g: f32, b: f32, a: f32) -> Self {
+        Self { r, g, b, a }
     }
 }
