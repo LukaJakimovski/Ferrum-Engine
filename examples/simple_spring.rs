@@ -1,4 +1,3 @@
-use ferrum_engine::spring::Spring;
 use ferrum_engine::*;
 
 fn main() {
@@ -9,7 +8,7 @@ fn main() {
         Vec2::new(0.0, 0.0),
         f32::MAX / 100000000000000.0,
         1.0,
-        Color::white(),
+        ColorRGBA::white(),
     ));
     rigidbodies[0].collision = false;
     rigidbodies[0].eternal = true;
@@ -19,7 +18,7 @@ fn main() {
         Vec2::new(25.0, 0.0),
         5000000.0,
         1.0,
-        Color::white(),
+        ColorRGBA::white(),
     ));
     rigidbodies[1].eternal = true;
     let mut springs = vec![];
@@ -38,12 +37,7 @@ fn main() {
         delta_time: 0.0,
         updates_per_frame: 1,
         angular_velocity: true,
-        camera_pos: Vec4 {
-            x: 0.0,
-            y: 0.0,
-            z: 0.0,
-            w: -30.0,
-        },
+        camera_pos: Vec4::new(0.0, 0.0, 0.0, -30.0),
         time_multiplier: 1.0,
         gravity: false,
         world_size: 100.0,

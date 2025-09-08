@@ -1,7 +1,9 @@
-use crate::math::*;
+use std::f32::consts::PI;
+use glam::Vec2;
 use crate::ode_solver::{rk4_angular_step, rk4_step};
 use crate::rigidbody::Rigidbody;
-use crate::Color;
+use crate::{ColorRGBA};
+use crate::utility::rotate;
 
 #[derive(Clone, Debug, Default)]
 pub struct Spring {
@@ -36,7 +38,7 @@ impl Spring {
         let world_anchor_b = b.center + anchor_b;
 
         let delta = world_anchor_b - world_anchor_a;
-        let distance = world_anchor_a.distance(&world_anchor_b);
+        let distance = world_anchor_a.distance(world_anchor_b);
 
         let direction = delta / distance;
 
@@ -49,16 +51,12 @@ impl Spring {
             ),
             1.0,
             1.0,
-            Color::white(),
+            ColorRGBA::white(),
         );
-        let angle = direction.angle(&Vec2::new(0.0, -1.0));
-        if direction.x < 0.0 {
-            connector.rotate(-angle);
-        } else {
-            connector.rotate(angle);
-        }
-        let angle_a = a.angle;
-        let angle_b = b.angle;
+        let angle = direction.angle_to(Vec2::new(0.0, -1.0));
+        connector.rotate(angle);
+        let angle_a = 0.0;
+        let angle_b = 0.0;
 
         Spring {
             body_a,
@@ -91,50 +89,45 @@ impl Spring {
         let world_anchor_b = b.center + self.anchor_b;
 
         let delta = world_anchor_b - world_anchor_a;
-        let distance = world_anchor_a.distance(&world_anchor_b);
-
+        let distance = world_anchor_a.distance(world_anchor_b);
         let direction = delta / distance;
-
         let stretch = distance - self.rest_length;
 
-        let relative_velocity = b.velocity - a.velocity;
+        let vel_a = a.velocity + a.angular_velocity * (world_anchor_a - a.center).perp();
+        let vel_b = b.velocity + b.angular_velocity * (world_anchor_b - b.center).perp();
+        let relative_velocity = vel_b - vel_a;
+
         let spring_force = -self.stiffness * stretch * direction;
-        let damping_force = -self.damping * relative_velocity.dot(&direction) * direction;
+        let damping_force = -self.damping * relative_velocity.dot(direction) * direction;
         let total_force = spring_force + damping_force;
 
         // Torques
         let r_a = world_anchor_a - a.center;
         let r_b = world_anchor_b - b.center;
-        let torque_a = r_a.cross(&-total_force);
-        let torque_b = r_b.cross(&total_force);
+        let torque_a = r_a.perp_dot(-total_force);
+        let torque_b = r_b.perp_dot(total_force);
 
         // Step linear motion using RK4
         let force_a = move |_t: f32, _x: Vec2, _v: Vec2| -> Vec2 {
-            -spring_force - damping_force // constant during step
+            -total_force
         };
 
-        let force_b = move |_t: f32, _x: Vec2, _v: Vec2| -> Vec2 { spring_force + damping_force };
+        let force_b = move |_t: f32, _x: Vec2, _v: Vec2| -> Vec2 {
+            total_force
+        };
 
-        let (new_pos_a, new_vel_a) = rk4_step(0.0, a.center, a.velocity, dt, a.mass, &force_a);
-        let (new_pos_b, new_vel_b) = rk4_step(0.0, b.center, b.velocity, dt, b.mass, &force_b);
+        let (_new_pos_a, new_vel_a) = rk4_step(0.0, a.center, a.velocity, dt, a.mass, &force_a);
+        let (_new_pos_b, new_vel_b) = rk4_step(0.0, b.center, b.velocity, dt, b.mass, &force_b);
 
         a.velocity = new_vel_a;
-
-        let diff = new_pos_a - a.center;
-        a.translate(diff);
-
         b.velocity = new_vel_b;
 
-        let diff = new_pos_b - b.center;
-        b.translate(diff);
-        
-        let torque_damping = -self.damping * (b.angular_velocity + a.angular_velocity);
         // Step angular motion using RK4
         let torque_fn_a = move |_t: f32, _theta: f32, _omega: f32| -> f32 {
-            torque_a + torque_damping// constant during dt
+            torque_a
         };
-        let torque_fn_b = move |_t: f32, _theta: f32, _omega: f32| -> f32 { 
-            torque_b + torque_damping
+        let torque_fn_b = move |_t: f32, _theta: f32, _omega: f32| -> f32 {
+            torque_b
         };
 
         let (new_angle_a, new_omega_a) = rk4_angular_step(
@@ -154,25 +147,15 @@ impl Spring {
             &torque_fn_b,
         );
 
-        let old_angle_a = a.angle;
-        a.angle = new_angle_a;
-        let diff = new_angle_a - old_angle_a;
-        a.rotate(diff);
         a.angular_velocity = new_omega_a;
-
         let diff = new_angle_a - self.angle_a;
         self.angle_a = new_angle_a;
-        self.anchor_a.rotate(&Vec2::zero(), diff);
+        rotate(&mut self.anchor_a, Vec2::ZERO, diff);
 
-        let old_angle_b = b.angle;
-        b.angle = new_angle_b;
-        let diff = new_angle_b - old_angle_b;
-        b.rotate(diff);
         b.angular_velocity = new_omega_b;
-
         let diff = new_angle_b - self.angle_b;
         self.angle_b = new_angle_b;
-        self.anchor_b.rotate(&Vec2::zero(), diff);
+        rotate(&mut self.anchor_b, Vec2::ZERO, diff);
     }
 
     pub fn update_connector(&mut self, rigidbodys: &Vec<Rigidbody>) {
@@ -182,9 +165,9 @@ impl Spring {
         let world_anchor_b = b.center + self.anchor_b;
 
         let delta = world_anchor_b - world_anchor_a;
-        let distance = world_anchor_a.distance(&world_anchor_b);
+        let distance = delta.length();
+        let direction = delta.to_angle();
 
-        let direction = delta / distance;
         self.connector = Rigidbody::rectangle(
             0.1,
             distance,
@@ -194,13 +177,22 @@ impl Spring {
             ),
             1.0,
             1.0,
-            Color::white(),
+            ColorRGBA::white(),
         );
-        let angle = direction.angle(&Vec2::new(0.0, -1.0));
-        if direction.x < 0.0 {
-            self.connector.rotate(-angle);
-        } else {
-            self.connector.rotate(angle);
-        }
+        println!("{}", -direction + PI / 2.0);
+        self.connector.rotate(direction + PI / 2.0);
+    }
+
+    pub fn calculate_energy(&self, rigidbodys: &Vec<Rigidbody>) -> f64 {
+        let a = &rigidbodys[self.body_a];
+        let b = &rigidbodys[self.body_b];
+
+        let world_anchor_a = a.center + self.anchor_a;
+        let world_anchor_b = b.center + self.anchor_b;
+
+        let distance = world_anchor_a.distance(world_anchor_b);
+        let stretch = distance - self.rest_length;
+
+        (0.5 * self.stiffness * stretch * stretch) as f64
     }
 }

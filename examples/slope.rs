@@ -10,7 +10,7 @@ fn main() {
         Vec2 { x: 0.0, y: 0.0 },
         f32::MAX / 10.0,
         0.6,
-        Color::orange(),
+        ColorRGBA::orange(),
     ));
     polygons[0].rotate(PI / 4.0);
     polygons[0].gravity_multiplier = 0.0;
@@ -25,7 +25,7 @@ fn main() {
             },
             1.0,
             1.0,
-            Color::random(),
+            ColorRGBA::random(),
         ));
     }
 
@@ -33,12 +33,7 @@ fn main() {
         delta_time: 0.0,
         updates_per_frame: 1,
         angular_velocity: true,
-        camera_pos: Vec4 {
-            x: 0.0,
-            y: 0.0,
-            z: 0.0,
-            w: -10.0,
-        },
+        camera_pos: Vec4::new(0.0, 0.0, 0.0, -10.0),
         time_multiplier: 1.0,
         gravity: true,
         world_size: 300.0,

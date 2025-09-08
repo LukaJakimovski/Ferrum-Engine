@@ -1,5 +1,5 @@
 use crate::enums::{BodyType, ColorType, InputMode, Menu};
-use crate::{Color, World};
+use crate::{ColorRGBA, World};
 use egui::Align2;
 use egui_wgpu::{ScreenDescriptor, wgpu};
 use std::f32::consts::PI;
@@ -27,6 +27,7 @@ impl World {
                 ui.checkbox(&mut self.menus[Menu::Input as usize], "Change Input Mode");
                 ui.checkbox(&mut self.menus[Menu::Editor as usize], "Edit Selected Polygon", );
                 ui.checkbox(&mut self.menus[Menu::Advanced as usize], "Advanced Settings");
+                ui.checkbox(&mut self.menus[Menu::Debug as usize], "Debug Menu");
             });
 
         if self.menus[Menu::Config as usize] {
@@ -52,6 +53,9 @@ impl World {
         }
         if self.menus[Menu::Advanced as usize] {
             self.advanced_menu()
+        }
+        if self.menus[Menu::Debug as usize] {
+            self.debug_menu()
         }
 
         self.is_pointer_used = self.egui_renderer.context().is_pointer_over_area();
@@ -244,8 +248,10 @@ impl World {
                                     &mut self.spawn_parameters.rigidbody_params.sides,
                                 )
                                 .speed(1),
-                            )
-                            //.show_tooltip_text("Changes the amount of sides of the spawned polygon");;
+                            );
+                            if self.spawn_parameters.rigidbody_params.sides < 3 {
+                                self.spawn_parameters.rigidbody_params.sides = 3
+                            }
                         });
                         ui.columns(2, |ui| {
                             ui[0].label("Radius");
@@ -258,7 +264,6 @@ impl World {
                             if self.spawn_parameters.rigidbody_params.radius < 0.0 {
                                 self.spawn_parameters.rigidbody_params.radius = 0.0
                             };
-                            //.show_tooltip_text("Changes the radius of the spawned polygon. Value in meters");;
                         });
                     }
                     BodyType::Rectangle => {
@@ -290,7 +295,6 @@ impl World {
                             if self.spawn_parameters.rigidbody_params.width < 0.0 {
                                 self.spawn_parameters.rigidbody_params.width = 0.0
                             };
-                            //.show_tooltip_text("Changes the amount of sides of the spawned polygon");;
                         });
                         ui.columns(2, |ui| {
                             ui[0].label("Height");
@@ -303,7 +307,6 @@ impl World {
                             if self.spawn_parameters.rigidbody_params.height < 0.0 {
                                 self.spawn_parameters.rigidbody_params.height = 0.0
                             };
-                            //.show_tooltip_text("Changes the radius of the spawned polygon. Value in meters");;
                         });
                     }
                     _ => {}
@@ -318,7 +321,6 @@ impl World {
                             )
                             .speed(0.01),
                         )
-                        //.show_tooltip_text("Changes the amount of energy conserved in a collision\n0.0 -> No bounce, 1.0 -> Perfectly elastic >1.0 -> Gains energy <0.0 -> Accelerates into collision");;
                     });
                     ui.columns(3, |ui| {
                         ui[0].label("Velocity");
@@ -328,14 +330,12 @@ impl World {
                             )
                             .speed(0.01),
                         );
-                        //.show_tooltip_text("Changes the horizontal velocity of the spawned polygon. Value in m/s");;
                         ui[2].add(
                             egui::DragValue::new(
                                 &mut self.spawn_parameters.rigidbody_params.velocity.y,
                             )
                             .speed(0.01),
                         );
-                        //.show_tooltip_text("Changes the vertical velocity of the spawned polygon. Value in m/s");;
                     });
                     ui.columns(2, |ui| {
                         ui[0].label("Angular Velocity");
@@ -345,7 +345,6 @@ impl World {
                             )
                             .speed(0.01),
                         )
-                        //.show_tooltip_text("Changes the orientation of the spawned polygon. Value in radians/sec");;
                     });
                     ui.columns(2, |ui| {
                         ui[0].label("Mass");
@@ -353,10 +352,9 @@ impl World {
                             egui::DragValue::new(&mut self.spawn_parameters.rigidbody_params.mass)
                                 .speed(0.01),
                         );
-                        if self.spawn_parameters.rigidbody_params.mass < 0.0 {
-                            self.spawn_parameters.rigidbody_params.mass = 0.0
+                        if self.spawn_parameters.rigidbody_params.mass <= 0.0 {
+                            self.spawn_parameters.rigidbody_params.mass = 0.0000000001
                         };
-                        //.show_tooltip_text("Changes the mass of the spawned polygon. Value in kg");;
                     });
                     ui.columns(2, |ui| {
                         ui[0].label("Rotation");
@@ -372,7 +370,6 @@ impl World {
                         if self.spawn_parameters.rigidbody_params.rotation < -PI {
                             self.spawn_parameters.rigidbody_params.rotation = -PI
                         };
-                        //.show_tooltip_text("Changes the orientation of the spawned polygon. Value in radians");
                     });
                     ui.columns(2, |ui| {
                         ui[0].label("Gravity Multiplier");
@@ -397,7 +394,7 @@ impl World {
                         ColorType::Set => {
                             if self.spawn_parameters.rigidbody_params.color.is_none() {
                                 self.spawn_parameters.rigidbody_params.color =
-                                    Some(Color::random());
+                                    Some(ColorRGBA::random());
                             }
                             let param_color =
                                 &mut self.spawn_parameters.rigidbody_params.color.unwrap();
@@ -408,7 +405,7 @@ impl World {
                             });
 
                             self.spawn_parameters.rigidbody_params.color =
-                                Some(Color::new(color[0], color[1], color[2]));
+                                Some(ColorRGBA::new(color[0], color[1], color[2], 1.0));
                         }
                     }
                 } else {
@@ -500,25 +497,33 @@ impl World {
                         ui[1].add(
                             egui::DragValue::new(&mut new_center.x).speed(0.01),
                         );
-                        //.show_tooltip_text("Changes the horizontal velocity of the spawned polygon. Value in m/s");;
                         ui[2].add(
                             egui::DragValue::new(&mut new_center.y).speed(0.01),
                         );
                         if new_center != selected_polygon.center {
                             selected_polygon.move_to(new_center);
                         }
-                        //.show_tooltip_text("Changes the vertical velocity of the spawned polygon. Value in m/s");;
                     });
                     ui.columns(3, |ui| {
                         ui[0].label("Velocity");
                         ui[1].add(
                             egui::DragValue::new(&mut selected_polygon.velocity.x).speed(0.01),
                         );
-                        //.show_tooltip_text("Changes the horizontal velocity of the spawned polygon. Value in m/s");;
                         ui[2].add(
                             egui::DragValue::new(&mut selected_polygon.velocity.y).speed(0.01),
                         );
-                        //.show_tooltip_text("Changes the vertical velocity of the spawned polygon. Value in m/s");;
+                    });
+                    ui.columns(2, |ui| {
+                        let mut angle_degrees = selected_polygon.angle * 360.0 / (2.0 * PI);
+                        let old_angle = selected_polygon.angle;
+                        ui[0].label("Angle");
+                        ui[1].add(
+                            egui::DragValue::new(&mut angle_degrees)
+                                .speed(0.1),
+                        );
+                        let angle_radians = angle_degrees * 2.0 * PI / 360.0;
+                        selected_polygon.rotate(angle_radians - old_angle);
+                        selected_polygon.angle += angle_radians - old_angle;
                     });
                     ui.columns(2, |ui| {
                         ui[0].label("Angular Velocity");
@@ -526,7 +531,6 @@ impl World {
                             egui::DragValue::new(&mut selected_polygon.angular_velocity)
                                 .speed(0.01),
                         )
-                        //.show_tooltip_text("Changes the orientation of the spawned polygon. Value in radians/sec");;
                     });
                     ui.columns(2, |ui| {
                         let old_mass = selected_polygon.mass;
@@ -544,7 +548,6 @@ impl World {
                         ui[1].add(
                             egui::DragValue::new(&mut selected_polygon.restitution).speed(0.01),
                         )
-                        //.show_tooltip_text("Changes the amount of energy conserved in a collision\n0.0 -> No bounce, 1.0 -> Perfectly elastic >1.0 -> Gains energy <0.0 -> Accelerates into collision");;
                     });
                     ui.columns(2, |ui| {
                         ui[0].label("Gravity Multiplier");
@@ -564,13 +567,13 @@ impl World {
                         ui[0].label("Eternal");
                         ui[1].add(egui::Checkbox::new(&mut selected_polygon.eternal, "Eternal"));
                     });
-                    let param_color = &mut selected_polygon.vertices[0].color;
+                    let param_color = &mut selected_polygon.color;
                     let mut color: [f32; 3] = [param_color.r, param_color.g, param_color.b];
                     ui.columns(2, |ui| {
                         ui[0].label("Color");
                         ui[1].color_edit_button_rgb(&mut color);
                     });
-                    selected_polygon.change_color(Color::new(color[0], color[1], color[2]));
+                    selected_polygon.change_color(ColorRGBA::new(color[0], color[1], color[2], 1.0));
                 });
         } else if self.selected_spring.is_some() {
             let selected_spring = &mut self.springs[self.selected_spring.unwrap()];
@@ -607,6 +610,12 @@ impl World {
                         );
                     });
                     ui.columns(3, |ui| {
+                        ui[0].label("Damping");
+                        ui[1].add(
+                            egui::DragValue::new(&mut selected_spring.damping).speed(0.01),
+                        );
+                    });
+                    ui.columns(3, |ui| {
                         ui[0].label("Rest Length");
                         ui[1].add(
                             egui::DragValue::new(&mut selected_spring.rest_length).speed(0.01),
@@ -625,5 +634,21 @@ impl World {
                     ui.label("No Rigidbody Selected");
                 });
         }
+    }
+
+    fn debug_menu(&mut self){
+        egui::Window::new("Debug Menu")
+            .resizable(false)
+            .vscroll(false)
+            .default_open(true)
+            .default_height(275.0)
+            .title_bar(false)
+            .show(self.egui_renderer.context(), |ui| {
+                ui.heading("Debug Menu");
+                ui.label(format!("Polygons: {}", self.polygons.len()));
+                if self.spawn_ghost_polygon.is_some(){
+                    ui.label(format!("Ghost polygon: {}", self.spawn_ghost_polygon.unwrap()));
+                }
+            });
     }
 }

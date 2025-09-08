@@ -1,8 +1,8 @@
-
+use glam::Vec2;
 use crate::body_builder::BodyBuilder;
 use crate::enums::{BodyType, DraggingState, InputMode, Keys, Menu, Mouse};
 use crate::spring::Spring;
-use crate::{Color, Rigidbody, Vec2, World};
+use crate::{ColorRGBA, Rigidbody, World};
 use winit::dpi::PhysicalPosition;
 use winit::event::{ElementState, MouseButton, MouseScrollDelta};
 use winit::event_loop::ActiveEventLoop;
@@ -74,7 +74,7 @@ impl World {
             winit::keyboard::KeyCode::KeyM => {
                 for i in 0..self.polygons.len() {
                     self.polygons[i].angular_velocity = 0.0;
-                    self.polygons[i].velocity = Vec2::zero();
+                    self.polygons[i].velocity = Vec2::ZERO;
                 }
             }
             winit::keyboard::KeyCode::Digit1 => {
@@ -127,10 +127,12 @@ impl World {
     pub fn handle_input(&mut self) {
         let position = self.get_mouse_world_position();
         if self.pressed_keys[Keys::L as usize] == 1 {
-            self.polygons
-                .push(BodyBuilder::create_rigidbody(&self.spawn_parameters));
-            let length = self.polygons.len() - 1;
-            self.polygons[length].translate(position);
+            if true || self.under_mouse_is_clear().is_none() {
+                self.polygons
+                    .push(BodyBuilder::create_rigidbody(&self.spawn_parameters));
+                let length = self.polygons.len() - 1;
+                self.polygons[length].translate(position);
+            }
         }
 
         if self.pressed_keys[Keys::W as usize] == 1 {
@@ -162,7 +164,7 @@ impl World {
             if self.selected_polygon.is_some() {
                 let position = self.get_mouse_world_position();
                 let mut mouse_polygon =
-                    Rigidbody::rectangle(0.03, 0.03, position, f32::MAX / 10000.0, 1.0, Color::random());
+                    Rigidbody::rectangle(0.03, 0.03, position, f32::MAX / 10000.0, 1.0, ColorRGBA::random());
                 mouse_polygon.collision = false;
                 let selected_polygon;
                 if self.selected_polygon.unwrap() < self.polygons.len(){
@@ -182,7 +184,7 @@ impl World {
                             self.selected_polygon.unwrap(),
                             length,
                             self.anchor_pos,
-                            Vec2::zero(),
+                            Vec2::ZERO,
                             self.spawn_parameters.spring_params.rest_length,
                             self.spawn_parameters.spring_params.stiffness,
                             self.spawn_parameters.spring_params.dampening,
@@ -193,21 +195,19 @@ impl World {
                             self.selected_polygon.unwrap(),
                             length,
                             self.anchor_pos,
-                            Vec2::zero(),
+                            Vec2::ZERO,
                             0.0,
                             self.polygons[self.selected_polygon.unwrap()].mass * 5.0,
                             1.0 * (11.0 * self.polygons[self.selected_polygon.unwrap()].mass).sqrt() ,
                             &self.polygons,
                         );
                     }
-                    self.polygons[spring.body_a.clone()].gravity_divider += 1.0;
-                    self.polygons[spring.body_b.clone()].gravity_divider += 1.0;
                     self.springs.push(spring);
-                    self.temp_springs.push(self.springs.len() - 1);
-                    self.temp_polygons.push(self.polygons.len() - 1);
+                    self.mouse_spring = Some(self.springs.len() - 1);
+                    self.spring_polygon = Some(self.polygons.len() - 1);
                 }
-                if self.temp_polygons.len() > 0 {
-                    let index = self.temp_polygons[0];
+                if self.spring_polygon.is_some() {
+                    let index = self.spring_polygon.unwrap();
                     if index < self.polygons.len() {
                         let diff = position - self.polygons[index].center;
                         self.polygons[index].translate(diff);
@@ -225,7 +225,10 @@ impl World {
             MouseScrollDelta::LineDelta(_, y) => y,
             MouseScrollDelta::PixelDelta(pos) => pos.y as f32 / 20.0,
         };
-        self.camera_pos.w += change * self.scaling_factor / 10.0;
+        if !self.is_pointer_used{
+            self.camera_pos.w += change * self.scaling_factor / 10.0;
+        }
+
     }
 
     pub fn handle_cursor_movement(&mut self, position: PhysicalPosition<f64>) {
@@ -249,11 +252,13 @@ impl World {
                         self.selected_polygon = self.get_polygon_under_mouse();
                         if self.selected_polygon.is_some() { self.dragging = DraggingState::StartDragging }
                     } else if self.spawn_parameters.body_type == BodyType::Rectangle || self.spawn_parameters.body_type == BodyType::RegularPolygon{
-                        self.pressed_buttons[Mouse::Left as usize] = 1;
-                        self.polygons
-                            .push(BodyBuilder::create_rigidbody(&self.spawn_parameters));
-                        let length = self.polygons.len() - 1;
-                        self.polygons[length].translate(position);
+                        if self.under_mouse_is_clear().is_none() {
+                            self.pressed_buttons[Mouse::Left as usize] = 1;
+                            self.polygons
+                                .push(BodyBuilder::create_rigidbody(&self.spawn_parameters));
+                            let length = self.polygons.len() - 1;
+                            self.polygons[length].translate(position);
+                        }
                     }
                 }
                 else if self.input_mode == InputMode::Select {
@@ -271,29 +276,28 @@ impl World {
                 }
             }  else if !state.is_pressed() || self.dragging == DraggingState::StopDragging {
                 if self.input_mode == InputMode::Drag {
-                    for index in self.temp_polygons.clone() { self.remove_rigidbody(index); }
-                    for index in self.temp_springs.clone() { self.remove_spring(index); }
-                    self.temp_springs.clear();
-                    self.temp_polygons.clear();
+                    if self.spring_polygon.is_some() {self.remove_rigidbody(self.spring_polygon.unwrap()); }
+                    if self.mouse_spring.is_some() {self.remove_spring(self.mouse_spring.unwrap()); }
+                    self.mouse_spring = None;
+                    self.spring_polygon = None;
                     self.dragging = DraggingState::NotDragging;
                     self.selected_polygon = None;
                     self.pressed_buttons[Mouse::Left as usize] = 0;
                 } else if self.input_mode == InputMode::Spawn && self.dragging == DraggingState::Dragging {
                     self.pressed_buttons[Mouse::Left as usize] = 1;
-                    let mouse_polygon = Rigidbody::rectangle(0.03, 0.03, position, f32::MAX / 100000.0, 1.0, Color::random());
+                    let mouse_polygon = Rigidbody::rectangle(0.03, 0.03, position, f32::MAX / 100000.0, 1.0, ColorRGBA::random());
                     let polygon2_index = self.get_polygon_under_mouse();
-                    if polygon2_index.is_some() && self.temp_springs.len() > 0 && self.selected_polygon.unwrap() != polygon2_index.unwrap() {
+                    if polygon2_index.is_some() && self.mouse_spring.is_some() && self.selected_polygon.unwrap() != polygon2_index.unwrap() {
                         let polygon2 = &mut self.polygons[polygon2_index.unwrap()];
                         let anchor_pos = mouse_polygon.center - polygon2.center;
-                        self.springs[self.temp_springs[0]].body_b = polygon2_index.unwrap();
-                        self.springs[self.temp_springs[0]].anchor_b = anchor_pos;
-                        self.polygons[self.springs[self.temp_springs[0]].body_b.clone()].gravity_divider += 1.0;
-                    } else {
-                        for spring_index in self.temp_springs.clone() { self.remove_spring(spring_index); }
+                        self.springs[self.mouse_spring.unwrap()].body_b = polygon2_index.unwrap();
+                        self.springs[self.mouse_spring.unwrap()].anchor_b = anchor_pos;
+                    } else if self.mouse_spring.is_some() {
+                        self.remove_spring(self.mouse_spring.unwrap());
                     }
-                    for rigidbody_index in self.temp_polygons.clone() { self.remove_rigidbody(rigidbody_index); }
-                    self.temp_springs.clear();
-                    self.temp_polygons.clear();
+                    if self.spring_polygon.is_some() {self.remove_rigidbody(self.spring_polygon.unwrap()); }
+                    self.mouse_spring = None;
+                    self.spring_polygon = None;
                     self.dragging = DraggingState::NotDragging;
                     self.pressed_buttons[Mouse::Left as usize] = 0;
                 } else {
@@ -305,7 +309,9 @@ impl World {
             if state.is_pressed() && !self.is_pointer_used {
                 self.pressed_buttons[Mouse::Right as usize] = 1;
                 let polygon_under_mouse = self.get_polygon_under_mouse();
-                if polygon_under_mouse.is_some() {self.remove_rigidbody(polygon_under_mouse.unwrap()); }
+                if polygon_under_mouse.is_some() {
+                self.remove_rigidbody(polygon_under_mouse.unwrap());
+                }
                 let spring_under_mouse = self.get_spring_under_mouse();
                 if spring_under_mouse.is_some() {self.remove_spring(spring_under_mouse.unwrap());}
             } else {

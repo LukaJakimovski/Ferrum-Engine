@@ -1,5 +1,5 @@
+use glam::Vec2;
 use crate::collision_detection::{find_contact_points, sat_collision};
-use crate::math::Vec2;
 use crate::world::World;
 use crate::{Parameters, Rigidbody};
 
@@ -91,22 +91,18 @@ impl World {
             let is_not_right_edge = x > 1 && (i + 1) % x != 0;
             let is_not_left_edge = x > 1 && i % x != 0;
             let row_valid = i + x < section_count;
-
             // Right neighbor
             if is_not_right_edge {
                 current.extend_from_slice(&right[0]);
             }
-
             // Down neighbor
             if row_valid {
                 current.extend_from_slice(&right[x - 1]);
             }
-
             // Down-right neighbor
             if row_valid && is_not_right_edge {
                 current.extend_from_slice(&right[x]);
             }
-
             // Down-left neighbor
             if row_valid && is_not_left_edge {
                 current.extend_from_slice(&right[x - 2]);
@@ -160,16 +156,16 @@ impl World {
             let m_total = m1 + m2;
             let penetration = result[1].x;
             let normal;
-            if result[0].normalized().dot(&polygon1.center)
-                < result[0].normalized().dot(&polygon2.center)
+            if result[0].normalize().dot(polygon1.center)
+                < result[0].normalize().dot(polygon2.center)
             {
-                normal = result[0].normalized();
+                normal = result[0].normalize();
             } else {
-                normal = -result[0].normalized();
+                normal = -result[0].normalize();
             }
             // Contact Points
             let contact_points = find_contact_points(polygon1, polygon2, &result);
-            let mut average_point = Vec2::zero();
+            let mut average_point = Vec2::ZERO;
             for point in &contact_points {
                 average_point += *point;
             }
@@ -185,20 +181,20 @@ impl World {
             let r1 = average_point - polygon1.center;
             let r2 = average_point - polygon2.center;
 
-            let tangent_v1 = r1.perpendicular() * polygon1.angular_velocity;
-            let tangent_v2 = r2.perpendicular() * polygon2.angular_velocity;
+            let tangent_v1 = r1.perp() * polygon1.angular_velocity;
+            let tangent_v2 = r2.perp() * polygon2.angular_velocity;
             let fv1 = v1 + tangent_v1;
             let fv2 = v2 + tangent_v2;
             let relative_velocity = fv2 - fv1;
-            let vel_along_normal = relative_velocity.dot(&normal);
+            let vel_along_normal = relative_velocity.dot(normal);
 
             let restitution = (polygon1.restitution + polygon2.restitution) / 2.0;
 
             let i1 = 1.0 / polygon1.moment_of_inertia;
             let i2 = 1.0 / polygon2.moment_of_inertia;
 
-            let rn1 = r1.cross(&normal);
-            let rn2 = r2.cross(&normal);
+            let rn1 = r1.perp_dot(normal);
+            let rn2 = r2.perp_dot(normal);
 
             let angle_term1: f32;
             let angle_term2: f32;
@@ -218,8 +214,8 @@ impl World {
             body1.velocity = v1 - impulse_vector * m1;
             body2.velocity = v2 + impulse_vector * m2;
             if parameters.angular_velocity == true {
-                body1.angular_velocity = body1.angular_velocity - r1.cross(&impulse_vector) * i1;
-                body2.angular_velocity = body2.angular_velocity + r2.cross(&impulse_vector) * i2;
+                body1.angular_velocity = body1.angular_velocity - r1.perp_dot(impulse_vector) * i1;
+                body2.angular_velocity = body2.angular_velocity + r2.perp_dot(impulse_vector) * i2;
             }
         }
     }

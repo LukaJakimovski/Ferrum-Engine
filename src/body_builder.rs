@@ -1,6 +1,7 @@
+use glam::Vec2;
 use crate::enums::{BodyType, ColorType};
 use crate::spring::Spring;
-use crate::{Color, Rigidbody, Vec2};
+use crate::{ColorRGBA, Rigidbody};
 
 #[derive(Clone)]
 pub struct RigidbodyParams {
@@ -11,7 +12,7 @@ pub struct RigidbodyParams {
     pub(crate) pos: Vec2,
     pub(crate) mass: f32,
     pub(crate) restitution: f32,
-    pub(crate) color: Option<Color>,
+    pub(crate) color: Option<ColorRGBA>,
     pub(crate) collides: bool,
     pub(crate) rotation: f32,
     pub(crate) angular_velocity: f32,
@@ -60,7 +61,7 @@ impl BodyBuilder {
                         body_params.pos,
                         body_params.mass,
                         body_params.restitution,
-                        Color::random(),
+                        ColorRGBA::random(),
                     )
                 }
             }
@@ -81,7 +82,7 @@ impl BodyBuilder {
                         body_params.pos,
                         body_params.mass,
                         body_params.restitution,
-                        Color::random(),
+                        ColorRGBA::random(),
                     )
                 }
             }

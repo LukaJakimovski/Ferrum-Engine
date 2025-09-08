@@ -1,4 +1,4 @@
-use crate::math::Vec2;
+use glam::Vec2;
 
 pub fn rk4_step(
     t: f32,

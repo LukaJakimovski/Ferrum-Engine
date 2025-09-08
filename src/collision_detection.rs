@@ -1,30 +1,30 @@
-use crate::math::Vec2;
+use glam::Vec2;
 use crate::rigidbody::Rigidbody;
 
 fn get_axes(shape: &Rigidbody) -> Vec<Vec2> {
     let mut axes: Vec<Vec2> = vec![];
     for i in 0..shape.vertices.len() {
-        let p1: &Vec2 = &shape.vertices[i].pos;
+        let p1: &Vec2 = &shape.vertices[i];
         let p2: &Vec2 = &shape.vertices[if i + 1 == shape.vertices.len() {
             0
         } else {
             i + 1
         }]
-        .pos;
+        ;
 
         let edge = p1 - p2;
-        let normal = edge.perpendicular();
+        let normal = edge.perp();
         axes.push(normal);
     }
     axes
 }
 
 fn project(shape: &Rigidbody, axis: &Vec2) -> Vec2 {
-    let mut min: f32 = axis.dot(&shape.vertices[0].pos);
+    let mut min: f32 = axis.dot(shape.vertices[0]);
     let mut max: f32 = min;
 
     for i in 1..shape.vertices.len() {
-        let p: f32 = axis.dot(&shape.vertices[i].pos);
+        let p: f32 = axis.dot(shape.vertices[i]);
         if p < min {
             min = p;
         } else if p > max {
@@ -49,7 +49,7 @@ fn get_overlap(interval1: &Vec2, interval2: &Vec2) -> f32 {
 
 pub fn sat_collision(shape1: &Rigidbody, shape2: &Rigidbody) -> [Vec2; 2] {
     // Simple circle check
-    if shape1.center.distance(&shape2.center) > shape1.radius + shape2.radius {
+    if shape1.center.distance(shape2.center) > shape1.radius + shape2.radius {
         return [
             Vec2 {
                 x: -133.7,
@@ -61,10 +61,10 @@ pub fn sat_collision(shape1: &Rigidbody, shape2: &Rigidbody) -> [Vec2; 2] {
     // Treat shapes with more than 31 vertices as circles
     if shape1.vertices.len() >= 32 && shape2.vertices.len() >= 32 {
         let delta = shape2.center - shape1.center;
-        let dist = delta.magnitude();
+        let dist = delta.length();
         let overlap = shape1.radius + shape2.radius - dist; // Total overlap amount
 
-        return [delta.normalized(), Vec2 { x: overlap, y: 1.0 }];
+        return [delta.normalize(), Vec2 { x: overlap, y: 1.0 }];
     }
 
     let mut overlap: f32 = 2.0_f32.powf(32.0);
@@ -144,8 +144,8 @@ pub fn sat_collision(shape1: &Rigidbody, shape2: &Rigidbody) -> [Vec2; 2] {
 }
 fn clip(v1: Vec2, v2: Vec2, normal: Vec2, offset: f32) -> Vec<Vec2> {
     let mut clipped = Vec::new();
-    let d1 = normal.dot(&v1) - offset;
-    let d2 = normal.dot(&v2) - offset;
+    let d1 = normal.dot(v1) - offset;
+    let d2 = normal.dot(v2) - offset;
 
     if d1 >= 0.0 {
         clipped.push(v1);
@@ -170,24 +170,24 @@ fn best_edge(polygon: &Rigidbody, normal: Vec2) -> (Vec2, Vec2, Vec2) {
     let mut max = f32::MIN;
     let mut index = 0;
     for i in 0..c {
-        let projection = normal.dot(&polygon.vertices[i].pos);
+        let projection = normal.dot(polygon.vertices[i]);
         if projection > max {
             max = projection;
             index = i
         }
     }
 
-    let v = polygon.vertices[index].pos;
-    let v1 = polygon.vertices[(index + 1) % c].pos;
-    let v0 = polygon.vertices[(index + c - 1) % c].pos;
+    let v = polygon.vertices[index];
+    let v1 = polygon.vertices[(index + 1) % c];
+    let v0 = polygon.vertices[(index + c - 1) % c];
 
     let mut l = v - v1;
     let mut r = v - v0;
 
-    l.normalize();
-    r.normalize();
+    l = l.normalize();
+    r = r.normalize();
 
-    if r.dot(&normal) <= l.dot(&normal) {
+    if r.dot(normal) <= l.dot(normal) {
         (v0, v, v)
     } else {
         (v, v1, v)
@@ -200,10 +200,10 @@ pub fn find_contact_points(
     mtv: &[Vec2; 2],
 ) -> Vec<Vec2> {
     let normal;
-    if mtv[0].normalized().dot(&polygon1.center) < mtv[0].normalized().dot(&polygon2.center) {
-        normal = mtv[0].normalized();
+    if mtv[0].normalize().dot(polygon1.center) < mtv[0].normalize().dot(polygon2.center) {
+        normal = mtv[0].normalize();
     } else {
-        normal = -mtv[0].normalized();
+        normal = -mtv[0].normalize();
     }
     let edge1 = best_edge(&polygon1, normal);
     let edge2 = best_edge(&polygon2, -normal);
@@ -213,7 +213,7 @@ pub fn find_contact_points(
     let ref_edge;
     let inc_edge;
     let mut flip = false;
-    if edge1v.dot(&normal).abs() <= edge2v.dot(&normal).abs() {
+    if edge1v.dot(normal).abs() <= edge2v.dot(normal).abs() {
         ref_edge = edge1;
         inc_edge = edge2;
     } else {
@@ -223,27 +223,27 @@ pub fn find_contact_points(
     }
 
     let mut refv = ref_edge.1 - ref_edge.0;
-    refv.normalize();
+    refv = refv.normalize();
 
-    let o1 = refv.dot(&ref_edge.0);
+    let o1 = refv.dot(ref_edge.0);
     let mut clipped = clip(inc_edge.0, inc_edge.1, refv, o1);
     if clipped.len() < 2 {
-        return vec![Vec2::zero(), Vec2::zero()];
+        return vec![Vec2::ZERO, Vec2::ZERO];
     };
 
     let mut ref_normal =
-        Vec2::new(ref_edge.1.y - ref_edge.0.y, ref_edge.0.x - ref_edge.1.x).normalized();
+        Vec2::new(ref_edge.1.y - ref_edge.0.y, ref_edge.0.x - ref_edge.1.x).normalize();
 
     if flip {
         ref_normal = -ref_normal;
     };
 
-    let max = ref_normal.dot(&ref_edge.2);
+    let max = ref_normal.dot(ref_edge.2);
 
-    if clipped.len() > 0 && ref_normal.dot(&clipped[0]) - max < 0.0 {
+    if clipped.len() > 0 && ref_normal.dot(clipped[0]) - max < 0.0 {
         clipped.remove(0);
     }
-    if clipped.len() > 1 && ref_normal.dot(&clipped[1]) - max < 0.0 {
+    if clipped.len() > 1 && ref_normal.dot(clipped[1]) - max < 0.0 {
         clipped.remove(1);
     }
 

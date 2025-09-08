@@ -20,7 +20,7 @@ found in /examples directory
 
 ### Playing a simulation
 
-To play a simulation you can either toggle the "Running" checkbox in the "World config" menu
+To play a simulation you can either toggle the "Running" checkbox in the "World config" menu,
 or you can press "P".
 
 ![Playing a simulation](videos/run_sim.gif)
@@ -34,7 +34,7 @@ The camera can be moved in several ways
 
 ![Camera Menu](videos/camera_movement.gif)
 
-Additionally you can zoom in and out using the following methods
+Additionally, you can zoom in and out using the following methods
 1. Using the + and - key
 2. Using the scroll wheel
 3. Using the camera position menu
@@ -50,7 +50,7 @@ input mode selector then there are three different ways to spawn a shape
 1. Left click with the mouse to spawn a single shape
 2. Press L to mass spawn shapes once a frame.
 
-Additionally you can edit the properties of the objects you spawned by 
+Additionally, you can edit the properties of the objects you spawned by 
 using the spawned body properties menu. This also allows you to select a type of
 object,options being spring rectangle and regular polygon (default) 
 
@@ -68,7 +68,7 @@ on the background instead of another object. Connecting a spring to a spring won
 springs can only connect between polygons.
 
 NOTE: Attempting to spawn a spring while the simulation is running will drag the object,
-the spring is attached to. Additionally if in the "drag" mode then attempting to connect
+the spring is attached to. Additionally, if in the "drag" mode then attempting to connect
 two object with a spring will not work. To have a spring persist after letting go of the
 left mouse button requires the "Spawn" input mode with the body type "Spring" selected.
 
@@ -77,7 +77,7 @@ left mouse button requires the "Spawn" input mode with the body type "Spring" se
 ### Editing spawned objects
 
 To edit an already spawned object first in the "Input Mode Selector" menu choose the 
-"Select/Deselect" mode then left click on the object you wanna edit and edit the properties using
+"Select/Deselect" mode then left-click on the object you want to edit and edit the properties using
 the "Edit Selected Polygon" menu
 
 ![Changing Properties](videos/changing_properties.gif)
