@@ -287,6 +287,7 @@ impl World{
                 dampening: 1.0,
                 ..Default::default()
             },
+            colors: None
         })
     }
 }

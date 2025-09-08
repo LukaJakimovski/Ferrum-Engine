@@ -1,19 +1,21 @@
 use ferrum_engine::*;
+use ferrum_engine::color::create_palette;
 
 fn main() {
     let mut polygons = vec![];
+    let palette = create_palette(10);
     for i in 0..64 {
         for j in 0..64 {
             polygons.push(Rigidbody::polygon(
                 rand::random::<u32>() % 3 + 3,
                 0.3533,
                 Vec2 {
-                    x: i as f32 * 0.3,
-                    y: j as f32 * 0.3,
+                    x: i as f32 * 0.5,
+                    y: j as f32 * 0.5,
                 },
                 1.0,
                 1.01,
-                ColorRGBA::random(),
+                ColorRGBA::random_from_palette(&palette),
             ));
         }
     }
@@ -33,6 +35,7 @@ fn main() {
         gravity: false,
         world_size: 300.0,
         gravity_force: Vec2::new(0.0, -9.81),
+        clear_color: ColorRGBA::new(0.0, 0.0, 0.0, 1.0),
     };
     run(polygons, vec![], parameters).unwrap();
 }

@@ -394,7 +394,7 @@ impl World {
                         ColorType::Set => {
                             if self.spawn_parameters.rigidbody_params.color.is_none() {
                                 self.spawn_parameters.rigidbody_params.color =
-                                    Some(ColorRGBA::random());
+                                    Some(ColorRGBA::random_oklab());
                             }
                             let param_color =
                                 &mut self.spawn_parameters.rigidbody_params.color.unwrap();

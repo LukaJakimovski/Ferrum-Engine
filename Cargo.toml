@@ -16,3 +16,4 @@ egui-winit = "0.31.1"
 winit = "0.30.9"
 glam = { version = "0.30.5", features = ["bytemuck"] }
 colors-transform = "0.2.11"
+oklab = "1.1.2"

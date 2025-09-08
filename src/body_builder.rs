@@ -61,7 +61,7 @@ impl BodyBuilder {
                         body_params.pos,
                         body_params.mass,
                         body_params.restitution,
-                        ColorRGBA::random(),
+                        ColorRGBA::random_oklab(),
                     )
                 }
             }
@@ -82,7 +82,7 @@ impl BodyBuilder {
                         body_params.pos,
                         body_params.mass,
                         body_params.restitution,
-                        ColorRGBA::random(),
+                        ColorRGBA::random_oklab(),
                     )
                 }
             }

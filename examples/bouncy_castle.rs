@@ -10,7 +10,7 @@ fn main() {
         Vec2::new(0.0, -6.0),
         f32::MAX / 1000.0,
         0.9,
-        ColorRGBA::random(),
+        ColorRGBA::random_hsl(),
     ));
     rigidbodies.push(Rigidbody::rectangle(
         10.0,
@@ -18,7 +18,7 @@ fn main() {
         Vec2::new(0.0, 0.0),
         f32::MAX / 10000000000.0,
         1.4,
-        ColorRGBA::random(),
+        ColorRGBA::random_hsl(),
     ));
     rigidbodies[0].gravity_multiplier = 0.0;
     rigidbodies[1].gravity_multiplier = 0.0;
@@ -144,6 +144,7 @@ fn main() {
         gravity: true,
         world_size: 500.0,
         gravity_force: Vec2::new(0.0, -9.81),
+        clear_color: ColorRGBA::new(0.0, 0.0, 0.0, 1.0),
     };
     run(rigidbodies, springs, parameters).unwrap();
 }

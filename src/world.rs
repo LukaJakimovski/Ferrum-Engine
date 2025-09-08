@@ -3,7 +3,7 @@ use crate::egui_tools::EguiRenderer;
 use crate::enums::{DraggingState, InputMode};
 use crate::spring::Spring;
 use crate::utility::date;
-use crate::{Rigidbody};
+use crate::{ColorRGBA, Rigidbody};
 use egui_wgpu::wgpu;
 use std::sync::Arc;
 use glam::{Vec2, Vec4};
@@ -19,7 +19,8 @@ pub struct Parameters {
     pub gravity: bool,
     pub world_size: f32,
     pub gravity_force: Vec2,
-    pub time_multiplier: f32
+    pub time_multiplier: f32,
+    pub clear_color: ColorRGBA,
 }
 pub struct World {
     pub surface: wgpu::Surface<'static>,
@@ -74,6 +75,7 @@ pub struct World {
     pub anchor_pos: Vec2,
     pub dragging: DraggingState,
     pub drag_params: SpringParams,
+    pub colors: Option<Vec<ColorRGBA>>
 }
 
 impl World {

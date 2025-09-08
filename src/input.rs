@@ -104,6 +104,15 @@ impl World {
                     self.input_mode = InputMode::Drag;
                 }
             }
+            winit::keyboard::KeyCode::KeyC => {
+                if _pressed && self.pressed_keys[Keys::C as usize] == 0 {
+                    self.pressed_keys[Keys::C as usize] = 1;
+                    self.regenerate_colors();
+                } else if _pressed && self.pressed_keys[Keys::C as usize] == 1 {
+                    self.pressed_keys[Keys::C as usize] = 0;
+                    self.regenerate_colors();
+                }
+            }
             winit::keyboard::KeyCode::Equal => {
                 if _pressed {
                     self.pressed_keys[Keys::Plus as usize] = 1
@@ -164,7 +173,7 @@ impl World {
             if self.selected_polygon.is_some() {
                 let position = self.get_mouse_world_position();
                 let mut mouse_polygon =
-                    Rigidbody::rectangle(0.03, 0.03, position, f32::MAX / 10000.0, 1.0, ColorRGBA::random());
+                    Rigidbody::rectangle(0.03, 0.03, position, f32::MAX / 10000.0, 1.0, ColorRGBA::random_oklab());
                 mouse_polygon.collision = false;
                 let selected_polygon;
                 if self.selected_polygon.unwrap() < self.polygons.len(){
@@ -285,7 +294,7 @@ impl World {
                     self.pressed_buttons[Mouse::Left as usize] = 0;
                 } else if self.input_mode == InputMode::Spawn && self.dragging == DraggingState::Dragging {
                     self.pressed_buttons[Mouse::Left as usize] = 1;
-                    let mouse_polygon = Rigidbody::rectangle(0.03, 0.03, position, f32::MAX / 100000.0, 1.0, ColorRGBA::random());
+                    let mouse_polygon = Rigidbody::rectangle(0.03, 0.03, position, f32::MAX / 100000.0, 1.0, ColorRGBA::random_oklab());
                     let polygon2_index = self.get_polygon_under_mouse();
                     if polygon2_index.is_some() && self.mouse_spring.is_some() && self.selected_polygon.unwrap() != polygon2_index.unwrap() {
                         let polygon2 = &mut self.polygons[polygon2_index.unwrap()];
