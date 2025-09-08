@@ -1,9 +1,45 @@
 use crate::spring::Spring;
-use crate::{Color, Rigidbody, Vertex, World};
+use crate::{ColorRGBA, Rigidbody, World};
 use egui_wgpu::wgpu;
 use std::iter;
-use glam::Vec2;
+use glam::{Vec2, Vec4};
 use wgpu::util::DeviceExt;
+
+#[repr(C)]
+#[derive(Copy, Clone, bytemuck::Pod, bytemuck::Zeroable)]
+pub struct Uniforms {
+    pub camera_pos: Vec4,
+    pub aspect_ratio: f32,
+    pub padding: [f32; 7],
+}
+
+#[repr(C)]
+#[derive(Copy, Clone, Debug, bytemuck::Pod, bytemuck::Zeroable)]
+pub struct Vertex {
+    pub(crate) pos: Vec2,
+    pub(crate) color: ColorRGBA,
+}
+
+impl Vertex {
+    pub(crate) fn desc() -> wgpu::VertexBufferLayout<'static> {
+        wgpu::VertexBufferLayout {
+            array_stride: size_of::<Vertex>() as wgpu::BufferAddress,
+            step_mode: wgpu::VertexStepMode::Vertex,
+            attributes: &[
+                wgpu::VertexAttribute {
+                    offset: 0,
+                    shader_location: 0,
+                    format: wgpu::VertexFormat::Float32x2,
+                },
+                wgpu::VertexAttribute {
+                    offset: size_of::<[f32; 2]>() as wgpu::BufferAddress,
+                    shader_location: 1,
+                    format: wgpu::VertexFormat::Float32x4,
+                },
+            ],
+        }
+    }
+}
 
 impl World {
     pub fn get_vertices_and_indices(
@@ -26,8 +62,7 @@ impl World {
                     .sum::<usize>(),
         );
         let mut start_index: u32 = 0;
-        // Helper closure to process each connector-like structure
-        let mut process = |verts: &[Vec2], color: Color, center: Vec2, indices_src: &[u32]| {
+        let mut process = |verts: &[Vec2], color: ColorRGBA, center: Vec2, indices_src: &[u32]| {
             for vert in verts {
                 vertices.push(Vertex {pos: vert.clone(), color});
             }

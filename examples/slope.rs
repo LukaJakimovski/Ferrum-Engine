@@ -10,7 +10,7 @@ fn main() {
         Vec2 { x: 0.0, y: 0.0 },
         f32::MAX / 10.0,
         0.6,
-        Color::orange(),
+        ColorRGBA::orange(),
     ));
     polygons[0].rotate(PI / 4.0);
     polygons[0].gravity_multiplier = 0.0;
@@ -25,7 +25,7 @@ fn main() {
             },
             1.0,
             1.0,
-            Color::random(),
+            ColorRGBA::random(),
         ));
     }
 

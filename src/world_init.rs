@@ -3,10 +3,11 @@ use egui_wgpu::wgpu;
 use egui_wgpu::wgpu::util::DeviceExt;
 use glam::Vec2;
 use winit::window::Window;
-use crate::{Parameters, Rigidbody, Uniforms, Vertex, World};
+use crate::{Parameters, Rigidbody, World};
 use crate::body_builder::{BodyBuilder, RigidbodyParams, SpringParams};
 use crate::egui_tools::EguiRenderer;
 use crate::enums::{BodyType, ColorType, DraggingState, InputMode, Menu};
+use crate::render::{Uniforms, Vertex};
 use crate::spring::Spring;
 
 impl World{

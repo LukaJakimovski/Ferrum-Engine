@@ -16,7 +16,7 @@ mod world;
 mod world_init;
 
 pub use crate::app::*;
-pub use crate::color::Color;
+pub use crate::color::ColorRGBA;
 pub use crate::rigidbody::*;
 pub use crate::spring::*;
 pub use crate::world::*;

@@ -13,7 +13,7 @@ fn main() {
                 },
                 1.0,
                 1.01,
-                Color::random(),
+                ColorRGBA::random(),
             ));
         }
     }

@@ -1,11 +1,11 @@
 use glam::Vec2;
-use crate::color::Color;
+use crate::color::ColorRGBA;
 use crate::ode_solver::{rk4_angular_step, rk4_step};
 #[derive(Clone, Default, Debug)]
 pub struct Rigidbody {
     pub center: Vec2,
     pub vertices: Vec<Vec2>,
-    pub color: Color,
+    pub color: ColorRGBA,
     pub indices: Vec<u32>,
     pub radius: f32,
     pub mass: f32,
@@ -28,7 +28,7 @@ impl Rigidbody {
         pos: Vec2,
         mass: f32,
         restitution: f32,
-        color: Color,
+        color: ColorRGBA,
     ) -> Self {
         let vertices: Vec<Vec2> = vec![
             Vec2 {
@@ -80,7 +80,7 @@ impl Rigidbody {
         pos: Vec2,
         mass: f32,
         restitution: f32,
-        color: Color,
+        color: ColorRGBA,
     ) -> Self {
         let vertices: Vec<Vec2> = vec![
             Vec2 {
@@ -127,7 +127,7 @@ impl Rigidbody {
         pos: Vec2,
         mass: f32,
         restitution: f32,
-        color: Color,
+        color: ColorRGBA,
     ) -> Self {
         let mut vertices: Vec<Vec2> = vec![];
 
@@ -290,7 +290,7 @@ impl Rigidbody {
         self
     }
 
-    pub fn change_color(&mut self, color: Color) {
+    pub fn change_color(&mut self, color: ColorRGBA) {
         self.color = color
     }
 

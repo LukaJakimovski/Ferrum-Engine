@@ -1,16 +1,25 @@
+use std::ops::Range;
 use rand;
+use colors_transform::{Color, Hsl};
 
 #[repr(C)]
 #[derive(Clone, Copy, Debug, Default, bytemuck::Pod, bytemuck::Zeroable)]
-pub struct Color {
+pub struct ColorRGBA {
     pub r: f32,
     pub g: f32,
     pub b: f32,
     pub a: f32,
 }
 
+pub struct ColorHSVA {
+    pub h: f32,
+    pub s: f32,
+    pub v: f32,
+    pub a: f32,
+}
+
 #[allow(dead_code)]
-impl Color {
+impl ColorRGBA {
     pub const fn red() -> Self {
         Self {
             r: 1.0,
@@ -68,10 +77,20 @@ impl Color {
         }
     }
     pub fn random() -> Self {
+        let h = rand::random_range::<f64, Range<f64>, >(0.0..360.0);
+        let s = rand::random_range::<f64, Range<f64>, >(50.0..70.0);
+        let l = rand::random_range::<f64, Range<f64>, >(40.0..60.0);
+        let hsl = Hsl::from(h as f32, s as f32, l as f32);
+        let rgb = hsl.to_rgb();
+        let mut rgb_tuple = rgb.as_tuple();
+        rgb_tuple.0 /= 255.0;
+        rgb_tuple.1 /= 255.0;
+        rgb_tuple.2 /= 255.0;
         Self {
-            r: rand::random::<f32>(),
-            g: rand::random::<f32>(),
-            b: rand::random::<f32>(),
+
+            r: rgb_tuple.0,
+            g: rgb_tuple.1,
+            b: rgb_tuple.2,
             a: 1.0,
         }
     }
@@ -79,3 +98,5 @@ impl Color {
         Self { r, g, b, a }
     }
 }
+
+

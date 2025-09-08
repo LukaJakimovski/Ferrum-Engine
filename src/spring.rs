@@ -1,7 +1,8 @@
+use std::f32::consts::PI;
 use glam::Vec2;
 use crate::ode_solver::{rk4_angular_step, rk4_step};
 use crate::rigidbody::Rigidbody;
-use crate::{Color};
+use crate::{ColorRGBA};
 use crate::utility::rotate;
 
 #[derive(Clone, Debug, Default)]
@@ -50,16 +51,12 @@ impl Spring {
             ),
             1.0,
             1.0,
-            Color::white(),
+            ColorRGBA::white(),
         );
         let angle = direction.angle_to(Vec2::new(0.0, -1.0));
-        if direction.x < 0.0 {
-            connector.rotate(-angle);
-        } else {
-            connector.rotate(angle);
-        }
-        let angle_a = a.angle;
-        let angle_b = b.angle;
+        connector.rotate(angle);
+        let angle_a = 0.0;
+        let angle_b = 0.0;
 
         Spring {
             body_a,
@@ -124,14 +121,13 @@ impl Spring {
 
         a.velocity = new_vel_a;
         b.velocity = new_vel_b;
-        
-        //let torque_damping = -self.damping * (b.angular_velocity + a.angular_velocity);
+
         // Step angular motion using RK4
         let torque_fn_a = move |_t: f32, _theta: f32, _omega: f32| -> f32 {
-            torque_a //+ torque_damping// constant during dt
+            torque_a
         };
-        let torque_fn_b = move |_t: f32, _theta: f32, _omega: f32| -> f32 { 
-            torque_b //+ torque_damping
+        let torque_fn_b = move |_t: f32, _theta: f32, _omega: f32| -> f32 {
+            torque_b
         };
 
         let (new_angle_a, new_omega_a) = rk4_angular_step(
@@ -169,9 +165,9 @@ impl Spring {
         let world_anchor_b = b.center + self.anchor_b;
 
         let delta = world_anchor_b - world_anchor_a;
-        let distance = world_anchor_a.distance(world_anchor_b);
+        let distance = delta.length();
+        let direction = delta.to_angle();
 
-        let direction = delta / distance;
         self.connector = Rigidbody::rectangle(
             0.1,
             distance,
@@ -181,21 +177,16 @@ impl Spring {
             ),
             1.0,
             1.0,
-            Color::white(),
+            ColorRGBA::white(),
         );
-        let angle = direction.angle_to(Vec2::new(0.0, -1.0));
-        if direction.x < 0.0 {
-            self.connector.rotate(-angle);
-        } else {
-            self.connector.rotate(angle);
-        }
+        println!("{}", -direction + PI / 2.0);
+        self.connector.rotate(direction + PI / 2.0);
     }
 
     pub fn calculate_energy(&self, rigidbodys: &Vec<Rigidbody>) -> f64 {
         let a = &rigidbodys[self.body_a];
         let b = &rigidbodys[self.body_b];
 
-        // Rotate anchors into world space
         let world_anchor_a = a.center + self.anchor_a;
         let world_anchor_b = b.center + self.anchor_b;
 

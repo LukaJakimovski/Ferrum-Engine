@@ -10,7 +10,7 @@ fn main() {
         Vec2::new(0.0, -6.0),
         f32::MAX / 1000.0,
         0.9,
-        Color::random(),
+        ColorRGBA::random(),
     ));
     rigidbodies.push(Rigidbody::rectangle(
         10.0,
@@ -18,7 +18,7 @@ fn main() {
         Vec2::new(0.0, 0.0),
         f32::MAX / 10000000000.0,
         1.4,
-        Color::random(),
+        ColorRGBA::random(),
     ));
     rigidbodies[0].gravity_multiplier = 0.0;
     rigidbodies[1].gravity_multiplier = 0.0;

@@ -8,7 +8,7 @@ fn main() {
         Vec2 { x: -1.0, y: 5.0 },
         1.0,
         0.6,
-        Color::random(),
+        ColorRGBA::random(),
     ));
     polygons.push(Rigidbody::rectangle(
         0.5,
@@ -16,7 +16,7 @@ fn main() {
         Vec2 { x: 1.0, y: 5.0 },
         1.0,
         0.6,
-        Color::random(),
+        ColorRGBA::random(),
     ));
     polygons.push(Rigidbody::rectangle(
         0.5,
@@ -24,7 +24,7 @@ fn main() {
         Vec2 { x: -2.0, y: 5.0 },
         1.0,
         0.6,
-        Color::random(),
+        ColorRGBA::random(),
     ));
     polygons.push(Rigidbody::rectangle(
         0.5,
@@ -32,7 +32,7 @@ fn main() {
         Vec2 { x: 2.0, y: 5.0 },
         1.0,
         0.6,
-        Color::random(),
+        ColorRGBA::random(),
     ));
     polygons.push(Rigidbody::rectangle(
         0.5,
@@ -43,7 +43,7 @@ fn main() {
         },
         1.0,
         0.6,
-        Color::random(),
+        ColorRGBA::random(),
     ));
     polygons.push(Rigidbody::rectangle(
         1000.0,
@@ -51,7 +51,7 @@ fn main() {
         Vec2 { x: 1.0, y: 0.0 },
         f32::MAX / 100000000000.0,
         0.6,
-        Color::random(),
+        ColorRGBA::random(),
     ));
     polygons[5].rotate(-1.0);
     polygons[5].gravity_multiplier = 0.0;

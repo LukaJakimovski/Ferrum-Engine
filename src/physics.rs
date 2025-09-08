@@ -91,22 +91,18 @@ impl World {
             let is_not_right_edge = x > 1 && (i + 1) % x != 0;
             let is_not_left_edge = x > 1 && i % x != 0;
             let row_valid = i + x < section_count;
-
             // Right neighbor
             if is_not_right_edge {
                 current.extend_from_slice(&right[0]);
             }
-
             // Down neighbor
             if row_valid {
                 current.extend_from_slice(&right[x - 1]);
             }
-
             // Down-right neighbor
             if row_valid && is_not_right_edge {
                 current.extend_from_slice(&right[x]);
             }
-
             // Down-left neighbor
             if row_valid && is_not_left_edge {
                 current.extend_from_slice(&right[x - 2]);

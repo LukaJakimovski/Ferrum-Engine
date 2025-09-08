@@ -1,5 +1,5 @@
 use glam::{Mat2, Vec2};
-use crate::{Color, Rigidbody, World};
+use crate::{ColorRGBA, Rigidbody, World};
 use crate::body_builder::BodyBuilder;
 use crate::collision_detection::sat_collision;
 use crate::enums::{BodyType, InputMode};
@@ -75,7 +75,7 @@ impl World {
         let mut polygon_index = None;
         let position = self.get_mouse_world_position();
         let mouse_polygon =
-            Rigidbody::rectangle(0.03, 0.03, position, 1.0, 1.0, Color::random());
+            Rigidbody::rectangle(0.03, 0.03, position, 1.0, 1.0, ColorRGBA::random());
         for i in 0..self.polygons.len() {
             let result = sat_collision(&self.polygons[i], &mouse_polygon);
             if result[1].y != 0.0 && (self.spawn_ghost_polygon == None || i != self.spawn_ghost_polygon.unwrap()) && (self.spring_polygon == None || i != self.spring_polygon.unwrap()) {
@@ -106,7 +106,7 @@ impl World {
         let mut spring_index = None;
         let position = self.get_mouse_world_position();
         let mouse_spring =
-            Rigidbody::rectangle(0.03, 0.03, position, 1.0, 1.0, Color::random());
+            Rigidbody::rectangle(0.03, 0.03, position, 1.0, 1.0, ColorRGBA::random());
         for i in 0..self.springs.len() {
             let result = sat_collision(&mouse_spring, &self.springs[i].connector);
             if result[1].y != 0.0 && (self.spring_polygon == None || i != self.spring_polygon.unwrap()) {
@@ -127,7 +127,7 @@ impl World {
             let length = self.polygons.len() - 1;
             let position = self.get_mouse_world_position();
             self.polygons[length].move_to(position);
-            self.polygons[length].change_color(Color::new(1.0, 1.0, 1.0, 0.3));
+            self.polygons[length].change_color(ColorRGBA::new(1.0, 1.0, 1.0, 0.3));
             self.polygons[length].collision = false;
             self.spawn_ghost_polygon = Some(length);
         }

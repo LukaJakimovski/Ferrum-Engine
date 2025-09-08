@@ -60,8 +60,6 @@ impl ApplicationHandler<World> for App {
 
         #[cfg(not(target_arch = "wasm32"))]
         {
-            // If we are not on web we can use pollster to
-            // await the
             self.state = Some(
                 pollster::block_on(World::new(
                     window,
@@ -127,7 +125,6 @@ impl ApplicationHandler<World> for App {
                 world.update();
                 match world.render() {
                     Ok(_) => {}
-                    // Reconfigure the surface if it's lost or outdated
                     Err(wgpu::SurfaceError::Lost | wgpu::SurfaceError::Outdated) => {
                         let size = world.window.inner_size();
                         world.resize(size.width, size.height);

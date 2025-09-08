@@ -3,11 +3,12 @@ use crate::egui_tools::EguiRenderer;
 use crate::enums::{DraggingState, InputMode};
 use crate::spring::Spring;
 use crate::utility::date;
-use crate::{Color, Rigidbody};
+use crate::{Rigidbody};
 use egui_wgpu::wgpu;
 use std::sync::Arc;
 use glam::{Vec2, Vec4};
 use winit::window::Window;
+use crate::render::{Uniforms, Vertex};
 
 #[derive(Clone)]
 pub struct Parameters {
@@ -20,42 +21,6 @@ pub struct Parameters {
     pub gravity_force: Vec2,
     pub time_multiplier: f32
 }
-
-#[repr(C)]
-#[derive(Copy, Clone, bytemuck::Pod, bytemuck::Zeroable)]
-pub struct Uniforms {
-    pub camera_pos: Vec4,
-    pub aspect_ratio: f32,
-    pub padding: [f32; 7],
-}
-
-#[repr(C)]
-#[derive(Copy, Clone, Debug, bytemuck::Pod, bytemuck::Zeroable)]
-pub struct Vertex {
-    pub(crate) pos: Vec2,
-    pub(crate) color: Color,
-}
-
-impl Vertex {
-    pub(crate) fn desc() -> wgpu::VertexBufferLayout<'static> {
-        wgpu::VertexBufferLayout {
-            array_stride: size_of::<Vertex>() as wgpu::BufferAddress,
-            step_mode: wgpu::VertexStepMode::Vertex,
-            attributes: &[
-                wgpu::VertexAttribute {
-                    offset: 0,
-                    shader_location: 0,
-                    format: wgpu::VertexFormat::Float32x2,
-                },
-                wgpu::VertexAttribute {
-                    offset: size_of::<[f32; 2]>() as wgpu::BufferAddress,
-                    shader_location: 1,
-                    format: wgpu::VertexFormat::Float32x4,
-                },
-            ],
-        }
-    }
-}
 pub struct World {
     pub surface: wgpu::Surface<'static>,
     pub device: wgpu::Device,
@@ -63,19 +28,16 @@ pub struct World {
     pub(crate) config: wgpu::SurfaceConfiguration,
     pub is_surface_configured: bool,
     pub render_pipeline: wgpu::RenderPipeline,
-    // NEW!
     pub vertex_buffer: wgpu::Buffer,
     pub index_buffer: wgpu::Buffer,
     pub num_indices: u32,
     pub window: Arc<Window>,
 
-    //Us
     pub vertices: Vec<Vertex>,
     pub uniforms: Uniforms,
     pub camera_pos: Vec4,
     pub uniforms_buffer: wgpu::Buffer,
     pub uniforms_bind_group: wgpu::BindGroup,
-    // From World
     pub scaling_factor: f32,
     pub mouse_pos: (f32, f32),
 

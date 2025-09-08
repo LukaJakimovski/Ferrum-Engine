@@ -8,7 +8,7 @@ fn main() {
         Vec2::new(0.0, 0.0),
         f32::MAX / 100000000000000.0,
         1.0,
-        Color::white(),
+        ColorRGBA::white(),
     ));
     rigidbodies[0].collision = false;
     rigidbodies[0].eternal = true;
@@ -18,7 +18,7 @@ fn main() {
         Vec2::new(25.0, 0.0),
         5000000.0,
         1.0,
-        Color::white(),
+        ColorRGBA::white(),
     ));
     rigidbodies[1].eternal = true;
     let mut springs = vec![];
