@@ -131,38 +131,51 @@ impl ColorRGBA {
     }
 }
 
-pub fn create_palette(size: u8) -> Vec<ColorRGBA> {
+pub struct OkLCH {
+    pub l: f32,
+    pub c: f32,
+    pub h: f32,
+}
+
+pub fn oklch_to_rgb(oklch: OkLCH) -> ColorRGBA {
+    let a = oklch.c * oklch.h.cos();
+    let b = oklch.c * oklch.h.sin();
+    let oklab = Oklab {l: oklch.l, a, b};
+    let rgb = oklab_to_srgb_f32(oklab);
+    ColorRGBA {
+
+        r: rgb.r,
+        g: rgb.g,
+        b: rgb.b,
+        a: 1.0,
+    }
+}
+
+pub fn create_palette(size: u8, ls_range: Range<f32>, cs_range: Range<f32>, hs_range: Range<f32> ) -> Vec<ColorRGBA> {
     let mut l = rand::random_range::<f32, Range<f32>, >(0.1..0.15);
-    let c = rand::random_range::<f32, Range<f32>, >(0.05..0.15);
+    let mut c = rand::random_range::<f32, Range<f32>, >(0.05..0.15);
     let mut h = rand::random_range::<f32, Range<f32>, >(0.0..PI * 2.0);
-    let ls = rand::random_range::<f32, Range<f32>, >(0.025..0.05);
-    let cs = rand::random_range::<f32, Range<f32>, >(0.025..0.05);
+    let ls = rand::random_range::<f32, Range<f32>, >(ls_range);
+    let cs = rand::random_range::<f32, Range<f32>, >(cs_range);
+    let hs = rand::random_range::<f32, Range<f32>, >(hs_range);
     let mut palette = vec![];
     for _ in 0..size {
-        let a = c * h.cos();
-        let b = c * h.sin();
-        let oklab = Oklab {l, a, b};
-        let rgb = oklab_to_srgb_f32(oklab);
-        palette.push(ColorRGBA {
-
-            r: rgb.r,
-            g: rgb.g,
-            b: rgb.b,
-            a: 1.0,
-        });
+        palette.push(oklch_to_rgb(OkLCH {l, c, h}));
         l += ls;
-        h += cs;
+        c += cs;
+        h += hs;
     }
     palette
 }
 
 impl World{
     pub fn regenerate_colors(&mut self){
-        self.colors = Some(create_palette(16));
+        self.colors = Some(create_palette(16, Range{start: 0.025, end: 0.05}, Range{start: 0.0, end: 0.00001}, Range{start: 0.025, end: 0.05}));
         for polygon in &mut self.polygons{
-            let rand = rand::random_range::<usize, Range<usize>, >(0..self.colors.as_ref().unwrap().len());
+            let rand = rand::random_range::<usize, Range<usize>, >(1..self.colors.as_ref().unwrap().len());
             polygon.color = self.colors.clone().unwrap()[rand];
         }
+        self.parameters.clear_color = self.colors.clone().unwrap()[0];
     }
 }
 

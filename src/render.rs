@@ -117,9 +117,9 @@ impl World {
                     resolve_target: None,
                     ops: wgpu::Operations {
                         load: wgpu::LoadOp::Clear(wgpu::Color {
-                            r: 0.0,
-                            g: 0.0,
-                            b: 0.0,
+                            r: self.parameters.clear_color.r as f64,
+                            g: self.parameters.clear_color.g as f64,
+                            b: self.parameters.clear_color.b as f64,
                             a: 1.0,
                         }),
                         store: wgpu::StoreOp::Store,

@@ -1,9 +1,10 @@
+use std::ops::Range;
 use ferrum_engine::*;
 use ferrum_engine::color::create_palette;
 
 fn main() {
     let mut polygons = vec![];
-    let palette = create_palette(10);
+    let palette = create_palette(10, Range {start: 0.025, end: 0.05}, Range {start: 0.025, end: 0.05},Range {start: 0.025, end: 0.05});
     for i in 0..64 {
         for j in 0..64 {
             polygons.push(Rigidbody::polygon(
