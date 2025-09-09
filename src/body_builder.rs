@@ -40,9 +40,16 @@ pub struct BodyBuilder {
 }
 
 impl BodyBuilder {
-    pub fn create_rigidbody(&self) -> Rigidbody {
+    pub fn create_rigidbody(&self, palette: &Option<Vec<ColorRGBA>>) -> Rigidbody {
         let body_params = &self.rigidbody_params;
         let mut rigidbody: Rigidbody;
+        let random_color;
+        if palette.is_some() {
+            random_color = ColorRGBA::random_from_palette(&palette.clone().unwrap());
+        } else {
+            random_color = ColorRGBA::random_oklab();
+        }
+
         match self.body_type {
             BodyType::Rectangle => {
                 if body_params.color.is_some() {
@@ -61,7 +68,7 @@ impl BodyBuilder {
                         body_params.pos,
                         body_params.mass,
                         body_params.restitution,
-                        ColorRGBA::random_oklab(),
+                        random_color,
                     )
                 }
             }
@@ -82,7 +89,7 @@ impl BodyBuilder {
                         body_params.pos,
                         body_params.mass,
                         body_params.restitution,
-                        ColorRGBA::random_oklab(),
+                        random_color,
                     )
                 }
             }

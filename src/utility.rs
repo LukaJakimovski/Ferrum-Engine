@@ -75,7 +75,7 @@ impl World {
         let mut polygon_index = None;
         let position = self.get_mouse_world_position();
         let mouse_polygon =
-            Rigidbody::rectangle(0.03, 0.03, position, 1.0, 1.0, ColorRGBA::random_oklab());
+            Rigidbody::rectangle(0.03, 0.03, position, 1.0, 1.0, ColorRGBA::white());
         for i in 0..self.polygons.len() {
             let result = sat_collision(&self.polygons[i], &mouse_polygon);
             if result[1].y != 0.0 && (self.spawn_ghost_polygon == None || i != self.spawn_ghost_polygon.unwrap()) && (self.spring_polygon == None || i != self.spring_polygon.unwrap()) {
@@ -90,7 +90,7 @@ impl World {
         let mut polygon_index = None;
         let position = self.get_mouse_world_position();
         let mut mouse_polygon =
-            BodyBuilder::create_rigidbody(&self.spawn_parameters);
+            BodyBuilder::create_rigidbody(&self.spawn_parameters, &self.colors);
         mouse_polygon.translate(position);
         for i in 0..self.polygons.len() {
             let result = sat_collision(&self.polygons[i], &mouse_polygon);
@@ -106,7 +106,7 @@ impl World {
         let mut spring_index = None;
         let position = self.get_mouse_world_position();
         let mouse_spring =
-            Rigidbody::rectangle(0.03, 0.03, position, 1.0, 1.0, ColorRGBA::random_oklab());
+            Rigidbody::rectangle(0.03, 0.03, position, 1.0, 1.0, ColorRGBA::white());
         for i in 0..self.springs.len() {
             let result = sat_collision(&mouse_spring, &self.springs[i].connector);
             if result[1].y != 0.0 && (self.spring_polygon == None || i != self.spring_polygon.unwrap()) {
@@ -123,7 +123,7 @@ impl World {
         }
         self.spawn_ghost_polygon = None;
         if self.input_mode == InputMode::Spawn && self.spawn_parameters.body_type != BodyType::Spring {
-            self.polygons.push(BodyBuilder::create_rigidbody(&self.spawn_parameters));
+            self.polygons.push(BodyBuilder::create_rigidbody(&self.spawn_parameters, &self.colors));
             let length = self.polygons.len() - 1;
             let position = self.get_mouse_world_position();
             self.polygons[length].move_to(position);

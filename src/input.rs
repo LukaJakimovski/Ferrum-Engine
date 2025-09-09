@@ -136,9 +136,9 @@ impl World {
     pub fn handle_input(&mut self) {
         let position = self.get_mouse_world_position();
         if self.pressed_keys[Keys::L as usize] == 1 {
-            if true || self.under_mouse_is_clear().is_none() {
+            if self.get_polygon_under_mouse().is_none() {
                 self.polygons
-                    .push(BodyBuilder::create_rigidbody(&self.spawn_parameters));
+                    .push(BodyBuilder::create_rigidbody(&self.spawn_parameters, &self.colors));
                 let length = self.polygons.len() - 1;
                 self.polygons[length].translate(position);
             }
@@ -173,7 +173,7 @@ impl World {
             if self.selected_polygon.is_some() {
                 let position = self.get_mouse_world_position();
                 let mut mouse_polygon =
-                    Rigidbody::rectangle(0.03, 0.03, position, f32::MAX / 10000.0, 1.0, ColorRGBA::random_oklab());
+                    Rigidbody::rectangle(0.03, 0.03, position, f32::MAX / 10000.0, 1.0, ColorRGBA::white());
                 mouse_polygon.collision = false;
                 let selected_polygon;
                 if self.selected_polygon.unwrap() < self.polygons.len(){
@@ -264,7 +264,7 @@ impl World {
                         if self.under_mouse_is_clear().is_none() {
                             self.pressed_buttons[Mouse::Left as usize] = 1;
                             self.polygons
-                                .push(BodyBuilder::create_rigidbody(&self.spawn_parameters));
+                                .push(BodyBuilder::create_rigidbody(&self.spawn_parameters, &self.colors));
                             let length = self.polygons.len() - 1;
                             self.polygons[length].translate(position);
                         }
@@ -294,7 +294,7 @@ impl World {
                     self.pressed_buttons[Mouse::Left as usize] = 0;
                 } else if self.input_mode == InputMode::Spawn && self.dragging == DraggingState::Dragging {
                     self.pressed_buttons[Mouse::Left as usize] = 1;
-                    let mouse_polygon = Rigidbody::rectangle(0.03, 0.03, position, f32::MAX / 100000.0, 1.0, ColorRGBA::random_oklab());
+                    let mouse_polygon = Rigidbody::rectangle(0.03, 0.03, position, f32::MAX / 100000.0, 1.0, ColorRGBA::white());
                     let polygon2_index = self.get_polygon_under_mouse();
                     if polygon2_index.is_some() && self.mouse_spring.is_some() && self.selected_polygon.unwrap() != polygon2_index.unwrap() {
                         let polygon2 = &mut self.polygons[polygon2_index.unwrap()];
