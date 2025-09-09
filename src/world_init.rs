@@ -234,8 +234,8 @@ impl World{
             },
         };
         let palette_params = PaletteParams {
-            start_range: ColorRange { x: Range{start: 0.0, end: 0.0001}, y: Range{start: 0.0, end: 0.0001}, z: Range{start: 2.0 * PI / 64.0001, end: 2.0 * PI / 64.0} },
-            end_range: ColorRange { x: Range{start: 0.0, end: 0.0001}, y: Range{start: 0.0, end: 0.0001}, z: Range{start: 0.0, end: 0.0001} },
+            start_range: ColorRange { x: Range{start: 0.15, end: 0.25}, y: Range{start: 0.15, end: 0.20}, z: Range{start: 0.0, end: 2.0 * PI} },
+            end_range: ColorRange { x: Range{start: 0.25, end: 0.30}, y: Range{start: 0.20, end: 0.25}, z: Range{start: 2.0 * PI, end: 4.0 * PI} },
             color_count: 32,
         };
         #[cfg(all(target_os = "windows", target_arch = "x86_64", target_env = "gnu"))]

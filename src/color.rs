@@ -158,7 +158,7 @@ pub struct ColorRange {
 }
 
 
-pub fn create_palette(size: u8, start_range: ColorRange, end_range: ColorRange) -> Vec<ColorRGBA> {
+pub fn create_palette(size: usize, start_range: ColorRange, end_range: ColorRange) -> Vec<ColorRGBA> {
     let mut l = rand::random_range::<f32, Range<f32>, >(start_range.x);
     let mut c = rand::random_range::<f32, Range<f32>, >(start_range.y);
     let mut h = rand::random_range::<f32, Range<f32>, >(start_range.z);
@@ -187,6 +187,18 @@ impl World{
         for polygon in &mut self.polygons{
             let rand = rand::random_range::<usize, Range<usize>, >(1..self.color_palette.as_ref().unwrap().len());
             polygon.color = self.color_palette.clone().unwrap()[rand];
+        }
+        self.parameters.clear_color = self.color_palette.clone().unwrap()[0];
+    }
+
+    pub fn view_random_palette(&mut self){
+        self.color_palette = Some(create_palette(self.palette_params.color_count, self.palette_params.start_range.clone(), self.palette_params.end_range.clone()));
+        let mut i = 1;
+        for polygon in &mut self.polygons{
+            //let rand = rand::random_range::<usize, Range<usize>, >(1..self.color_palette.as_ref().unwrap().len());
+            let rand = i % self.color_palette.as_ref().unwrap().len();
+            polygon.color = self.color_palette.clone().unwrap()[rand];
+            i += 1;
         }
         self.parameters.clear_color = self.color_palette.clone().unwrap()[0];
     }

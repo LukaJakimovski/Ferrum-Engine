@@ -113,6 +113,15 @@ impl World {
                     self.regenerate_colors();
                 }
             }
+            winit::keyboard::KeyCode::KeyV => {
+                if _pressed && self.pressed_keys[Keys::C as usize] == 0 {
+                    self.pressed_keys[Keys::V as usize] = 1;
+                    self.view_random_palette();
+                } else if _pressed && self.pressed_keys[Keys::C as usize] == 1 {
+                    self.pressed_keys[Keys::V as usize] = 0;
+                    self.view_random_palette();
+                }
+            }
             winit::keyboard::KeyCode::Equal => {
                 if _pressed {
                     self.pressed_keys[Keys::Plus as usize] = 1
