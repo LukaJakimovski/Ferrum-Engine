@@ -140,10 +140,9 @@ pub struct OkLCH {
 pub fn oklch_to_rgb(oklch: OkLCH) -> ColorRGBA {
     let a = oklch.c * oklch.h.cos();
     let b = oklch.c * oklch.h.sin();
-    let oklab = Oklab {l: oklch.l, a, b};
+    let oklab = Oklab { l: oklch.l, a, b };
     let rgb = oklab_to_srgb_f32(oklab);
     ColorRGBA {
-
         r: rgb.r,
         g: rgb.g,
         b: rgb.b,
@@ -151,13 +150,24 @@ pub fn oklch_to_rgb(oklch: OkLCH) -> ColorRGBA {
     }
 }
 
-pub fn create_palette(size: u8, ls_range: Range<f32>, cs_range: Range<f32>, hs_range: Range<f32> ) -> Vec<ColorRGBA> {
-    let mut l = rand::random_range::<f32, Range<f32>, >(0.05..0.1);
-    let mut c = rand::random_range::<f32, Range<f32>, >(0.15..0.25);
-    let mut h = rand::random_range::<f32, Range<f32>, >(0.0..PI * 2.0);
-    let ls = rand::random_range::<f32, Range<f32>, >(ls_range);
-    let cs = rand::random_range::<f32, Range<f32>, >(cs_range);
-    let hs = rand::random_range::<f32, Range<f32>, >(hs_range);
+#[derive(Clone)]
+pub struct ColorRange {
+    pub x: Range<f32>,
+    pub y: Range<f32>,
+    pub z: Range<f32>,
+}
+
+
+pub fn create_palette(size: u8, start_range: ColorRange, end_range: ColorRange) -> Vec<ColorRGBA> {
+    let mut l = rand::random_range::<f32, Range<f32>, >(start_range.x);
+    let mut c = rand::random_range::<f32, Range<f32>, >(start_range.y);
+    let mut h = rand::random_range::<f32, Range<f32>, >(start_range.z);
+    let ln = rand::random_range::<f32, Range<f32>, >(end_range.x);
+    let cn = rand::random_range::<f32, Range<f32>, >(end_range.y);
+    let hn = rand::random_range::<f32, Range<f32>, >(end_range.z);
+    let ls = (ln - l) / (size as f32);
+    let cs = (cn - c) / (size as f32);
+    let hs = (hn - h) / (size as f32);
     let mut palette = vec![];
     for _i in 0..size {
         if _i == 0 {
@@ -173,12 +183,12 @@ pub fn create_palette(size: u8, ls_range: Range<f32>, cs_range: Range<f32>, hs_r
 
 impl World{
     pub fn regenerate_colors(&mut self){
-        self.colors = Some(create_palette(32, Range{start: 0.0125, end: 0.025}, Range{start: 0.0, end: 0.00001}, Range{start: 0.05, end: 0.125}));
+        self.color_palette = Some(create_palette(64, self.palette_params.start_range.clone(), self.palette_params.end_range.clone()));
         for polygon in &mut self.polygons{
-            let rand = rand::random_range::<usize, Range<usize>, >(1..self.colors.as_ref().unwrap().len());
-            polygon.color = self.colors.clone().unwrap()[rand];
+            let rand = rand::random_range::<usize, Range<usize>, >(1..self.color_palette.as_ref().unwrap().len());
+            polygon.color = self.color_palette.clone().unwrap()[rand];
         }
-        self.parameters.clear_color = self.colors.clone().unwrap()[0];
+        self.parameters.clear_color = self.color_palette.clone().unwrap()[0];
     }
 }
 

@@ -1,6 +1,6 @@
 use crate::enums::{BodyType, ColorType, InputMode, Menu};
 use crate::{ColorRGBA, World};
-use egui::Align2;
+use egui::{Align2};
 use egui_wgpu::{ScreenDescriptor, wgpu};
 use std::f32::consts::PI;
 
@@ -28,6 +28,7 @@ impl World {
                 ui.checkbox(&mut self.menus[Menu::Editor as usize], "Edit Selected Polygon", );
                 ui.checkbox(&mut self.menus[Menu::Advanced as usize], "Advanced Settings");
                 ui.checkbox(&mut self.menus[Menu::Debug as usize], "Debug Menu");
+                ui.checkbox(&mut self.menus[Menu::Color as usize], "Color Menu");
             });
 
         if self.menus[Menu::Config as usize] {
@@ -56,6 +57,9 @@ impl World {
         }
         if self.menus[Menu::Debug as usize] {
             self.debug_menu()
+        }
+        if self.menus[Menu::Color as usize] {
+            self.color_menu()
         }
 
         self.is_pointer_used = self.egui_renderer.context().is_pointer_over_area();
@@ -394,7 +398,7 @@ impl World {
                         ColorType::Set => {
                             if self.spawn_parameters.rigidbody_params.color.is_none() {
                                 self.spawn_parameters.rigidbody_params.color =
-                                    Some(ColorRGBA::random_from_palette(&self.colors.clone().unwrap()));
+                                    Some(ColorRGBA::random_from_palette(&self.color_palette.clone().unwrap()));
                             }
                             let param_color =
                                 &mut self.spawn_parameters.rigidbody_params.color.unwrap();
@@ -649,6 +653,78 @@ impl World {
                 if self.spawn_ghost_polygon.is_some(){
                     ui.label(format!("Ghost polygon: {}", self.spawn_ghost_polygon.unwrap()));
                 }
+            });
+    }
+    
+    fn color_menu(&mut self) {
+        egui::Window::new("Color Menu")
+            .resizable(false)
+            .vscroll(false)
+            .default_open(true)
+            .default_height(275.0)
+            .title_bar(false)
+            .show(self.egui_renderer.context(), |ui| {
+                ui.heading("Color Menu");
+                ui.columns(3, |ui| {
+                    ui[0].label("Luminosity Start Range");
+                    ui[1].add(
+                        egui::DragValue::new(&mut self.palette_params.start_range.x.start).speed(0.001),
+                    );
+                    ui[2].add(
+                        egui::DragValue::new(&mut self.palette_params.start_range.x.end).speed(0.001),
+                    );
+                });
+                ui.columns(3, |ui| {
+                    ui[0].label("Chromaticity Start Range");
+                    ui[1].add(
+                        egui::DragValue::new(&mut self.palette_params.start_range.y.start).speed(0.001),
+                    );
+                    ui[2].add(
+                        egui::DragValue::new(&mut self.palette_params.start_range.y.end).speed(0.001),
+                    );
+                });
+                ui.columns(3, |ui| {
+                    ui[0].label("Hue Start Range");
+                    ui[1].add(
+                        egui::DragValue::new(&mut self.palette_params.start_range.z.start).speed(0.001),
+                    );
+                    ui[2].add(
+                        egui::DragValue::new(&mut self.palette_params.start_range.z.end).speed(0.001),
+                    );
+                });
+                ui.columns(3, |ui| {
+                    ui[0].label("Luminosity End Range");
+                    ui[1].add(
+                        egui::DragValue::new(&mut self.palette_params.end_range.x.start).speed(0.001),
+                    );
+                    ui[2].add(
+                        egui::DragValue::new(&mut self.palette_params.end_range.x.end).speed(0.001),
+                    );
+                });
+                ui.columns(3, |ui| {
+                    ui[0].label("Chromaticity End Range");
+                    ui[1].add(
+                        egui::DragValue::new(&mut self.palette_params.end_range.y.start).speed(0.001),
+                    );
+                    ui[2].add(
+                        egui::DragValue::new(&mut self.palette_params.end_range.y.end).speed(0.001),
+                    );
+                });
+                ui.columns(3, |ui| {
+                    ui[0].label("Hue End Range");
+                    ui[1].add(
+                        egui::DragValue::new(&mut self.palette_params.end_range.z.start).speed(0.001),
+                    );
+                    ui[2].add(
+                        egui::DragValue::new(&mut self.palette_params.end_range.z.end).speed(0.001),
+                    );
+                });
+                ui.columns(2, |ui|{
+                    ui[0].label("Color Count");
+                    ui[1].add(
+                        egui::DragValue::new(&mut self.palette_params.color_count).speed(1),
+                    );
+                });
             });
     }
 }

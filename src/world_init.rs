@@ -1,10 +1,13 @@
+use std::f32::consts::PI;
+use std::ops::Range;
 use std::sync::Arc;
 use egui_wgpu::wgpu;
 use egui_wgpu::wgpu::util::DeviceExt;
 use glam::Vec2;
 use winit::window::Window;
-use crate::{Parameters, Rigidbody, World};
+use crate::{PaletteParams, Parameters, Rigidbody, World};
 use crate::body_builder::{BodyBuilder, RigidbodyParams, SpringParams};
+use crate::color::ColorRange;
 use crate::egui_tools::EguiRenderer;
 use crate::enums::{BodyType, ColorType, DraggingState, InputMode, Menu};
 use crate::render::{Uniforms, Vertex};
@@ -230,6 +233,11 @@ impl World{
                 anchor_b: Default::default(),
             },
         };
+        let palette_params = PaletteParams {
+            start_range: ColorRange { x: Range{start: 0.0, end: 0.0001}, y: Range{start: 0.0, end: 0.0001}, z: Range{start: 2.0 * PI / 64.0001, end: 2.0 * PI / 64.0} },
+            end_range: ColorRange { x: Range{start: 0.0, end: 0.0001}, y: Range{start: 0.0, end: 0.0001}, z: Range{start: 0.0, end: 0.0001} },
+            color_count: 32,
+        };
         #[cfg(all(target_os = "windows", target_arch = "x86_64", target_env = "gnu"))]
         let scaling_factor = 0.1;
         #[cfg(not(all(target_os = "windows", target_arch = "x86_64", target_env = "gnu")))]
@@ -257,8 +265,6 @@ impl World{
             mouse_pos: (0.0, 0.0),
             springs,
             polygons,
-            previous_polygon_count: 0,
-            collisions: 0,
             pressed_keys: [0; 64],
             pressed_buttons: [0; 3],
             start_time: 0.0,
@@ -287,7 +293,9 @@ impl World{
                 dampening: 1.0,
                 ..Default::default()
             },
-            colors: None
+            palette_params,
+            color_palette: None,
+
         })
     }
 }

@@ -138,7 +138,7 @@ impl World {
         if self.pressed_keys[Keys::L as usize] == 1 {
             if self.get_polygon_under_mouse().is_none() {
                 self.polygons
-                    .push(BodyBuilder::create_rigidbody(&self.spawn_parameters, &self.colors));
+                    .push(BodyBuilder::create_rigidbody(&self.spawn_parameters, &self.color_palette));
                 let length = self.polygons.len() - 1;
                 self.polygons[length].translate(position);
             }
@@ -264,7 +264,7 @@ impl World {
                         if self.under_mouse_is_clear().is_none() {
                             self.pressed_buttons[Mouse::Left as usize] = 1;
                             self.polygons
-                                .push(BodyBuilder::create_rigidbody(&self.spawn_parameters, &self.colors));
+                                .push(BodyBuilder::create_rigidbody(&self.spawn_parameters, &self.color_palette));
                             let length = self.polygons.len() - 1;
                             self.polygons[length].translate(position);
                         }

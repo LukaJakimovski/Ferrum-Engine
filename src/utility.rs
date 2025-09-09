@@ -90,7 +90,7 @@ impl World {
         let mut polygon_index = None;
         let position = self.get_mouse_world_position();
         let mut mouse_polygon =
-            BodyBuilder::create_rigidbody(&self.spawn_parameters, &self.colors);
+            BodyBuilder::create_rigidbody(&self.spawn_parameters, &self.color_palette);
         mouse_polygon.translate(position);
         for i in 0..self.polygons.len() {
             let result = sat_collision(&self.polygons[i], &mouse_polygon);
@@ -123,7 +123,7 @@ impl World {
         }
         self.spawn_ghost_polygon = None;
         if self.input_mode == InputMode::Spawn && self.spawn_parameters.body_type != BodyType::Spring {
-            self.polygons.push(BodyBuilder::create_rigidbody(&self.spawn_parameters, &self.colors));
+            self.polygons.push(BodyBuilder::create_rigidbody(&self.spawn_parameters, &self.color_palette));
             let length = self.polygons.len() - 1;
             let position = self.get_mouse_world_position();
             self.polygons[length].move_to(position);

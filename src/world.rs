@@ -8,6 +8,7 @@ use egui_wgpu::wgpu;
 use std::sync::Arc;
 use glam::{Vec2, Vec4};
 use winit::window::Window;
+use crate::color::ColorRange;
 use crate::render::{Uniforms, Vertex};
 
 #[derive(Clone)]
@@ -22,6 +23,12 @@ pub struct Parameters {
     pub time_multiplier: f32,
     pub clear_color: ColorRGBA,
 }
+
+pub struct PaletteParams {
+    pub start_range: ColorRange,
+    pub end_range: ColorRange,
+    pub color_count: usize,
+}
 pub struct World {
     pub surface: wgpu::Surface<'static>,
     pub device: wgpu::Device,
@@ -31,22 +38,19 @@ pub struct World {
     pub render_pipeline: wgpu::RenderPipeline,
     pub vertex_buffer: wgpu::Buffer,
     pub index_buffer: wgpu::Buffer,
+    pub uniforms_buffer: wgpu::Buffer,
+    pub uniforms_bind_group: wgpu::BindGroup,
     pub num_indices: u32,
     pub window: Arc<Window>,
 
     pub vertices: Vec<Vertex>,
     pub uniforms: Uniforms,
     pub camera_pos: Vec4,
-    pub uniforms_buffer: wgpu::Buffer,
-    pub uniforms_bind_group: wgpu::BindGroup,
     pub scaling_factor: f32,
     pub mouse_pos: (f32, f32),
 
     pub springs: Vec<Spring>,
     pub polygons: Vec<Rigidbody>,
-    pub previous_polygon_count: usize,
-
-    pub collisions: usize,
 
     pub pressed_keys: [u8; 64],
     pub pressed_buttons: [u8; 3],
@@ -75,7 +79,8 @@ pub struct World {
     pub anchor_pos: Vec2,
     pub dragging: DraggingState,
     pub drag_params: SpringParams,
-    pub colors: Option<Vec<ColorRGBA>>
+    pub palette_params: PaletteParams,
+    pub color_palette: Option<Vec<ColorRGBA>>
 }
 
 impl World {

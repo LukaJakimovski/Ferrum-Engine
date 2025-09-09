@@ -69,6 +69,7 @@ pub enum Menu {
     DragParams = 7,
     Advanced = 8,
     Debug = 9,
+    Color = 10,
 }
 
 #[repr(usize)]
