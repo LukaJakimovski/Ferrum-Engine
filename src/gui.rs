@@ -1,11 +1,17 @@
 use crate::enums::{BodyType, ColorType, InputMode, Menu};
-use crate::{ColorRGBA, World};
+use crate::{Camera, ColorRGBA, Parameters};
 use egui::{Align2};
 use egui_wgpu::{ScreenDescriptor, wgpu};
 use std::f32::consts::PI;
+use crate::body_builder::BodyBuilder;
+use crate::color::ColorSystem;
+use crate::input::UiSystem;
+use crate::physics::PhysicsSystem;
+use crate::render::RenderSystem;
+use crate::timing::Timing;
 
-impl World {
-    pub fn create_gui(&mut self, encoder: &mut wgpu::CommandEncoder, view: &wgpu::TextureView) {
+impl RenderSystem {
+    pub fn create_gui(&mut self, ui_system: &mut UiSystem, physics_system: &mut PhysicsSystem, color_system: &mut ColorSystem, timing: &mut Timing, parameters: &mut Parameters, encoder: &mut wgpu::CommandEncoder, view: &wgpu::TextureView) {
         let screen_descriptor = ScreenDescriptor {
             size_in_pixels: [self.config.width, self.config.height],
             pixels_per_point: self.window.as_ref().scale_factor() as f32 * 1.0,
@@ -19,50 +25,50 @@ impl World {
             .title_bar(false)
             .show(self.egui_renderer.context(), |ui| {
                 ui.heading("Menu Selector");
-                ui.checkbox(&mut self.menus[Menu::Config as usize], "World Config");
-                ui.checkbox(&mut self.menus[Menu::Energy as usize], "Kinetic Energy Info", );
-                ui.checkbox(&mut self.menus[Menu::FPS as usize], "Show FPS");
-                ui.checkbox(&mut self.menus[Menu::Camera as usize], "Camera Position");
-                ui.checkbox(&mut self.menus[Menu::Spawner as usize], "Spawned Body Properties", );
-                ui.checkbox(&mut self.menus[Menu::Input as usize], "Change Input Mode");
-                ui.checkbox(&mut self.menus[Menu::Editor as usize], "Edit Selected Polygon", );
-                ui.checkbox(&mut self.menus[Menu::Advanced as usize], "Advanced Settings");
-                ui.checkbox(&mut self.menus[Menu::Debug as usize], "Debug Menu");
-                ui.checkbox(&mut self.menus[Menu::Color as usize], "Color Menu");
+                ui.checkbox(&mut ui_system.menus[Menu::Config as usize], "World Config");
+                ui.checkbox(&mut ui_system.menus[Menu::Energy as usize], "Kinetic Energy Info", );
+                ui.checkbox(&mut ui_system.menus[Menu::FPS as usize], "Show FPS");
+                ui.checkbox(&mut ui_system.menus[Menu::Camera as usize], "Camera Position");
+                ui.checkbox(&mut ui_system.menus[Menu::Spawner as usize], "Spawned Body Properties", );
+                ui.checkbox(&mut ui_system.menus[Menu::Input as usize], "Change Input Mode");
+                ui.checkbox(&mut ui_system.menus[Menu::Editor as usize], "Edit Selected Polygon", );
+                ui.checkbox(&mut ui_system.menus[Menu::Advanced as usize], "Advanced Settings");
+                ui.checkbox(&mut ui_system.menus[Menu::Debug as usize], "Debug Menu");
+                ui.checkbox(&mut ui_system.menus[Menu::Color as usize], "Color Menu");
             });
 
-        if self.menus[Menu::Config as usize] {
-            self.config_menu()
+        if ui_system.menus[Menu::Config as usize] {
+            self.config_menu(parameters)
         }
-        if self.menus[Menu::Energy as usize] {
-            self.energy_menu()
+        if ui_system.menus[Menu::Energy as usize] {
+            self.energy_menu(physics_system)
         }
-        if self.menus[Menu::FPS as usize] {
-            self.fps_menu()
+        if ui_system.menus[Menu::FPS as usize] {
+            self.fps_menu(timing)
         }
-        if self.menus[Menu::Camera as usize] {
-            self.camera_menu()
+        if ui_system.menus[Menu::Camera as usize] {
+            self.camera_menu(&mut ui_system.camera)
         }
-        if self.menus[Menu::Spawner as usize] {
-            self.spawner_menu()
+        if ui_system.menus[Menu::Spawner as usize] {
+            self.spawner_menu(&mut ui_system.spawn_parameters, &mut color_system.color_palette)
         }
-        if self.menus[Menu::Input as usize] {
-            self.input_menu()
+        if ui_system.menus[Menu::Input as usize] {
+            self.input_menu(ui_system)
         }
-        if self.menus[Menu::Editor as usize] {
-            self.editor_menu()
+        if ui_system.menus[Menu::Editor as usize] {
+            self.editor_menu(physics_system, ui_system)
         }
-        if self.menus[Menu::Advanced as usize] {
-            self.advanced_menu()
+        if ui_system.menus[Menu::Advanced as usize] {
+            self.advanced_menu(parameters)
         }
-        if self.menus[Menu::Debug as usize] {
-            self.debug_menu()
+        if ui_system.menus[Menu::Debug as usize] {
+            self.debug_menu(physics_system, ui_system)
         }
-        if self.menus[Menu::Color as usize] {
-            self.color_menu()
+        if ui_system.menus[Menu::Color as usize] {
+            self.color_menu(color_system)
         }
 
-        self.is_pointer_used = self.egui_renderer.context().is_pointer_over_area();
+        ui_system.is_pointer_used = self.egui_renderer.context().is_pointer_over_area();
         self.egui_renderer.end_frame_and_draw(
             &self.device,
             &self.queue,
@@ -73,7 +79,7 @@ impl World {
         );
     }
 
-    fn camera_menu(&mut self) {
+    fn camera_menu(&mut self, camera: &mut Camera) {
         egui::Window::new("Camera")
             .resizable(true)
             .vscroll(true)
@@ -90,23 +96,23 @@ impl World {
                 });
                 ui.end_row();
                 ui.columns(3, |ui| {
-                    ui[0].add(egui::DragValue::new(&mut self.camera_pos.x).speed(0.1));
-                    ui[1].add(egui::DragValue::new(&mut self.camera_pos.y).speed(0.1));
-                    ui[2].add(egui::DragValue::new(&mut self.camera_pos.w).speed(0.1));
-                    if self.camera_pos.w > 0.0 {
-                        self.camera_pos.w = 0.0
+                    ui[0].add(egui::DragValue::new(&mut camera.camera_pos.x).speed(0.1));
+                    ui[1].add(egui::DragValue::new(&mut camera.camera_pos.y).speed(0.1));
+                    ui[2].add(egui::DragValue::new(&mut camera.camera_pos.w).speed(0.1));
+                    if camera.camera_pos.w > 0.0 {
+                        camera.camera_pos.w = 0.0
                     }
                 });
                 ui.columns(2, |ui| {
                     ui[0].label("Scroll Speed");
-                    ui[1].add(egui::DragValue::new(&mut self.scaling_factor).speed(0.1));
-                    if self.scaling_factor < 0.0 {
-                        self.scaling_factor = 0.0
+                    ui[1].add(egui::DragValue::new(&mut camera.scaling_factor).speed(0.1));
+                    if camera.scaling_factor < 0.0 {
+                        camera.scaling_factor = 0.0
                     }
                 })
             });
     }
-    fn energy_menu(&mut self) {
+    fn energy_menu(&mut self, physics_system: &mut PhysicsSystem) {
         egui::Window::new("Energy")
             .resizable(false)
             .vscroll(true)
@@ -116,10 +122,10 @@ impl World {
             .title_bar(false)
             .show(self.egui_renderer.context(), |ui| {
                 ui.heading("Energy");
-                ui.label(format!("Energy: {:.3} Joules", self.total_energy));
+                ui.label(format!("Energy: {:.3} Joules", physics_system.total_energy));
             });
     }
-    fn fps_menu(&mut self) {
+    fn fps_menu(&mut self, timing: &mut Timing) {
         egui::Window::new("FPS")
             .resizable(false)
             .vscroll(true)
@@ -129,11 +135,11 @@ impl World {
             .title_bar(false)
             .show(self.egui_renderer.context(), |ui| {
                 ui.heading("FPS");
-                ui.label(format!("FPS: {:.3}", self.fps));
-                ui.label(format!("ms/frame {:.3}", 1000.0 / self.fps));
+                ui.label(format!("FPS: {:.3}", timing.fps));
+                ui.label(format!("ms/frame {:.3}", 1000.0 / timing.fps));
             });
     }
-    fn config_menu(&mut self) {
+    fn config_menu(&mut self, parameters: &mut Parameters) {
         egui::Window::new("Config")
             .resizable(false)
             .vscroll(true)
@@ -142,35 +148,35 @@ impl World {
             .title_bar(false)
             .show(self.egui_renderer.context(), |ui| {
                 ui.heading("Config");
-                ui.checkbox(&mut self.is_running, "Running");
-                ui.checkbox(&mut self.parameters.gravity, "Gravity");
+                ui.checkbox(&mut parameters.is_running, "Running");
+                ui.checkbox(&mut parameters.gravity, "Gravity");
                 ui.columns(2, |ui| {
                     ui[0].label("World Radius");
-                    ui[1].add(egui::DragValue::new(&mut self.parameters.world_size).speed(0.1));
-                    if self.parameters.world_size < 0.0 {
-                        self.parameters.world_size = 0.0;
+                    ui[1].add(egui::DragValue::new(&mut parameters.world_size).speed(0.1));
+                    if parameters.world_size < 0.0 {
+                        parameters.world_size = 0.0;
                     }
                 });
-                if self.parameters.delta_time == 0.0 {
+                if parameters.delta_time == 0.0 {
                     ui.columns(2, |ui| {
                         ui[0].label("Time multiplier");
-                        ui[1].add(egui::DragValue::new(&mut self.parameters.time_multiplier).speed(0.01));
-                        if self.parameters.time_multiplier < 0.0 {
-                            self.parameters.time_multiplier = 0.0;
+                        ui[1].add(egui::DragValue::new(&mut parameters.time_multiplier).speed(0.01));
+                        if parameters.time_multiplier < 0.0 {
+                            parameters.time_multiplier = 0.0;
                         }
                     });
                 }
                 ui.columns(3, |ui| {
                     ui[0].label("Gravity Force");
                     ui[1]
-                        .add(egui::DragValue::new(&mut self.parameters.gravity_force.x).speed(0.1));
+                        .add(egui::DragValue::new(&mut parameters.gravity_force.x).speed(0.1));
                     ui[1]
-                        .add(egui::DragValue::new(&mut self.parameters.gravity_force.y).speed(0.1));
+                        .add(egui::DragValue::new(&mut parameters.gravity_force.y).speed(0.1));
                 });
             });
     }
 
-    fn advanced_menu(&mut self) {
+    fn advanced_menu(&mut self, parameters: &mut Parameters) {
         egui::Window::new("Spawner")
             .resizable(false)
             .vscroll(false)
@@ -182,23 +188,23 @@ impl World {
                 ui.label("If you don't know what these mean don't change them");
                 ui.columns(2, |ui| {
                     ui[0].label("Time Step");
-                    ui[1].add(egui::DragValue::new(&mut self.parameters.delta_time).speed(0.00001));
-                    if self.parameters.delta_time < 0.0 {
-                        self.parameters.delta_time = 0.0;
+                    ui[1].add(egui::DragValue::new(&mut parameters.delta_time).speed(0.00001));
+                    if parameters.delta_time < 0.0 {
+                        parameters.delta_time = 0.0;
                     }
-                    if self.parameters.delta_time > 0.005 {
-                        self.parameters.delta_time = 0.005;
+                    if parameters.delta_time > 0.005 {
+                        parameters.delta_time = 0.005;
                     }
                 });
                 ui.columns(2, |ui| {
                     ui[0].label("Physics Updates Per Frame");
                     ui[1]
-                        .add(egui::DragValue::new(&mut self.parameters.updates_per_frame).speed(1));
+                        .add(egui::DragValue::new(&mut parameters.updates_per_frame).speed(1));
                 });
             });
     }
 
-    fn spawner_menu(&mut self) {
+    fn spawner_menu(&mut self, spawn_parameters: &mut BodyBuilder, color_palette: &mut Option<Vec<ColorRGBA>>) {
         egui::Window::new("Spawner")
             .resizable(false)
             .vscroll(false)
@@ -208,39 +214,39 @@ impl World {
             .show(self.egui_renderer.context(), |ui| {
                 ui.heading("Spawner");
                 egui::ComboBox::from_label("Body Type")
-                    .selected_text(format!("{:?}", self.spawn_parameters.body_type))
+                    .selected_text(format!("{:?}", spawn_parameters.body_type))
                     .show_ui(ui, |ui| {
                         ui.selectable_value(
-                            &mut self.spawn_parameters.body_type,
+                            &mut spawn_parameters.body_type,
                             BodyType::RegularPolygon,
                             "Regular Polygon",
                         );
                         ui.selectable_value(
-                            &mut self.spawn_parameters.body_type,
+                            &mut spawn_parameters.body_type,
                             BodyType::Rectangle,
                             "Rectangle",
                         );
                         ui.selectable_value(
-                            &mut self.spawn_parameters.body_type,
+                            &mut spawn_parameters.body_type,
                             BodyType::Spring,
                             "Spring",
                         );
                     });
-                match self.spawn_parameters.body_type {
+                match spawn_parameters.body_type {
                     BodyType::RegularPolygon => {
                         egui::ComboBox::from_label("Color")
                             .selected_text(format!(
                                 "{:?}",
-                                self.spawn_parameters.rigidbody_params.color_type
+                                spawn_parameters.rigidbody_params.color_type
                             ))
                             .show_ui(ui, |ui| {
                                 ui.selectable_value(
-                                    &mut self.spawn_parameters.rigidbody_params.color_type,
+                                    &mut spawn_parameters.rigidbody_params.color_type,
                                     ColorType::Random,
                                     "Random Color",
                                 );
                                 ui.selectable_value(
-                                    &mut self.spawn_parameters.rigidbody_params.color_type,
+                                    &mut spawn_parameters.rigidbody_params.color_type,
                                     ColorType::Set,
                                     "Set Color",
                                 );
@@ -249,24 +255,24 @@ impl World {
                             ui[0].label("Side Count");
                             ui[1].add(
                                 egui::DragValue::new(
-                                    &mut self.spawn_parameters.rigidbody_params.sides,
+                                    &mut spawn_parameters.rigidbody_params.sides,
                                 )
                                 .speed(1),
                             );
-                            if self.spawn_parameters.rigidbody_params.sides < 3 {
-                                self.spawn_parameters.rigidbody_params.sides = 3
+                            if spawn_parameters.rigidbody_params.sides < 3 {
+                                spawn_parameters.rigidbody_params.sides = 3
                             }
                         });
                         ui.columns(2, |ui| {
                             ui[0].label("Radius");
                             ui[1].add(
                                 egui::DragValue::new(
-                                    &mut self.spawn_parameters.rigidbody_params.radius,
+                                    &mut spawn_parameters.rigidbody_params.radius,
                                 )
                                 .speed(0.01),
                             );
-                            if self.spawn_parameters.rigidbody_params.radius < 0.0 {
-                                self.spawn_parameters.rigidbody_params.radius = 0.0
+                            if spawn_parameters.rigidbody_params.radius < 0.0 {
+                                spawn_parameters.rigidbody_params.radius = 0.0
                             };
                         });
                     }
@@ -274,16 +280,16 @@ impl World {
                         egui::ComboBox::from_label("Color")
                             .selected_text(format!(
                                 "{:?}",
-                                self.spawn_parameters.rigidbody_params.color_type
+                                spawn_parameters.rigidbody_params.color_type
                             ))
                             .show_ui(ui, |ui| {
                                 ui.selectable_value(
-                                    &mut self.spawn_parameters.rigidbody_params.color_type,
+                                    &mut spawn_parameters.rigidbody_params.color_type,
                                     ColorType::Random,
                                     "Random Color",
                                 );
                                 ui.selectable_value(
-                                    &mut self.spawn_parameters.rigidbody_params.color_type,
+                                    &mut spawn_parameters.rigidbody_params.color_type,
                                     ColorType::Set,
                                     "Set Color",
                                 );
@@ -292,36 +298,36 @@ impl World {
                             ui[0].label("Width");
                             ui[1].add(
                                 egui::DragValue::new(
-                                    &mut self.spawn_parameters.rigidbody_params.width,
+                                    &mut spawn_parameters.rigidbody_params.width,
                                 )
                                 .speed(0.01),
                             );
-                            if self.spawn_parameters.rigidbody_params.width < 0.0 {
-                                self.spawn_parameters.rigidbody_params.width = 0.0
+                            if spawn_parameters.rigidbody_params.width < 0.0 {
+                                spawn_parameters.rigidbody_params.width = 0.0
                             };
                         });
                         ui.columns(2, |ui| {
                             ui[0].label("Height");
                             ui[1].add(
                                 egui::DragValue::new(
-                                    &mut self.spawn_parameters.rigidbody_params.height,
+                                    &mut spawn_parameters.rigidbody_params.height,
                                 )
                                 .speed(0.01),
                             );
-                            if self.spawn_parameters.rigidbody_params.height < 0.0 {
-                                self.spawn_parameters.rigidbody_params.height = 0.0
+                            if spawn_parameters.rigidbody_params.height < 0.0 {
+                                spawn_parameters.rigidbody_params.height = 0.0
                             };
                         });
                     }
                     _ => {}
                 }
 
-                if self.spawn_parameters.body_type != BodyType::Spring {
+                if spawn_parameters.body_type != BodyType::Spring {
                     ui.columns(2, |ui| {
                         ui[0].label("Restitution/Bounciness");
                         ui[1].add(
                             egui::DragValue::new(
-                                &mut self.spawn_parameters.rigidbody_params.restitution,
+                                &mut spawn_parameters.rigidbody_params.restitution,
                             )
                             .speed(0.01),
                         )
@@ -330,13 +336,13 @@ impl World {
                         ui[0].label("Velocity");
                         ui[1].add(
                             egui::DragValue::new(
-                                &mut self.spawn_parameters.rigidbody_params.velocity.x,
+                                &mut spawn_parameters.rigidbody_params.velocity.x,
                             )
                             .speed(0.01),
                         );
                         ui[2].add(
                             egui::DragValue::new(
-                                &mut self.spawn_parameters.rigidbody_params.velocity.y,
+                                &mut spawn_parameters.rigidbody_params.velocity.y,
                             )
                             .speed(0.01),
                         );
@@ -345,7 +351,7 @@ impl World {
                         ui[0].label("Angular Velocity");
                         ui[1].add(
                             egui::DragValue::new(
-                                &mut self.spawn_parameters.rigidbody_params.angular_velocity,
+                                &mut spawn_parameters.rigidbody_params.angular_velocity,
                             )
                             .speed(0.01),
                         )
@@ -353,33 +359,33 @@ impl World {
                     ui.columns(2, |ui| {
                         ui[0].label("Mass");
                         ui[1].add(
-                            egui::DragValue::new(&mut self.spawn_parameters.rigidbody_params.mass)
+                            egui::DragValue::new(&mut spawn_parameters.rigidbody_params.mass)
                                 .speed(0.01),
                         );
-                        if self.spawn_parameters.rigidbody_params.mass <= 0.0 {
-                            self.spawn_parameters.rigidbody_params.mass = 0.0000000001
+                        if spawn_parameters.rigidbody_params.mass <= 0.0 {
+                            spawn_parameters.rigidbody_params.mass = 0.0000000001
                         };
                     });
                     ui.columns(2, |ui| {
                         ui[0].label("Rotation");
                         ui[1].add(
                             egui::DragValue::new(
-                                &mut self.spawn_parameters.rigidbody_params.rotation,
+                                &mut spawn_parameters.rigidbody_params.rotation,
                             )
                             .speed(0.01),
                         );
-                        if self.spawn_parameters.rigidbody_params.rotation > PI {
-                            self.spawn_parameters.rigidbody_params.rotation = PI
+                        if spawn_parameters.rigidbody_params.rotation > PI {
+                            spawn_parameters.rigidbody_params.rotation = PI
                         };
-                        if self.spawn_parameters.rigidbody_params.rotation < -PI {
-                            self.spawn_parameters.rigidbody_params.rotation = -PI
+                        if spawn_parameters.rigidbody_params.rotation < -PI {
+                            spawn_parameters.rigidbody_params.rotation = -PI
                         };
                     });
                     ui.columns(2, |ui| {
                         ui[0].label("Gravity Multiplier");
                         ui[1].add(
                             egui::DragValue::new(
-                                &mut self.spawn_parameters.rigidbody_params.gravity_multiplier,
+                                &mut spawn_parameters.rigidbody_params.gravity_multiplier,
                             )
                             .speed(0.01),
                         )
@@ -387,28 +393,28 @@ impl World {
                     ui.columns(2, |ui| {
                         ui[0].label("Collides");
                         ui[1].add(egui::Checkbox::new(
-                            &mut self.spawn_parameters.rigidbody_params.collides,
+                            &mut spawn_parameters.rigidbody_params.collides,
                             "Collides",
                         ));
                     });
-                    match self.spawn_parameters.rigidbody_params.color_type {
+                    match spawn_parameters.rigidbody_params.color_type {
                         ColorType::Random => {
-                            self.spawn_parameters.rigidbody_params.color = None;
+                            spawn_parameters.rigidbody_params.color = None;
                         }
                         ColorType::Set => {
-                            if self.spawn_parameters.rigidbody_params.color.is_none() {
-                                self.spawn_parameters.rigidbody_params.color =
-                                    Some(ColorRGBA::random_from_palette(&self.color_palette.clone().unwrap()));
+                            if spawn_parameters.rigidbody_params.color.is_none() {
+                                spawn_parameters.rigidbody_params.color =
+                                    Some(ColorRGBA::random_from_palette(&color_palette.clone().unwrap()));
                             }
                             let param_color =
-                                &mut self.spawn_parameters.rigidbody_params.color.unwrap();
+                                &mut spawn_parameters.rigidbody_params.color.unwrap();
                             let mut color: [f32; 3] = [param_color.r, param_color.g, param_color.b];
                             ui.columns(2, |ui| {
                                 ui[0].label("Color");
                                 ui[1].color_edit_button_rgb(&mut color);
                             });
 
-                            self.spawn_parameters.rigidbody_params.color =
+                            spawn_parameters.rigidbody_params.color =
                                 Some(ColorRGBA::new(color[0], color[1], color[2], 1.0));
                         }
                     }
@@ -417,43 +423,43 @@ impl World {
                         ui[0].label("Pull Strength/Stiffness");
                         ui[1].add(
                             egui::DragValue::new(
-                                &mut self.spawn_parameters.spring_params.stiffness,
+                                &mut spawn_parameters.spring_params.stiffness,
                             )
                                 .speed(0.01),
                         );
-                        if self.spawn_parameters.spring_params.stiffness < 0.0 {
-                            self.spawn_parameters.spring_params.stiffness = 0.0
+                        if spawn_parameters.spring_params.stiffness < 0.0 {
+                            spawn_parameters.spring_params.stiffness = 0.0
                         };
                     });
                     ui.columns(2, |ui| {
                         ui[0].label("Dampening");
                         ui[1].add(
                             egui::DragValue::new(
-                                &mut self.spawn_parameters.spring_params.dampening,
+                                &mut spawn_parameters.spring_params.dampening,
                             )
                                 .speed(0.01),
                         );
-                        if self.spawn_parameters.spring_params.dampening < 0.0 {
-                            self.spawn_parameters.spring_params.dampening = 0.0
+                        if spawn_parameters.spring_params.dampening < 0.0 {
+                            spawn_parameters.spring_params.dampening = 0.0
                         };
                     });
                     ui.columns(2, |ui| {
                         ui[0].label("Rest length");
                         ui[1].add(
                             egui::DragValue::new(
-                                &mut self.spawn_parameters.spring_params.rest_length,
+                                &mut spawn_parameters.spring_params.rest_length,
                             )
                                 .speed(0.01),
                         );
-                        if self.spawn_parameters.spring_params.rest_length < 0.0 {
-                            self.spawn_parameters.spring_params.rest_length = 0.0
+                        if spawn_parameters.spring_params.rest_length < 0.0 {
+                            spawn_parameters.spring_params.rest_length = 0.0
                         };
                     });
                 }
             });
     }
 
-    fn input_menu(&mut self) {
+    fn input_menu(&mut self, ui_system: &mut UiSystem) {
         egui::Window::new("Input Mode")
             .resizable(false)
             .vscroll(false)
@@ -464,29 +470,29 @@ impl World {
             .show(self.egui_renderer.context(), |ui| {
                 ui.heading("Input Mode Selector");
                 egui::ComboBox::from_label("Mode")
-                    .selected_text(format!("{:?}", self.input_mode))
+                    .selected_text(format!("{:?}", ui_system.input_mode))
                     .show_ui(ui, |ui| {
                         ui.selectable_value(
-                            &mut self.input_mode,
+                            &mut ui_system.input_mode,
                             InputMode::Spawn,
                             "Spawn/Despawn Bodies",
                         );
                         ui.selectable_value(
-                            &mut self.input_mode,
+                            &mut ui_system.input_mode,
                             InputMode::Select,
                             "Select/Deselect Bodies",
                         );
-                        ui.selectable_value(&mut self.input_mode, InputMode::Drag, "Drag Bodies");
+                        ui.selectable_value(&mut ui_system.input_mode, InputMode::Drag, "Drag Bodies");
                     });
             });
-        if self.input_mode == InputMode::Drag {
-            self.menus[Menu::DragParams as usize] = true;
+        if ui_system.input_mode == InputMode::Drag {
+            ui_system.menus[Menu::DragParams as usize] = true;
         }
     }
 
-    fn editor_menu(&mut self) {
-        if self.selected_polygon.is_some() {
-            let selected_polygon = &mut self.polygons[self.selected_polygon.unwrap()];
+    fn editor_menu(&mut self, physics_system: &mut PhysicsSystem, ui_system: &mut UiSystem) {
+        if ui_system.selected_polygon.is_some() {
+            let selected_polygon = &mut physics_system.polygons[ui_system.selected_polygon.unwrap()];
             egui::Window::new("Body Editor")
                 .resizable(false)
                 .vscroll(false)
@@ -543,7 +549,7 @@ impl World {
                         if old_mass != selected_polygon.mass {
                             selected_polygon.calculate_moment_of_inertia();
                         }
-                        if self.spawn_parameters.rigidbody_params.mass < 0.0 {
+                        if selected_polygon.mass < 0.0 {
                             selected_polygon.mass = 0.0
                         };
                     });
@@ -579,8 +585,8 @@ impl World {
                     });
                     selected_polygon.change_color(ColorRGBA::new(color[0], color[1], color[2], 1.0));
                 });
-        } else if self.selected_spring.is_some() {
-            let selected_spring = &mut self.springs[self.selected_spring.unwrap()];
+        } else if ui_system.selected_spring.is_some() {
+            let selected_spring = &mut physics_system.springs[ui_system.selected_spring.unwrap()];
             egui::Window::new("Spring Editor")
                 .resizable(false)
                 .vscroll(false)
@@ -640,7 +646,7 @@ impl World {
         }
     }
 
-    fn debug_menu(&mut self){
+    fn debug_menu(&mut self, physics_system: &mut PhysicsSystem, ui_system: &mut UiSystem) {
         egui::Window::new("Debug Menu")
             .resizable(false)
             .vscroll(false)
@@ -649,14 +655,14 @@ impl World {
             .title_bar(false)
             .show(self.egui_renderer.context(), |ui| {
                 ui.heading("Debug Menu");
-                ui.label(format!("Polygons: {}", self.polygons.len()));
-                if self.spawn_ghost_polygon.is_some(){
-                    ui.label(format!("Ghost polygon: {}", self.spawn_ghost_polygon.unwrap()));
+                ui.label(format!("Polygons: {}", physics_system.polygons.len()));
+                if ui_system.spawn_ghost_polygon.is_some(){
+                    ui.label(format!("Ghost polygon: {}", ui_system.spawn_ghost_polygon.unwrap()));
                 }
             });
     }
     
-    fn color_menu(&mut self) {
+    fn color_menu(&mut self, color_system: &mut ColorSystem) {
         egui::Window::new("Color Menu")
             .resizable(false)
             .vscroll(false)
@@ -668,61 +674,61 @@ impl World {
                 ui.columns(3, |ui| {
                     ui[0].label("Luminosity Start Range");
                     ui[1].add(
-                        egui::DragValue::new(&mut self.palette_params.start_range.x.start).speed(0.001),
+                        egui::DragValue::new(&mut color_system.palette_params.start_range.x.start).speed(0.001),
                     );
                     ui[2].add(
-                        egui::DragValue::new(&mut self.palette_params.start_range.x.end).speed(0.001),
+                        egui::DragValue::new(&mut color_system.palette_params.start_range.x.end).speed(0.001),
                     );
                 });
                 ui.columns(3, |ui| {
                     ui[0].label("Chromaticity Start Range");
                     ui[1].add(
-                        egui::DragValue::new(&mut self.palette_params.start_range.y.start).speed(0.001),
+                        egui::DragValue::new(&mut color_system.palette_params.start_range.y.start).speed(0.001),
                     );
                     ui[2].add(
-                        egui::DragValue::new(&mut self.palette_params.start_range.y.end).speed(0.001),
+                        egui::DragValue::new(&mut color_system.palette_params.start_range.y.end).speed(0.001),
                     );
                 });
                 ui.columns(3, |ui| {
                     ui[0].label("Hue Start Range");
                     ui[1].add(
-                        egui::DragValue::new(&mut self.palette_params.start_range.z.start).speed(0.001),
+                        egui::DragValue::new(&mut color_system.palette_params.start_range.z.start).speed(0.001),
                     );
                     ui[2].add(
-                        egui::DragValue::new(&mut self.palette_params.start_range.z.end).speed(0.001),
+                        egui::DragValue::new(&mut color_system.palette_params.start_range.z.end).speed(0.001),
                     );
                 });
                 ui.columns(3, |ui| {
                     ui[0].label("Luminosity End Range");
                     ui[1].add(
-                        egui::DragValue::new(&mut self.palette_params.end_range.x.start).speed(0.001),
+                        egui::DragValue::new(&mut color_system.palette_params.end_range.x.start).speed(0.001),
                     );
                     ui[2].add(
-                        egui::DragValue::new(&mut self.palette_params.end_range.x.end).speed(0.001),
+                        egui::DragValue::new(&mut color_system.palette_params.end_range.x.end).speed(0.001),
                     );
                 });
                 ui.columns(3, |ui| {
                     ui[0].label("Chromaticity End Range");
                     ui[1].add(
-                        egui::DragValue::new(&mut self.palette_params.end_range.y.start).speed(0.001),
+                        egui::DragValue::new(&mut color_system.palette_params.end_range.y.start).speed(0.001),
                     );
                     ui[2].add(
-                        egui::DragValue::new(&mut self.palette_params.end_range.y.end).speed(0.001),
+                        egui::DragValue::new(&mut color_system.palette_params.end_range.y.end).speed(0.001),
                     );
                 });
                 ui.columns(3, |ui| {
                     ui[0].label("Hue End Range");
                     ui[1].add(
-                        egui::DragValue::new(&mut self.palette_params.end_range.z.start).speed(0.001),
+                        egui::DragValue::new(&mut color_system.palette_params.end_range.z.start).speed(0.001),
                     );
                     ui[2].add(
-                        egui::DragValue::new(&mut self.palette_params.end_range.z.end).speed(0.001),
+                        egui::DragValue::new(&mut color_system.palette_params.end_range.z.end).speed(0.001),
                     );
                 });
                 ui.columns(2, |ui|{
                     ui[0].label("Color Count");
                     ui[1].add(
-                        egui::DragValue::new(&mut self.palette_params.color_count).speed(1),
+                        egui::DragValue::new(&mut color_system.palette_params.color_count).speed(1),
                     );
                 });
             });

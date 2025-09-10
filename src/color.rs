@@ -3,7 +3,7 @@ use std::ops::Range;
 use rand;
 use colors_transform::{Color, Hsl};
 use oklab::*;
-use crate::World;
+use crate::Rigidbody;
 
 #[repr(C)]
 #[derive(Clone, Copy, Debug, Default, bytemuck::Pod, bytemuck::Zeroable)]
@@ -157,50 +157,63 @@ pub struct ColorRange {
     pub z: Range<f32>,
 }
 
-
-pub fn create_palette(size: usize, start_range: ColorRange, end_range: ColorRange) -> Vec<ColorRGBA> {
-    let mut l = rand::random_range::<f32, Range<f32>, >(start_range.x);
-    let mut c = rand::random_range::<f32, Range<f32>, >(start_range.y);
-    let mut h = rand::random_range::<f32, Range<f32>, >(start_range.z);
-    let ln = rand::random_range::<f32, Range<f32>, >(end_range.x);
-    let cn = rand::random_range::<f32, Range<f32>, >(end_range.y);
-    let hn = rand::random_range::<f32, Range<f32>, >(end_range.z);
-    let ls = (ln - l) / (size as f32);
-    let cs = (cn - c) / (size as f32);
-    let hs = (hn - h) / (size as f32);
-    let mut palette = vec![];
-    for _i in 0..size {
-        if _i == 0 {
-            palette.push(oklch_to_rgb(OkLCH {l: l / 2.0 , c: c / 3.0, h}));
-        }
-        palette.push(oklch_to_rgb(OkLCH {l, c, h}));
-        l += ls;
-        c += cs;
-        h += hs;
-    }
-    palette
+pub struct PaletteParams {
+    pub start_range: ColorRange,
+    pub end_range: ColorRange,
+    pub color_count: usize,
 }
 
-impl World{
-    pub fn regenerate_colors(&mut self){
-        self.color_palette = Some(create_palette(64, self.palette_params.start_range.clone(), self.palette_params.end_range.clone()));
-        for polygon in &mut self.polygons{
+impl PaletteParams {
+    pub fn create_palette(&mut self) -> Vec<ColorRGBA> {
+        let mut l = rand::random_range::<f32, Range<f32>, >(self.start_range.x.clone());
+        let mut c = rand::random_range::<f32, Range<f32>, >(self.start_range.y.clone());
+        let mut h = rand::random_range::<f32, Range<f32>, >(self.start_range.z.clone());
+        let ln = rand::random_range::<f32, Range<f32>, >(self.end_range.x.clone());
+        let cn = rand::random_range::<f32, Range<f32>, >(self.end_range.y.clone());
+        let hn = rand::random_range::<f32, Range<f32>, >(self.end_range.z.clone());
+        let ls = (ln - l) / (self.color_count as f32);
+        let cs = (cn - c) / (self.color_count as f32);
+        let hs = (hn - h) / (self.color_count as f32);
+        let mut palette = vec![];
+        for _i in 0..self.color_count {
+            if _i == 0 {
+                palette.push(oklch_to_rgb(OkLCH {l: l / 2.0 , c: c / 3.0, h}));
+            }
+            palette.push(oklch_to_rgb(OkLCH {l, c, h}));
+            l += ls;
+            c += cs;
+            h += hs;
+        }
+        palette
+    }
+}
+
+pub struct ColorSystem {
+    pub palette_params: PaletteParams,
+    pub color_palette: Option<Vec<ColorRGBA>>,
+    pub clear_color: ColorRGBA,
+}
+
+impl ColorSystem{
+    pub fn regenerate_colors(&mut self, polygons: &mut Vec<Rigidbody>){
+        self.color_palette = Some(self.palette_params.create_palette());
+        for polygon in polygons{
             let rand = rand::random_range::<usize, Range<usize>, >(1..self.color_palette.as_ref().unwrap().len());
             polygon.color = self.color_palette.clone().unwrap()[rand];
         }
-        self.parameters.clear_color = self.color_palette.clone().unwrap()[0];
+        self.clear_color = self.color_palette.clone().unwrap()[0];
     }
 
-    pub fn view_random_palette(&mut self){
-        self.color_palette = Some(create_palette(self.palette_params.color_count, self.palette_params.start_range.clone(), self.palette_params.end_range.clone()));
+    pub fn view_random_palette(&mut self, polygons: &mut Vec<Rigidbody>){
+        self.color_palette = Some(self.palette_params.create_palette());
         let mut i = 1;
-        for polygon in &mut self.polygons{
+        for polygon in polygons{
             //let rand = rand::random_range::<usize, Range<usize>, >(1..self.color_palette.as_ref().unwrap().len());
             let rand = i % self.color_palette.as_ref().unwrap().len();
             polygon.color = self.color_palette.clone().unwrap()[rand];
             i += 1;
         }
-        self.parameters.clear_color = self.color_palette.clone().unwrap()[0];
+        self.clear_color = self.color_palette.clone().unwrap()[0];
     }
 }
 

@@ -2,8 +2,11 @@ use crate::spring::Spring;
 use crate::{ColorRGBA, Rigidbody, World};
 use egui_wgpu::wgpu;
 use std::iter;
+use std::sync::Arc;
 use glam::{Vec2, Vec4};
 use wgpu::util::DeviceExt;
+use winit::window::Window;
+use crate::egui_tools::EguiRenderer;
 
 #[repr(C)]
 #[derive(Copy, Clone, bytemuck::Pod, bytemuck::Zeroable)]
@@ -18,6 +21,24 @@ pub struct Uniforms {
 pub struct Vertex {
     pub(crate) pos: Vec2,
     pub(crate) color: ColorRGBA,
+}
+
+pub struct RenderSystem{
+    pub surface: wgpu::Surface<'static>,
+    pub device: wgpu::Device,
+    pub queue: wgpu::Queue,
+    pub egui_renderer: EguiRenderer,
+    pub(crate) config: wgpu::SurfaceConfiguration,
+    pub is_surface_configured: bool,
+    pub render_pipeline: wgpu::RenderPipeline,
+    pub vertex_buffer: wgpu::Buffer,
+    pub index_buffer: wgpu::Buffer,
+    pub uniforms_buffer: wgpu::Buffer,
+    pub uniforms_bind_group: wgpu::BindGroup,
+    pub num_indices: u32,
+    pub window: Arc<Window>,
+    pub vertices: Vec<Vertex>,
+    pub uniforms: Uniforms,
 }
 
 impl Vertex {
@@ -89,22 +110,24 @@ impl World {
     }
 
     pub(crate) fn render(&mut self) -> Result<(), wgpu::SurfaceError> {
-        let (vertices, indices) = &Self::get_vertices_and_indices(&self.polygons, &self.springs);
+        let (vertices, indices) = &Self::get_vertices_and_indices(&self.physics.polygons, &self.physics.springs);
+        self.ui.window_dimensions.x = self.render.config.width as f32;
+        self.ui.window_dimensions.y = self.render.config.height as f32;
 
-        self.window.request_redraw();
+        self.render.window.request_redraw();
 
         // We can't render unless the surface is configured
-        if !self.is_surface_configured {
+        if !self.render.is_surface_configured {
             return Ok(());
         }
 
-        let output = self.surface.get_current_texture()?;
+        let output = self.render.surface.get_current_texture()?;
         let view = output
             .texture
             .create_view(&wgpu::TextureViewDescriptor::default());
 
         let mut encoder = self
-            .device
+            .render.device
             .create_command_encoder(&wgpu::CommandEncoderDescriptor {
                 label: Some("Render Encoder"),
             });
@@ -130,50 +153,50 @@ impl World {
                 timestamp_writes: None,
             });
             // Always update uniforms
-            let size = self.window.inner_size();
-            self.uniforms.camera_pos = self.camera_pos;
-            self.uniforms.aspect_ratio = size.width as f32 / size.height as f32;
-            self.queue.write_buffer(
-                &self.uniforms_buffer,
+            let size = self.render.window.inner_size();
+            self.render.uniforms.camera_pos = self.ui.camera.camera_pos;
+            self.render.uniforms.aspect_ratio = size.width as f32 / size.height as f32;
+            self.render.queue.write_buffer(
+                &self.render.uniforms_buffer,
                 0,
-                bytemuck::cast_slice(&[self.uniforms]),
+                bytemuck::cast_slice(&[self.render.uniforms]),
             );
-            self.queue.submit(None);
+            self.render.queue.submit(None);
 
             // Only update and draw if there are vertices/indices
             if !vertices.is_empty() && !indices.is_empty() {
-                self.vertex_buffer.destroy();
-                self.index_buffer.destroy();
+                self.render.vertex_buffer.destroy();
+                self.render.index_buffer.destroy();
 
-                self.vertex_buffer =
-                    self.device
+                self.render.vertex_buffer =
+                    self.render.device
                         .create_buffer_init(&wgpu::util::BufferInitDescriptor {
                             label: Some("Vertex Buffer"),
                             contents: bytemuck::cast_slice(&vertices),
                             usage: wgpu::BufferUsages::VERTEX | wgpu::BufferUsages::COPY_DST,
                         });
 
-                self.index_buffer =
-                    self.device
+                self.render.index_buffer =
+                    self.render.device
                         .create_buffer_init(&wgpu::util::BufferInitDescriptor {
                             label: Some("Index Buffer"),
                             contents: bytemuck::cast_slice(&indices),
                             usage: wgpu::BufferUsages::INDEX | wgpu::BufferUsages::COPY_DST,
                         });
 
-                self.num_indices = indices.len() as u32;
-                render_pass.set_pipeline(&self.render_pipeline);
-                render_pass.set_bind_group(0, &self.uniforms_bind_group, &[]);
-                render_pass.set_vertex_buffer(0, self.vertex_buffer.slice(..));
+                self.render.num_indices = indices.len() as u32;
+                render_pass.set_pipeline(&self.render.render_pipeline);
+                render_pass.set_bind_group(0, &self.render.uniforms_bind_group, &[]);
+                render_pass.set_vertex_buffer(0, self.render.vertex_buffer.slice(..));
                 render_pass
-                    .set_index_buffer(self.index_buffer.slice(..), wgpu::IndexFormat::Uint32);
-                render_pass.draw_indexed(0..self.num_indices, 0, 0..1);
+                    .set_index_buffer(self.render.index_buffer.slice(..), wgpu::IndexFormat::Uint32);
+                render_pass.draw_indexed(0..self.render.num_indices, 0, 0..1);
             }
         }
 
-        self.create_gui(&mut encoder, &view);
+        self.render.create_gui(&mut self.ui, &mut self.physics, &mut self.color_system, &mut self.timing, &mut self.parameters, &mut encoder, &view);
 
-        self.queue.submit(iter::once(encoder.finish()));
+        self.render.queue.submit(iter::once(encoder.finish()));
         output.present();
         Ok(())
     }

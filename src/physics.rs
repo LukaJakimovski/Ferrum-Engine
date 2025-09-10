@@ -1,9 +1,15 @@
 use glam::Vec2;
 use crate::collision_detection::{find_contact_points, sat_collision};
-use crate::world::World;
-use crate::{Parameters, Rigidbody};
+use crate::{Parameters, Rigidbody, Spring};
 
-impl World {
+pub struct PhysicsSystem {
+    pub springs: Vec<Spring>,
+    pub polygons: Vec<Rigidbody>,
+    pub dt: f32,
+    pub total_energy: f64,
+}
+
+impl PhysicsSystem {
     pub fn separate_into_section(&mut self) -> Vec<Vec<u16>> {
         let mut x_min = f32::MAX;
         let mut x_max = f32::MIN;
@@ -28,18 +34,6 @@ impl World {
             }
         }
         rad_max *= 2.0;
-        if x_max > self.parameters.world_size {
-            x_max = self.parameters.world_size;
-        }
-        if y_max > self.parameters.world_size {
-            y_max = self.parameters.world_size;
-        }
-        if x_min < -self.parameters.world_size {
-            x_min = -self.parameters.world_size;
-        }
-        if y_min < -self.parameters.world_size {
-            y_min = -self.parameters.world_size;
-        }
 
         let mut x_sections: usize = ((x_max - x_min) / rad_max).ceil() as usize;
         if x_sections > 256 {
@@ -128,12 +122,12 @@ impl World {
                         let (left, right) = self.polygons.split_at_mut(section[j] as usize);
                         let a = &mut left[section[i] as usize];
                         let b = &mut right[0];
-                        Self::check_and_resolve(&self.parameters, a, b);
+                        Self::check_and_resolve(a, b);
                     } else if section[i] > section[j] {
                         let (left, right) = self.polygons.split_at_mut(section[i] as usize);
                         let a = &mut left[section[j] as usize];
                         let b = &mut right[0];
-                        Self::check_and_resolve(&self.parameters, a, b);
+                        Self::check_and_resolve(a, b);
                     }
                 }
             }
@@ -141,7 +135,6 @@ impl World {
     }
 
     pub fn check_and_resolve(
-        parameters: &Parameters,
         body1: &mut Rigidbody,
         body2: &mut Rigidbody,
     ) {
@@ -199,13 +192,8 @@ impl World {
             let angle_term1: f32;
             let angle_term2: f32;
 
-            if parameters.angular_velocity == true {
-                angle_term1 = (rn1 * rn1) * i1;
-                angle_term2 = (rn2 * rn2) * i2;
-            } else {
-                angle_term1 = 0.0;
-                angle_term2 = 0.0;
-            }
+            angle_term1 = (rn1 * rn1) * i1;
+            angle_term2 = (rn2 * rn2) * i2;
 
             let impulse_magnitude =
                 -(1.0 + restitution) * vel_along_normal / (m1 + m2 + angle_term1 + angle_term2);
@@ -213,28 +201,26 @@ impl World {
 
             body1.velocity = v1 - impulse_vector * m1;
             body2.velocity = v2 + impulse_vector * m2;
-            if parameters.angular_velocity == true {
-                body1.angular_velocity = body1.angular_velocity - r1.perp_dot(impulse_vector) * i1;
-                body2.angular_velocity = body2.angular_velocity + r2.perp_dot(impulse_vector) * i2;
-            }
+            body1.angular_velocity = body1.angular_velocity - r1.perp_dot(impulse_vector) * i1;
+            body2.angular_velocity = body2.angular_velocity + r2.perp_dot(impulse_vector) * i2;
         }
     }
 
-    pub fn update_physics(&mut self) {
+    pub fn update_physics(&mut self, parameters: &Parameters) {
         self.collision_resolution();
         let g: Vec2;
-        if self.parameters.gravity == true {
-            g = self.parameters.gravity_force;
+        if parameters.gravity == true {
+            g = parameters.gravity_force;
         } else {
             g = Vec2 { x: 0.0, y: 0.0 };
         }
 
         for polygon in &mut self.polygons {
-            polygon.update_rigidbody(g, self.delta_time as f32);
+            polygon.update_rigidbody(g, self.dt);
         }
 
         for spring in &mut self.springs {
-            spring.apply(self.delta_time as f32, &mut self.polygons);
+            spring.apply(self.dt, &mut self.polygons);
         }
     }
 }

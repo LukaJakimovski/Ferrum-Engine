@@ -14,6 +14,7 @@ pub mod spring;
 mod utility;
 mod world;
 mod world_init;
+mod timing;
 
 pub use crate::app::*;
 pub use crate::color::ColorRGBA;

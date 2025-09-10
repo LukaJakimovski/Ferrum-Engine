@@ -110,8 +110,8 @@ impl ApplicationHandler<World> for App {
     ) {
         let state = self.state.as_mut().unwrap();
         state
-            .egui_renderer
-            .handle_input(state.window.as_ref(), &event);
+            .render.egui_renderer
+            .handle_input(state.render.window.as_ref(), &event);
 
         let world = match &mut self.state {
             Some(canvas) => canvas,
@@ -126,7 +126,7 @@ impl ApplicationHandler<World> for App {
                 match world.render() {
                     Ok(_) => {}
                     Err(wgpu::SurfaceError::Lost | wgpu::SurfaceError::Outdated) => {
-                        let size = world.window.inner_size();
+                        let size = world.render.window.inner_size();
                         world.resize(size.width, size.height);
                     }
                     Err(e) => {
@@ -135,7 +135,7 @@ impl ApplicationHandler<World> for App {
                 }
             }
             WindowEvent::MouseInput { state, button, .. } => {
-                world.handle_mouse_input(state, button)
+                world.ui.handle_mouse_input(state, button, &mut world.physics, &mut world.color_system)
             }
             WindowEvent::KeyboardInput {
                 event:
@@ -145,9 +145,9 @@ impl ApplicationHandler<World> for App {
                         ..
                     },
                 ..
-            } => if  !world.is_pointer_used {world.handle_key(event_loop, code, key_state.is_pressed())},
-            WindowEvent::MouseWheel { delta, .. } => world.handle_scroll(delta),
-            WindowEvent::CursorMoved { position, .. } => world.handle_cursor_movement(position),
+            } => if  !world.ui.is_pointer_used {world.ui.handle_key(&mut world.physics, &mut world.color_system, &mut world.parameters, event_loop, code, key_state.is_pressed())},
+            WindowEvent::MouseWheel { delta, .. } => world.ui.handle_scroll(delta),
+            WindowEvent::CursorMoved { position, .. } => world.ui.handle_cursor_movement(position),
             _ => {}
         }
     }

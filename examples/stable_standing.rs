@@ -62,12 +62,16 @@ fn main() {
         delta_time: 0.00001,
         updates_per_frame: 25,
         angular_velocity: true,
-        camera_pos: Vec4::new(0.0, 2.5, 0.0, -3.0),
+        initial_camera: Camera {
+            camera_pos: Vec4::new(0.0, 2.5, 0.0, -3.0),
+            scaling_factor: 10.0,
+        },
         time_multiplier: 1.0,
         gravity: true,
         world_size: 300.0,
         gravity_force: Vec2::new(0.0, -9.81),
         clear_color: ColorRGBA::new(0.0, 0.0, 0.0, 1.0),
+        is_running: false,
     };
     run(polygons, vec![], parameters).unwrap();
 }

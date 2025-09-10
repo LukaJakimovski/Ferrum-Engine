@@ -5,25 +5,28 @@ use egui_wgpu::wgpu;
 use egui_wgpu::wgpu::util::DeviceExt;
 use glam::Vec2;
 use winit::window::Window;
-use crate::{PaletteParams, Parameters, Rigidbody, World};
+use crate::{ColorRGBA, Parameters, Rigidbody, World};
 use crate::body_builder::{BodyBuilder, RigidbodyParams, SpringParams};
-use crate::color::ColorRange;
+use crate::color::{ColorRange, ColorSystem, PaletteParams};
 use crate::egui_tools::EguiRenderer;
 use crate::enums::{BodyType, ColorType, DraggingState, InputMode, Menu};
-use crate::render::{Uniforms, Vertex};
+use crate::input::UiSystem;
+use crate::physics::PhysicsSystem;
+use crate::render::{RenderSystem, Uniforms, Vertex};
 use crate::spring::Spring;
+use crate::timing::Timing;
 
 impl World{
     pub(crate) async fn new(
         window: Arc<Window>,
         polygons: Vec<Rigidbody>,
         springs: Vec<Spring>,
-        parameters: Parameters,
+        mut parameters: Parameters,
     ) -> anyhow::Result<World> {
         let size = window.inner_size();
         let aspect_ratio = size.width as f32 / size.height as f32;
         let uniforms = Uniforms {
-            camera_pos: parameters.camera_pos,
+            camera_pos: parameters.initial_camera.camera_pos,
             aspect_ratio,
             padding: [0.0; 7],
         };
@@ -239,13 +242,15 @@ impl World{
             color_count: 32,
         };
         #[cfg(all(target_os = "windows", target_arch = "x86_64", target_env = "gnu"))]
-        let scaling_factor = 0.1;
+        let scale_divider = 100.0;
         #[cfg(not(all(target_os = "windows", target_arch = "x86_64", target_env = "gnu")))]
-        let scaling_factor = 10.0;
+        let scale_divider = 1.0;
+        parameters.initial_camera.scaling_factor /= scale_divider;
         let mut menus = [false; 16];
         menus[Menu::Input as usize] = true;
         menus[Menu::Config as usize] = true;
-        Ok(Self {
+
+        let render: RenderSystem = RenderSystem {
             surface,
             device,
             queue,
@@ -260,42 +265,61 @@ impl World{
             uniforms,
             uniforms_buffer,
             uniforms_bind_group,
-
-            scaling_factor,
-            mouse_pos: (0.0, 0.0),
-            springs,
-            polygons,
-            pressed_keys: [0; 64],
-            pressed_buttons: [0; 3],
+            egui_renderer,
+        };
+        let timing: Timing = Timing {
             start_time: 0.0,
-            delta_time: 0.0,
+            timer: 0.0,
             frame_count: 0,
             fps: 0.0,
-            is_running: false,
+        };
+        let physics: PhysicsSystem = PhysicsSystem{
+            springs,
+            polygons,
+            dt: 0.0,
             total_energy: 0.0,
-            parameters,
-            camera_pos: uniforms.camera_pos,
-            timer: 0.0,
-            egui_renderer,
+        };
+
+        let color_system: ColorSystem = ColorSystem {
+            palette_params,
+            color_palette: None,
+            clear_color: ColorRGBA { r: 0.0, g: 0.0, b: 0.0, a: 0.0 },
+        };
+
+        let ui: UiSystem = UiSystem {
+            pressed_keys: [0; 64],
+            pressed_buttons: [0; 3],
+            mouse_pos: Vec2::ZERO,
             is_pointer_used: false,
-            menus,
-            spawn_parameters,
-            input_mode: InputMode::Spawn,
             selected_polygon: None,
             selected_spring: None,
             spring_polygon: None,
             mouse_spring: None,
             spawn_ghost_polygon: None,
-            anchor_pos: Vec2::new(0.0, 0.0),
+            input_mode: InputMode::Spawn,
             dragging: DraggingState::NotDragging,
+            menus,
             drag_params: SpringParams {
                 stiffness: 10.0,
                 dampening: 1.0,
                 ..Default::default()
             },
-            palette_params,
-            color_palette: None,
+            spawn_parameters,
+            camera: parameters.initial_camera.clone(),
+            window_dimensions: Vec2::new(render.config.width as f32, render.config.height as f32),
+        };
 
+
+
+
+
+        Ok(Self {
+            render,
+            physics,
+            timing,
+            color_system,
+            ui,
+            parameters,
         })
     }
 }
