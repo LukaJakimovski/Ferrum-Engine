@@ -8,12 +8,15 @@ use winit::event::{KeyEvent, WindowEvent};
 use winit::event_loop::{ActiveEventLoop, EventLoop};
 use winit::keyboard::PhysicalKey;
 use winit::window::Window;
+use crate::weld_joint::WeldJoint;
+
 pub struct App {
     #[cfg(target_arch = "wasm32")]
     proxy: Option<winit::event_loop::EventLoopProxy<State>>,
     state: Option<World>,
     polygons: Vec<Rigidbody>,
     springs: Vec<Spring>,
+    weld_joints: Vec<WeldJoint>,
     parameters: Parameters,
 }
 
@@ -22,6 +25,7 @@ impl App {
         #[cfg(target_arch = "wasm32")] event_loop: &EventLoop<State>,
         polygons: Vec<Rigidbody>,
         springs: Vec<Spring>,
+        weld_joints: Vec<WeldJoint>,
         parameters: Parameters,
     ) -> Self {
         #[cfg(target_arch = "wasm32")]
@@ -32,6 +36,7 @@ impl App {
             proxy,
             polygons,
             springs,
+            weld_joints,
             parameters,
         }
     }
@@ -65,6 +70,7 @@ impl ApplicationHandler<World> for App {
                     window,
                     self.polygons.clone(),
                     self.springs.clone(),
+                    self.weld_joints.clone(),
                     self.parameters.clone(),
                 ))
                 .unwrap(),
@@ -156,6 +162,7 @@ impl ApplicationHandler<World> for App {
 pub fn run(
     rigidbodys: Vec<Rigidbody>,
     springs: Vec<Spring>,
+    weld_joints: Vec<WeldJoint>,
     parameters: Parameters,
 ) -> anyhow::Result<()> {
     #[cfg(not(target_arch = "wasm32"))]
@@ -171,6 +178,7 @@ pub fn run(
     let mut app = App::new(
         rigidbodys,
         springs,
+        weld_joints,
         parameters,
         #[cfg(target_arch = "wasm32")]
         &event_loop,

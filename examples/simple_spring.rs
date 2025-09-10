@@ -48,5 +48,5 @@ fn main() {
         clear_color: ColorRGBA::new(0.0, 0.0, 0.0, 1.0),
         is_running: true,
     };
-    run(rigidbodies, springs, parameters).unwrap();
+    run(rigidbodies, springs, vec![], parameters).unwrap();
 }

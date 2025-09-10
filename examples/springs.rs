@@ -98,5 +98,5 @@ fn main() {
         clear_color: ColorRGBA::new(0.0, 0.0, 0.0, 1.0),
         is_running: false,
     };
-    run(polygons, springs, parameters).unwrap();
+    run(polygons, springs, vec![], parameters).unwrap();
 }

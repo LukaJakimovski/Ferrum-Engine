@@ -1,4 +1,4 @@
-use glam::Vec2;
+use glam::{Mat2, Vec2};
 use crate::color::ColorRGBA;
 use crate::ode_solver::{rk4_angular_step, rk4_step};
 #[derive(Clone, Default, Debug)]
@@ -176,6 +176,10 @@ impl Rigidbody {
         polygon
     }
 
+    pub fn rotation_matrix(&self) -> Mat2 {
+        let (s, c) = self.angle.sin_cos();
+        Mat2::from_cols(Vec2::new(c, s), Vec2::new(-s, c))
+    }
     pub fn calculate_properties(&mut self) {
         self.calculate_area();
         self.calculate_center_of_mass();

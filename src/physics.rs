@@ -1,12 +1,15 @@
 use glam::Vec2;
 use crate::collision_detection::{find_contact_points, sat_collision};
 use crate::{Parameters, Rigidbody, Spring};
+use crate::weld_joint::WeldJoint;
 
 pub struct PhysicsSystem {
     pub springs: Vec<Spring>,
     pub polygons: Vec<Rigidbody>,
+    pub(crate) weld_joints: Vec<WeldJoint>,
     pub dt: f32,
     pub total_energy: f64,
+
 }
 
 impl PhysicsSystem {
@@ -215,12 +218,22 @@ impl PhysicsSystem {
             g = Vec2 { x: 0.0, y: 0.0 };
         }
 
+        for spring in &mut self.springs {
+            spring.apply(self.dt, &mut self.polygons);
+        }
+
+        for weld_joint in &mut self.weld_joints {
+            for _ in 0..500 {
+                weld_joint.solve_velocity_constraints(&mut self.polygons, self.dt);
+            }
+        }
+
         for polygon in &mut self.polygons {
             polygon.update_rigidbody(g, self.dt);
         }
 
-        for spring in &mut self.springs {
-            spring.apply(self.dt, &mut self.polygons);
+        for weld_joint in &mut self.weld_joints {
+            weld_joint.positional_correction(&mut self.polygons);
         }
     }
 }

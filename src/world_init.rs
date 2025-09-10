@@ -15,12 +15,14 @@ use crate::physics::PhysicsSystem;
 use crate::render::{RenderSystem, Uniforms, Vertex};
 use crate::spring::Spring;
 use crate::timing::Timing;
+use crate::weld_joint::WeldJoint;
 
 impl World{
     pub(crate) async fn new(
         window: Arc<Window>,
         polygons: Vec<Rigidbody>,
         springs: Vec<Spring>,
+        weld_joints: Vec<WeldJoint>,
         mut parameters: Parameters,
     ) -> anyhow::Result<World> {
         let size = window.inner_size();
@@ -276,6 +278,7 @@ impl World{
         let physics: PhysicsSystem = PhysicsSystem{
             springs,
             polygons,
+            weld_joints,
             dt: 0.0,
             total_energy: 0.0,
         };

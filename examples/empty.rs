@@ -12,9 +12,9 @@ fn main(){
         time_multiplier: 1.0,
         gravity: false,
         world_size: 300.0,
-        gravity_force: Vec2::new(0.0, 0.0),
+        gravity_force: Vec2::new(0.0, -9.81),
         clear_color: ColorRGBA::new(0.0, 0.0, 0.0, 1.0),
         is_running: false,
     };
-    run(vec![], vec![], parameters).unwrap();
+    run(vec![], vec![], vec![], parameters).unwrap();
 }

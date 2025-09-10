@@ -15,11 +15,13 @@ mod utility;
 mod world;
 mod world_init;
 mod timing;
+mod weld_joint;
 
 pub use crate::app::*;
 pub use crate::color::ColorRGBA;
 pub use crate::rigidbody::*;
 pub use crate::spring::*;
 pub use crate::world::*;
+pub use crate::weld_joint::WeldJoint;
 pub use glam::{Vec2, Vec4};
 
