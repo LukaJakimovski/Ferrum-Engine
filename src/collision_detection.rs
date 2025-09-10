@@ -158,14 +158,8 @@ fn clip(v1: Vec2, v2: Vec2, normal: Vec2, offset: f32) -> Vec<Vec2> {
 
     if d1 * d2 < 0.0 {
         let mut e = v2 - v1;
-        
-        let u;
-        if d1 - d2 == 0.0 {
-            u = 0.0;
-        }
-        else {
-            u = d1 / (d1 - d2);
-        }
+
+        let u = d1 / (d1 - d2);
         e = e * u;
         e = e + v1;
         clipped.push(e);
