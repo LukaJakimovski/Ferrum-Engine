@@ -134,10 +134,8 @@ impl WeldJoint {
             a.translate(-corr * inv_ma);
                 b.translate(corr * inv_mb);
         }
-
-        a.angle -= k_ang * c_ang * (inv_ia / (inv_ia + inv_ib));
+        
         a.rotate(-k_ang * c_ang * (inv_ia / (inv_ia + inv_ib)));
-        b.angle += k_ang * c_ang * (inv_ib / (inv_ia + inv_ib));
         b.rotate(k_ang * c_ang * (inv_ib / (inv_ia + inv_ib)));
     }
 }

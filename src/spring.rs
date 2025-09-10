@@ -90,7 +90,12 @@ impl Spring {
 
         let delta = world_anchor_b - world_anchor_a;
         let distance = world_anchor_a.distance(world_anchor_b);
-        let direction = delta / distance;
+        let direction;
+        if distance == 0.0 {
+            direction = Vec2::new(rand::random::<f32>(), rand::random::<f32>()).normalize();
+        } else {
+            direction = delta / distance;
+        }
         let stretch = distance - self.rest_length;
 
         let vel_a = a.velocity + a.angular_velocity * (world_anchor_a - a.center).perp();

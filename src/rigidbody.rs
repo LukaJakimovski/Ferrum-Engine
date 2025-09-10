@@ -70,6 +70,7 @@ impl Rigidbody {
             eternal: false,
         };
         polygon.calculate_properties();
+        polygon.center = pos;
         polygon
     }
 
@@ -218,28 +219,56 @@ impl Rigidbody {
             self.center = Vec2::ZERO;
             return;
         }
+        if n == 1 {
+            self.center = self.vertices[0];
+            return;
+        }
+        if n == 2 {
+            // midpoint for a line segment
+            self.center = (self.vertices[0] + self.vertices[1]) * 0.5;
+            return;
+        }
 
-        let mut sum_cx = 0.0;
-        let mut sum_cy = 0.0;
+        let mut sum_cross: f32 = 0.0;
+        let mut sum_cx: f32 = 0.0;
+        let mut sum_cy: f32 = 0.0;
 
         for i in 0..n {
-            let iv: &Vec2 = &self.vertices[i];
-            let jv: &Vec2 = &self.vertices[(i + 1) % n];
-
-            let cross = iv.perp_dot(*jv);
-
+            let iv = self.vertices[i];
+            let jv = self.vertices[(i + 1) % n];
+            // explicit 2D cross product (scalar)
+            let cross = iv.x * jv.y - iv.y * jv.x;
+            sum_cross += cross;
             sum_cx += (iv.x + jv.x) * cross;
             sum_cy += (iv.y + jv.y) * cross;
         }
 
-        if self.area == 0.0 {
-            self.center = self.vertices[0].clone();
+        // signed area = 0.5 * sum_cross
+        let signed_area = 0.5 * sum_cross;
+
+        // handle degenerate / nearly-zero area (colinear or numeric degenerate)
+        if sum_cross.abs() < f32::EPSILON {
+            // fallback: use average of vertices (or you could pick bounding midpoint)
+            let mut avg = Vec2::ZERO;
+            for &v in &self.vertices {
+                avg += v;
+            }
+            self.center = avg / (n as f32);
+            // keep area as 0.0
+            self.area = 0.0;
             return;
         }
-        let centroid_x = sum_cx / (6.0 * self.area);
-        let centroid_y = sum_cy / (6.0 * self.area);
+
+        // centroid formula — note we use the signed sum_cross directly:
+        // C = (1 / (6*A)) * sum((xi + xi+1) * cross)  where A = 0.5 * sum_cross
+        // so 6*A = 3 * sum_cross -> centroid = sum_cx / (3 * sum_cross)
+        let centroid_x = sum_cx / (3.0 * sum_cross);
+        let centroid_y = sum_cy / (3.0 * sum_cross);
+
         self.center = Vec2::new(centroid_x, centroid_y);
+        self.area = signed_area; // update stored area (signed); if you want positive area, store signed_area.abs()
     }
+
 
     pub fn calculate_moment_of_inertia(&mut self) {
         let n = self.vertices.len();

@@ -60,10 +60,12 @@ pub fn sat_collision(shape1: &Rigidbody, shape2: &Rigidbody) -> [Vec2; 2] {
     }
     // Treat shapes with more than 31 vertices as circles
     if shape1.vertices.len() >= 32 && shape2.vertices.len() >= 32 {
-        let delta = shape2.center - shape1.center;
+        let mut delta = shape2.center - shape1.center;
         let dist = delta.length();
         let overlap = shape1.radius + shape2.radius - dist; // Total overlap amount
-
+        if delta == Vec2::ZERO {
+            delta = Vec2::new(rand::random::<f32>(), rand::random::<f32>());
+        }
         return [delta.normalize(), Vec2 { x: overlap, y: 1.0 }];
     }
 
@@ -156,11 +158,16 @@ fn clip(v1: Vec2, v2: Vec2, normal: Vec2, offset: f32) -> Vec<Vec2> {
 
     if d1 * d2 < 0.0 {
         let mut e = v2 - v1;
-
-        let u = d1 / (d1 - d2);
+        
+        let u;
+        if d1 - d2 == 0.0 {
+            u = 0.0;
+        }
+        else {
+            u = d1 / (d1 - d2);
+        }
         e = e * u;
         e = e + v1;
-
         clipped.push(e);
     }
     clipped
