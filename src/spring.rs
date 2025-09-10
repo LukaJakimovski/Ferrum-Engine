@@ -179,7 +179,6 @@ impl Spring {
             1.0,
             ColorRGBA::white(),
         );
-        println!("{}", -direction + PI / 2.0);
         self.connector.rotate(direction + PI / 2.0);
     }
 

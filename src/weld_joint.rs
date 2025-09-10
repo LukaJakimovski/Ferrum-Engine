@@ -131,11 +131,13 @@ impl WeldJoint {
         let inv_m_total = inv_ma + inv_mb;
         if inv_m_total > 0.0 {
             let corr = (k_pos / inv_m_total) * c_pos;
-            a.center -= corr * inv_ma;
-            b.center += corr * inv_mb;
+            a.translate(-corr * inv_ma);
+                b.translate(corr * inv_mb);
         }
 
         a.angle -= k_ang * c_ang * (inv_ia / (inv_ia + inv_ib));
+        a.rotate(-k_ang * c_ang * (inv_ia / (inv_ia + inv_ib)));
         b.angle += k_ang * c_ang * (inv_ib / (inv_ia + inv_ib));
+        b.rotate(k_ang * c_ang * (inv_ib / (inv_ia + inv_ib)));
     }
 }
