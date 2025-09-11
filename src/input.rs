@@ -108,27 +108,39 @@ impl UiSystem {
                 if _pressed && self.pressed_keys[Keys::Num1 as usize] == 0 {
                     self.pressed_keys[Keys::Num1 as usize] = 1;
                     self.input_mode = InputMode::Spawn;
+                    self.menus[Menu::Spawner as usize] = true;
+                    self.menus[Menu::Editor as usize] = false;
                 } else if _pressed && self.pressed_keys[Keys::Num1 as usize] == 1 {
                     self.pressed_keys[Keys::Num1 as usize] = 0;
                     self.input_mode = InputMode::Spawn;
+                    self.menus[Menu::Spawner as usize] = true;
+                    self.menus[Menu::Editor as usize] = false;
                 }
             }
             winit::keyboard::KeyCode::Digit2 => {
                 if _pressed && self.pressed_keys[Keys::Num2 as usize] == 0 {
                     self.pressed_keys[Keys::Num2 as usize] = 1;
                     self.input_mode = InputMode::Select;
+                    self.menus[Menu::Editor as usize] = true;
+                    self.menus[Menu::Spawner as usize] = false;
                 } else if _pressed && self.pressed_keys[Keys::Num2 as usize] == 1 {
                     self.pressed_keys[Keys::Num2 as usize] = 0;
                     self.input_mode = InputMode::Select;
+                    self.menus[Menu::Editor as usize] = true;
+                    self.menus[Menu::Spawner as usize] = false;
                 }
             }
             winit::keyboard::KeyCode::Digit3 => {
                 if _pressed && self.pressed_keys[Keys::Num3 as usize] == 0 {
                     self.pressed_keys[Keys::Num3 as usize] = 1;
                     self.input_mode = InputMode::Drag;
+                    self.menus[Menu::Editor as usize] = false;
+                    self.menus[Menu::Spawner as usize] = false;
                 } else if _pressed && self.pressed_keys[Keys::Num3 as usize] == 1 {
                     self.pressed_keys[Keys::Num3 as usize] = 0;
                     self.input_mode = InputMode::Drag;
+                    self.menus[Menu::Editor as usize] = false;
+                    self.menus[Menu::Spawner as usize] = false;
                 }
             }
             winit::keyboard::KeyCode::KeyC => {

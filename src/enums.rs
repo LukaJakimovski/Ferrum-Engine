@@ -58,6 +58,7 @@ pub enum Mouse {
 }
 
 #[repr(usize)]
+#[derive(Debug, Copy, Clone)]
 pub enum Menu {
     Config = 0,
     FPS = 1,
@@ -86,7 +87,7 @@ pub enum ColorType {
     Set = 1,
 }
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Clone, Copy)]
 pub enum InputMode {
     Spawn = 0,
     Select = 1,

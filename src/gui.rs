@@ -3,6 +3,7 @@ use crate::{Camera, ColorRGBA, Parameters};
 use egui::{Align2};
 use egui_wgpu::{ScreenDescriptor, wgpu};
 use std::f32::consts::PI;
+use std::thread::current;
 use crate::body_builder::BodyBuilder;
 use crate::color::ColorSystem;
 use crate::input::UiSystem;
@@ -26,15 +27,15 @@ impl RenderSystem {
             .show(self.egui_renderer.context(), |ui| {
                 ui.heading("Menu Selector");
                 ui.checkbox(&mut ui_system.menus[Menu::Config as usize], "World Config");
-                ui.checkbox(&mut ui_system.menus[Menu::Energy as usize], "Kinetic Energy Info", );
-                ui.checkbox(&mut ui_system.menus[Menu::FPS as usize], "Show FPS");
+                ui.checkbox(&mut ui_system.menus[Menu::Input as usize], "Change Input Mode");
                 ui.checkbox(&mut ui_system.menus[Menu::Camera as usize], "Camera Position");
                 ui.checkbox(&mut ui_system.menus[Menu::Spawner as usize], "Spawned Body Properties", );
-                ui.checkbox(&mut ui_system.menus[Menu::Input as usize], "Change Input Mode");
                 ui.checkbox(&mut ui_system.menus[Menu::Editor as usize], "Edit Selected Polygon", );
-                ui.checkbox(&mut ui_system.menus[Menu::Advanced as usize], "Advanced Settings");
-                ui.checkbox(&mut ui_system.menus[Menu::Debug as usize], "Debug Menu");
+                ui.checkbox(&mut ui_system.menus[Menu::Energy as usize], "Kinetic Energy Info", );
+                ui.checkbox(&mut ui_system.menus[Menu::FPS as usize], "Show FPS");
                 ui.checkbox(&mut ui_system.menus[Menu::Color as usize], "Color Menu");
+                ui.checkbox(&mut ui_system.menus[Menu::Debug as usize], "Debug Menu");
+                ui.checkbox(&mut ui_system.menus[Menu::Advanced as usize], "Advanced Settings");
             });
 
         if ui_system.menus[Menu::Config as usize] {
@@ -210,6 +211,7 @@ impl RenderSystem {
             .vscroll(false)
             .default_open(true)
             .default_height(275.0)
+            .anchor(Align2::LEFT_CENTER, [0.0, 0.0])
             .title_bar(false)
             .show(self.egui_renderer.context(), |ui| {
                 ui.heading("Spawner");
@@ -468,6 +470,7 @@ impl RenderSystem {
             .anchor(Align2::RIGHT_TOP, [0.0, 0.0])
             .title_bar(false)
             .show(self.egui_renderer.context(), |ui| {
+                let current_mode = ui_system.input_mode;
                 ui.heading("Input Mode Selector");
                 egui::ComboBox::from_label("Mode")
                     .selected_text(format!("{:?}", ui_system.input_mode))
@@ -484,6 +487,18 @@ impl RenderSystem {
                         );
                         ui.selectable_value(&mut ui_system.input_mode, InputMode::Drag, "Drag Bodies");
                     });
+                if ui_system.input_mode != current_mode {
+                    if ui_system.input_mode == InputMode::Spawn {
+                        ui_system.menus[Menu::Spawner as usize] = true;
+                        ui_system.menus[Menu::Editor as usize] = false;
+                    } else if ui_system.input_mode == InputMode::Select {
+                        ui_system.menus[Menu::Spawner as usize] = false;
+                        ui_system.menus[Menu::Editor as usize] = true;
+                    } else if ui_system.input_mode == InputMode::Spawn {
+                        ui_system.menus[Menu::Spawner as usize] = false;
+                        ui_system.menus[Menu::Editor as usize] = false;
+                    }
+                }
             });
         if ui_system.input_mode == InputMode::Drag {
             ui_system.menus[Menu::DragParams as usize] = true;
@@ -498,6 +513,7 @@ impl RenderSystem {
                 .vscroll(false)
                 .default_open(true)
                 .default_height(275.0)
+                .anchor(Align2::LEFT_CENTER, [0.0, 0.0])
                 .title_bar(false)
                 .show(self.egui_renderer.context(), |ui| {
                     ui.heading("Rigidbody Editor");
@@ -591,6 +607,7 @@ impl RenderSystem {
                 .resizable(false)
                 .vscroll(false)
                 .default_open(true)
+                .anchor(Align2::LEFT_CENTER, [0.0, 0.0])
                 .default_height(275.0)
                 .title_bar(false)
                 .show(self.egui_renderer.context(), |ui| {
@@ -633,15 +650,17 @@ impl RenderSystem {
                     });
                 });
         } else {
-            egui::Window::new("Rigidbody Editor")
+            egui::Window::new("Physics Body Editor")
                 .resizable(false)
                 .vscroll(false)
                 .default_open(true)
+                .anchor(Align2::LEFT_CENTER, [0.0, 0.0])
                 .default_height(275.0)
                 .title_bar(false)
                 .show(self.egui_renderer.context(), |ui| {
-                    ui.heading("Rigidbody Editor");
-                    ui.label("No Rigidbody Selected");
+                    ui.heading("Physics Body Editor");
+                    ui.label("No Body Selected");
+                    ui.label("Try left clicking one");
                 });
         }
     }
