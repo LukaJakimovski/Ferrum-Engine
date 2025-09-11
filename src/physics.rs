@@ -223,17 +223,13 @@ impl PhysicsSystem {
         }
 
         for weld_joint in &mut self.weld_joints {
-            for _ in 0..500 {
+            for _ in 0..50 {
                 weld_joint.solve_velocity_constraints(&mut self.polygons, self.dt);
             }
         }
 
         for polygon in &mut self.polygons {
             polygon.update_rigidbody(g, self.dt);
-        }
-
-        for weld_joint in &mut self.weld_joints {
-            weld_joint.positional_correction(&mut self.polygons);
         }
     }
 }

@@ -1,4 +1,4 @@
-use glam::{Vec2, Mat2};
+use glam::{Vec2, Vec3, Mat3};
 use crate::Rigidbody;
 
 #[derive(Clone)]
@@ -10,7 +10,6 @@ pub struct WeldJoint {
     reference_angle: f32,
 
     pub beta: f32,
-    pub solver_iters: usize,
 }
 
 impl WeldJoint {
@@ -24,8 +23,7 @@ impl WeldJoint {
             local_anchor_a,
             local_anchor_b,
             reference_angle,
-            beta: 0.2,
-            solver_iters: 10,
+            beta: 0.05,
         }
     }
 
@@ -50,92 +48,76 @@ impl WeldJoint {
         let inv_ia = 1.0 / a.moment_of_inertia;
         let inv_ib = 1.0 / b.moment_of_inertia;
 
-        // constraint errors
+        // Jacobian builds constraints:
+        // Cdot = J * v
+        // v = [va, wa, vb, wb]
+        //
+        // We collapse this into a 3x3 effective mass matrix.
+
+        // relative velocity at anchors
+        let va_anchor = a.velocity + Vec2::new(-a.angular_velocity * ra.y, a.angular_velocity * ra.x);
+        let vb_anchor = b.velocity + Vec2::new(-b.angular_velocity * rb.y, b.angular_velocity * rb.x);
+        let v_rel = vb_anchor - va_anchor;
+        let w_rel = b.angular_velocity - a.angular_velocity;
+
+        // Bias term (Baumgarte)
         let pa = a.center + ra;
         let pb = b.center + rb;
-        let c_pos = pb - pa;
+        let pos_err = pb - pa;
+        let ang_err = (b.angle - a.angle) - self.reference_angle;
 
-        let c_ang = (b.angle - a.angle) - self.reference_angle;
+        let bias_lin = (self.beta / dt) * pos_err;
+        let bias_ang = (self.beta / dt) * ang_err;
 
-        // Baumgarte stabilization
-        let bias_pos = (self.beta / dt) * c_pos;
-        let bias_ang = (self.beta / dt) * c_ang;
+        // Effective mass matrix (3x3)
+        // [ M11  M12  M13 ]
+        // [ M21  M22  M23 ]
+        // [ M31  M32  M33 ]
 
-        for _ in 0..self.solver_iters {
-            // ---- linear 2D constraint (2x2) ----
-            let va_anchor = a.velocity + Vec2::new(-a.angular_velocity * ra.y, a.angular_velocity * ra.x);
-            let vb_anchor = b.velocity + Vec2::new(-b.angular_velocity * rb.y, b.angular_velocity * rb.x);
-            let v_rel = vb_anchor - va_anchor;
+        // Row/col ordering: [linear.x, linear.y, angular]
 
-            // effective mass matrix for linear constraint
-            let mut k = Mat2::from_diagonal(Vec2::splat(inv_ma + inv_mb));
+        // Start with zeros
+        let mut k = Mat3::ZERO;
 
-            // add rotational terms: r x invI x r^T
-            // In 2D, torque response is scalar, so add scalar terms
-            let ra_skew = Mat2::from_cols(Vec2::new(0.0, -ra.x), Vec2::new(ra.y, 0.0));
-            let rb_skew = Mat2::from_cols(Vec2::new(0.0, -rb.x), Vec2::new(rb.y, 0.0));
+        // Linear terms
+        k.x_axis.x = inv_ma + inv_mb;
+        k.y_axis.y = inv_ma + inv_mb;
 
-            k += ra_skew * ra_skew.transpose() * inv_ia;
-            k += rb_skew * rb_skew.transpose() * inv_ib;
+        // Rotational contributions from anchors
+        // In 2D, r x f = perp_dot(r, f)
+        k.x_axis.x += inv_ia * ra.y * ra.y + inv_ib * rb.y * rb.y;
+        k.x_axis.y += -inv_ia * ra.x * ra.y - inv_ib * rb.x * rb.y;
+        k.y_axis.x = k.x_axis.y;
+        k.y_axis.y += inv_ia * ra.x * ra.x + inv_ib * rb.x * rb.x;
 
-            let rhs = -(v_rel + bias_pos);
-            let lambda_lin = k.inverse() * rhs;
+        // Cross terms with angular constraint
+        k.z_axis.x = -inv_ia * ra.y - inv_ib * rb.y;
+        k.z_axis.y = inv_ia * ra.x + inv_ib * rb.x;
+        k.x_axis.z = k.z_axis.x;
+        k.y_axis.z = k.z_axis.y;
 
-            // apply impulses
-            a.velocity -= lambda_lin * inv_ma;
-            a.angular_velocity -= inv_ia * ra.perp_dot(lambda_lin);
-            b.velocity += lambda_lin * inv_mb;
-            b.angular_velocity += inv_ib * rb.perp_dot(lambda_lin);
+        // Angular constraint diagonal
+        k.z_axis.z = inv_ia + inv_ib;
 
-            // ---- angular 1D constraint ----
-            let w_rel = b.angular_velocity - a.angular_velocity;
-            let k_ang = inv_ia + inv_ib;
-            if k_ang > 0.0 {
-                let lambda_ang = -(w_rel + bias_ang) / k_ang;
-                a.angular_velocity -= inv_ia * lambda_ang;
-                b.angular_velocity += inv_ib * lambda_ang;
-            }
-        }
-    }
+        // Now invert K
+        let k_inv = k.inverse();
 
-    /// Optional position projection
-    pub fn positional_correction(&self, rigidbodys: &mut Vec<Rigidbody>) {
-        let a;
-        let b;
-        if self.body_a > self.body_b {
-            let (left, right) = rigidbodys.split_at_mut(self.body_a);
-            a = &mut left[self.body_b];
-            b = &mut right[0];
-        } else {
-            let (left, right) = rigidbodys.split_at_mut(self.body_b);
-            a = &mut left[self.body_a];
-            b = &mut right[0];
-        }
+        // Build constraint velocity error vector
+        let c_dot = Vec3::new(v_rel.x + bias_lin.x,
+                              v_rel.y + bias_lin.y,
+                              w_rel + bias_ang);
 
-        let ra = a.rotation_matrix() * self.local_anchor_a;
-        let rb = b.rotation_matrix() * self.local_anchor_b;
+        // Solve for impulses
+        let lambda = -k_inv * c_dot;
 
-        let pa = a.center + ra;
-        let pb = b.center + rb;
-        let c_pos = pb - pa;
-        let c_ang = (b.angle - a.angle) - self.reference_angle;
+        // Apply impulses
+        let lin_impulse = Vec2::new(lambda.x, lambda.y);
+        let ang_impulse = lambda.z;
 
-        let k_pos = 0.2;
-        let k_ang = 0.2;
+        a.velocity -= lin_impulse * inv_ma;
+        a.angular_velocity -= inv_ia * (ra.perp_dot(lin_impulse) + ang_impulse);
 
-        let inv_ma = 1.0 / a.mass;
-        let inv_mb = 1.0 / b.mass;
-        let inv_ia = 1.0 / a.moment_of_inertia;
-        let inv_ib = 1.0 / b.moment_of_inertia;
-
-        let inv_m_total = inv_ma + inv_mb;
-        if inv_m_total > 0.0 {
-            let corr = (k_pos / inv_m_total) * c_pos;
-            a.translate(-corr * inv_ma);
-                b.translate(corr * inv_mb);
-        }
-        
-        a.rotate(-k_ang * c_ang * (inv_ia / (inv_ia + inv_ib)));
-        b.rotate(k_ang * c_ang * (inv_ib / (inv_ia + inv_ib)));
+        b.velocity += lin_impulse * inv_mb;
+        b.angular_velocity += inv_ib * (rb.perp_dot(lin_impulse) + ang_impulse);
     }
 }

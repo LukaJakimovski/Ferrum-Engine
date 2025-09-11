@@ -16,6 +16,7 @@ mod world;
 mod world_init;
 mod timing;
 mod weld_joint;
+mod pivot_joint;
 
 pub use crate::app::*;
 pub use crate::color::ColorRGBA;
