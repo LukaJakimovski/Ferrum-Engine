@@ -54,5 +54,5 @@ fn main() {
 
 
 
-    run(polygons, vec![], weld_joints, parameters).unwrap();
+    run(polygons, vec![], weld_joints, vec![], parameters).unwrap();
 }

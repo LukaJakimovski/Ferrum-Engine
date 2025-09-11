@@ -8,6 +8,7 @@ use winit::event::{KeyEvent, WindowEvent};
 use winit::event_loop::{ActiveEventLoop, EventLoop};
 use winit::keyboard::PhysicalKey;
 use winit::window::Window;
+use crate::pivot_joint::PivotJoint;
 use crate::weld_joint::WeldJoint;
 
 pub struct App {
@@ -17,7 +18,9 @@ pub struct App {
     polygons: Vec<Rigidbody>,
     springs: Vec<Spring>,
     weld_joints: Vec<WeldJoint>,
+    pivot_joints: Vec<PivotJoint>,
     parameters: Parameters,
+
 }
 
 impl App {
@@ -26,6 +29,7 @@ impl App {
         polygons: Vec<Rigidbody>,
         springs: Vec<Spring>,
         weld_joints: Vec<WeldJoint>,
+        pivot_joints: Vec<PivotJoint>,
         parameters: Parameters,
     ) -> Self {
         #[cfg(target_arch = "wasm32")]
@@ -37,6 +41,7 @@ impl App {
             polygons,
             springs,
             weld_joints,
+            pivot_joints,
             parameters,
         }
     }
@@ -71,6 +76,7 @@ impl ApplicationHandler<World> for App {
                     self.polygons.clone(),
                     self.springs.clone(),
                     self.weld_joints.clone(),
+                    self.pivot_joints.clone(),
                     self.parameters.clone(),
                 ))
                 .unwrap(),
@@ -163,6 +169,7 @@ pub fn run(
     rigidbodys: Vec<Rigidbody>,
     springs: Vec<Spring>,
     weld_joints: Vec<WeldJoint>,
+    pivot_joints: Vec<PivotJoint>,
     parameters: Parameters,
 ) -> anyhow::Result<()> {
     #[cfg(not(target_arch = "wasm32"))]
@@ -179,6 +186,7 @@ pub fn run(
         rigidbodys,
         springs,
         weld_joints,
+        pivot_joints,
         parameters,
         #[cfg(target_arch = "wasm32")]
         &event_loop,

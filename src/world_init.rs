@@ -12,6 +12,7 @@ use crate::egui_tools::EguiRenderer;
 use crate::enums::{BodyType, ColorType, DraggingState, InputMode, Menu};
 use crate::input::UiSystem;
 use crate::physics::PhysicsSystem;
+use crate::pivot_joint::PivotJoint;
 use crate::render::{RenderSystem, Uniforms, Vertex};
 use crate::spring::Spring;
 use crate::timing::Timing;
@@ -23,6 +24,7 @@ impl World{
         polygons: Vec<Rigidbody>,
         springs: Vec<Spring>,
         weld_joints: Vec<WeldJoint>,
+        pivot_joints: Vec<PivotJoint>,
         mut parameters: Parameters,
     ) -> anyhow::Result<World> {
         let size = window.inner_size();
@@ -279,6 +281,7 @@ impl World{
             springs,
             polygons,
             weld_joints,
+            pivot_joints,
             dt: 0.0,
             total_energy: 0.0,
         };

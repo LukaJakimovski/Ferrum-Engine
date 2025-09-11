@@ -16,5 +16,5 @@ fn main(){
         clear_color: ColorRGBA::new(0.0, 0.0, 0.0, 1.0),
         is_running: false,
     };
-    run(vec![], vec![], vec![], parameters).unwrap();
+    run(vec![], vec![], vec![], vec![], parameters).unwrap();
 }

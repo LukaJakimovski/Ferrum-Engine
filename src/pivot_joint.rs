@@ -2,6 +2,7 @@ use glam::{Mat2, Vec2};
 use crate::Rigidbody;
 
 /// 2D Ball-and-Socket (pivot/pin) joint: constrains anchors to coincide, allows free rotation.
+#[derive(Clone)]
 pub struct PivotJoint {
     local_anchor_a: Vec2,
     local_anchor_b: Vec2,

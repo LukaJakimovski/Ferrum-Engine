@@ -24,5 +24,6 @@ pub use crate::rigidbody::*;
 pub use crate::spring::*;
 pub use crate::world::*;
 pub use crate::weld_joint::WeldJoint;
+pub use crate::pivot_joint::PivotJoint;
 pub use glam::{Vec2, Vec4};
 
