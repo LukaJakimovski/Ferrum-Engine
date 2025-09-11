@@ -1,5 +1,5 @@
 use glam::{Vec2, Vec4};
-use ferrum_engine::{run, Camera, ColorRGBA, Parameters, PivotJoint, Rigidbody, WeldJoint};
+use ferrum_engine::{run, Camera, ColorRGBA, Parameters, PivotJoint, Rigidbody};
 
 fn main() {
     let parameters = Parameters {

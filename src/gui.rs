@@ -3,7 +3,6 @@ use crate::{Camera, ColorRGBA, Parameters};
 use egui::{Align2};
 use egui_wgpu::{ScreenDescriptor, wgpu};
 use std::f32::consts::PI;
-use std::thread::current;
 use crate::body_builder::BodyBuilder;
 use crate::color::ColorSystem;
 use crate::input::UiSystem;
