@@ -99,8 +99,8 @@ impl RenderSystem {
                     ui[0].add(egui::DragValue::new(&mut camera.camera_pos.x).speed(0.1));
                     ui[1].add(egui::DragValue::new(&mut camera.camera_pos.y).speed(0.1));
                     ui[2].add(egui::DragValue::new(&mut camera.camera_pos.w).speed(0.1));
-                    if camera.camera_pos.w > 0.0 {
-                        camera.camera_pos.w = 0.0
+                    if camera.camera_pos.w > 0.9999 {
+                        camera.camera_pos.w = 0.9999
                     }
                 });
                 ui.columns(2, |ui| {
@@ -263,6 +263,9 @@ impl RenderSystem {
                             if spawn_parameters.rigidbody_params.sides < 3 {
                                 spawn_parameters.rigidbody_params.sides = 3
                             }
+                            if spawn_parameters.rigidbody_params.sides > 128 {
+                                spawn_parameters.rigidbody_params.sides = 128
+                            }
                         });
                         ui.columns(2, |ui| {
                             ui[0].label("Radius");
@@ -333,6 +336,12 @@ impl RenderSystem {
                             .speed(0.01),
                         )
                     });
+                    if spawn_parameters.rigidbody_params.restitution > 1.5 {
+                        spawn_parameters.rigidbody_params.restitution = 1.5;
+                    }
+                    if spawn_parameters.rigidbody_params.restitution < 0.0 {
+                        spawn_parameters.rigidbody_params.restitution = 0.0;
+                    }
                     ui.columns(3, |ui| {
                         ui[0].label("Velocity");
                         ui[1].add(
@@ -368,13 +377,15 @@ impl RenderSystem {
                         };
                     });
                     ui.columns(2, |ui| {
+                        let mut rotation_degrees = spawn_parameters.rigidbody_params.rotation.to_degrees();
                         ui[0].label("Rotation");
                         ui[1].add(
                             egui::DragValue::new(
-                                &mut spawn_parameters.rigidbody_params.rotation,
+                                &mut rotation_degrees,
                             )
                             .speed(0.01),
                         );
+                        spawn_parameters.rigidbody_params.rotation = rotation_degrees.to_radians();
                         if spawn_parameters.rigidbody_params.rotation > PI {
                             spawn_parameters.rigidbody_params.rotation = PI
                         };
@@ -539,14 +550,14 @@ impl RenderSystem {
                         );
                     });
                     ui.columns(2, |ui| {
-                        let mut angle_degrees = selected_polygon.angle * 360.0 / (2.0 * PI);
+                        let mut angle_degrees = selected_polygon.angle.to_degrees();
                         let old_angle = selected_polygon.angle;
                         ui[0].label("Angle");
                         ui[1].add(
                             egui::DragValue::new(&mut angle_degrees)
                                 .speed(0.1),
                         );
-                        let angle_radians = angle_degrees * 2.0 * PI / 360.0;
+                        let angle_radians = angle_degrees.to_radians();
                         selected_polygon.rotate(angle_radians - old_angle);
                         selected_polygon.angle += angle_radians - old_angle;
                     });
@@ -565,7 +576,7 @@ impl RenderSystem {
                             selected_polygon.calculate_moment_of_inertia();
                         }
                         if selected_polygon.mass < 0.0 {
-                            selected_polygon.mass = 0.0
+                            selected_polygon.mass = 0.000000000001
                         };
                     });
                     ui.columns(2, |ui| {
@@ -574,6 +585,12 @@ impl RenderSystem {
                             egui::DragValue::new(&mut selected_polygon.restitution).speed(0.01),
                         )
                     });
+                    if selected_polygon.restitution < 0.0 {
+                        selected_polygon.restitution = 0.0
+                    }
+                    if selected_polygon.restitution > 1.5 {
+                        selected_polygon.restitution = 1.5
+                    }
                     ui.columns(2, |ui| {
                         ui[0].label("Gravity Multiplier");
                         ui[1].add(
@@ -704,7 +721,7 @@ impl RenderSystem {
                         if old_end != color_system.palette_params.start_range.x.end { color_system.palette_params.start_range.x.end = color_system.palette_params.start_range.x.start.next_up();}
                     }
                     if color_system.palette_params.start_range.x.start < 0.0 { color_system.palette_params.start_range.x.start = 0.0; }
-                    if color_system.palette_params.start_range.x.end < 0.0 { color_system.palette_params.start_range.x.end = (0.0f32).next_up(); }
+                    if color_system.palette_params.start_range.x.end < 0.0 { color_system.palette_params.start_range.x.end = 0.0f32.next_up(); }
                 });
                 ui.columns(3, |ui| {
                     let old_start = color_system.palette_params.start_range.y.start;
@@ -721,7 +738,7 @@ impl RenderSystem {
                         if old_end != color_system.palette_params.start_range.y.end { color_system.palette_params.start_range.y.end = color_system.palette_params.start_range.y.start.next_up();}
                     }
                     if color_system.palette_params.start_range.y.start < 0.0 { color_system.palette_params.start_range.y.start = 0.0; }
-                    if color_system.palette_params.start_range.y.end < 0.0 { color_system.palette_params.start_range.y.end = (0.0f32).next_up(); }
+                    if color_system.palette_params.start_range.y.end < 0.0 { color_system.palette_params.start_range.y.end = 0.0f32.next_up(); }
                 });
                 ui.columns(3, |ui| {
                     let old_start = color_system.palette_params.start_range.z.start;
@@ -738,7 +755,7 @@ impl RenderSystem {
                         if old_end != color_system.palette_params.start_range.z.end { color_system.palette_params.start_range.z.end = color_system.palette_params.start_range.z.start.next_up();}
                     }
                     if color_system.palette_params.start_range.z.start < 0.0 { color_system.palette_params.start_range.z.start = 0.0; }
-                    if color_system.palette_params.start_range.z.end < 0.0 { color_system.palette_params.start_range.z.end = (0.0f32).next_up(); }
+                    if color_system.palette_params.start_range.z.end < 0.0 { color_system.palette_params.start_range.z.end = 0.0f32.next_up(); }
                 });
                 ui.columns(3, |ui| {
                     let old_start = color_system.palette_params.end_range.x.start;
@@ -755,7 +772,7 @@ impl RenderSystem {
                         if old_end != color_system.palette_params.end_range.x.end { color_system.palette_params.end_range.x.end = color_system.palette_params.end_range.x.start.next_up();}
                     }
                     if color_system.palette_params.end_range.x.start < 0.0 { color_system.palette_params.end_range.x.start = 0.0; }
-                    if color_system.palette_params.end_range.x.end < 0.0 { color_system.palette_params.end_range.x.end = (0.0f32).next_up(); }
+                    if color_system.palette_params.end_range.x.end < 0.0 { color_system.palette_params.end_range.x.end = 0.0f32.next_up(); }
                 });
                 ui.columns(3, |ui| {
                     let old_start = color_system.palette_params.end_range.y.start;
@@ -772,7 +789,7 @@ impl RenderSystem {
                         if old_end != color_system.palette_params.end_range.y.end { color_system.palette_params.end_range.y.end = color_system.palette_params.end_range.y.start.next_up();}
                     }
                     if color_system.palette_params.end_range.y.start < 0.0 { color_system.palette_params.end_range.y.start = 0.0; }
-                    if color_system.palette_params.end_range.y.end < 0.0 { color_system.palette_params.end_range.y.end = (0.0f32).next_up(); }
+                    if color_system.palette_params.end_range.y.end < 0.0 { color_system.palette_params.end_range.y.end = 0.0f32.next_up(); }
                 });
                 ui.columns(3, |ui| {
                     let old_start = color_system.palette_params.end_range.z.start;
@@ -789,7 +806,7 @@ impl RenderSystem {
                         if old_end != color_system.palette_params.end_range.z.end { color_system.palette_params.end_range.z.end = color_system.palette_params.end_range.z.start.next_up();}
                     }
                     if color_system.palette_params.end_range.z.start < 0.0 { color_system.palette_params.end_range.z.start = 0.0; }
-                    if color_system.palette_params.end_range.z.end < 0.0 { color_system.palette_params.end_range.z.end = (0.0f32).next_up(); }
+                    if color_system.palette_params.end_range.z.end < 0.0 { color_system.palette_params.end_range.z.end = 0.0f32.next_up(); }
                 });
                 ui.columns(2, |ui|{
                     ui[0].label("Color Count");

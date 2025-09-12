@@ -1,10 +1,13 @@
 For version 0.3.0
 
 Method to properly erase a joint
-Properly constrained properties in the editor
-Fixed time step
-Recovery from long step calculation time (crash prevention)
+Method to add a joint in the editor
+Method to edit the properties of a joint
+Way to clamp anchors to ensure they are on polygons.
 Method to edit dragging strength
+Fixed time step
+
+Recovery from long step calculation time (crash prevention)
 Calculation of potential energy
 Motors
 Better performance monitoring tools
