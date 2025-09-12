@@ -28,7 +28,7 @@ fn main() {
         },
         f32::MAX / 10000.0,
         1.01,
-        ColorRGBA::random_oklab(),
+        ColorRGBA::random_hsl(),
     ));
     polygons[0].gravity_multiplier = 0.0;
 
@@ -41,7 +41,7 @@ fn main() {
         },
         1.0,
         1.01,
-        ColorRGBA::random_oklab(),
+        ColorRGBA::random_hsl(),
     ));
     let mut pivot_joints = vec![];
 
@@ -58,7 +58,7 @@ fn main() {
         },
         1.0,
         1.01,
-        ColorRGBA::random_oklab(),
+        ColorRGBA::random_hsl(),
     ));
 
     pivot_joints.push(

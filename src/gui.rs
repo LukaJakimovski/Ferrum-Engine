@@ -709,12 +709,12 @@ impl RenderSystem {
                 ui.columns(3, |ui| {
                     let old_start = color_system.palette_params.start_range.x.start;
                     let old_end = color_system.palette_params.start_range.x.end;
-                    ui[0].label("Luminosity Start Range");
+                    ui[0].label("Hue Start Range");
                     ui[1].add(
-                        egui::DragValue::new(&mut color_system.palette_params.start_range.x.start).speed(0.001),
+                        egui::DragValue::new(&mut color_system.palette_params.start_range.x.start).speed(0.1),
                     );
                     ui[2].add(
-                        egui::DragValue::new(&mut color_system.palette_params.start_range.x.end).speed(0.001),
+                        egui::DragValue::new(&mut color_system.palette_params.start_range.x.end).speed(0.1),
                     );
                     if  color_system.palette_params.start_range.x.start >= color_system.palette_params.start_range.x.end {
                         if old_start != color_system.palette_params.start_range.x.start { color_system.palette_params.start_range.x.start = color_system.palette_params.start_range.x.end.next_down();}
@@ -726,12 +726,12 @@ impl RenderSystem {
                 ui.columns(3, |ui| {
                     let old_start = color_system.palette_params.start_range.y.start;
                     let old_end = color_system.palette_params.start_range.y.end;
-                    ui[0].label("Chromaticity Start Range");
+                    ui[0].label("Saturation Start Range");
                     ui[1].add(
-                        egui::DragValue::new(&mut color_system.palette_params.start_range.y.start).speed(0.001),
+                        egui::DragValue::new(&mut color_system.palette_params.start_range.y.start).speed(0.1),
                     );
                     ui[2].add(
-                        egui::DragValue::new(&mut color_system.palette_params.start_range.y.end).speed(0.001),
+                        egui::DragValue::new(&mut color_system.palette_params.start_range.y.end).speed(0.1),
                     );
                     if color_system.palette_params.start_range.y.start >= color_system.palette_params.start_range.y.end {
                         if old_start != color_system.palette_params.start_range.y.start { color_system.palette_params.start_range.y.start = color_system.palette_params.start_range.y.end.next_down();}
@@ -743,12 +743,12 @@ impl RenderSystem {
                 ui.columns(3, |ui| {
                     let old_start = color_system.palette_params.start_range.z.start;
                     let old_end = color_system.palette_params.start_range.z.end;
-                    ui[0].label("Hue Start Range");
+                    ui[0].label("Light Start Range");
                     ui[1].add(
-                        egui::DragValue::new(&mut color_system.palette_params.start_range.z.start).speed(0.001),
+                        egui::DragValue::new(&mut color_system.palette_params.start_range.z.start).speed(0.1),
                     );
                     ui[2].add(
-                        egui::DragValue::new(&mut color_system.palette_params.start_range.z.end).speed(0.001),
+                        egui::DragValue::new(&mut color_system.palette_params.start_range.z.end).speed(0.1),
                     );
                     if color_system.palette_params.start_range.z.start >= color_system.palette_params.start_range.z.end {
                         if old_start != color_system.palette_params.start_range.z.start { color_system.palette_params.start_range.z.start = color_system.palette_params.start_range.z.end.next_down();}
@@ -760,12 +760,12 @@ impl RenderSystem {
                 ui.columns(3, |ui| {
                     let old_start = color_system.palette_params.end_range.x.start;
                     let old_end = color_system.palette_params.end_range.x.end;
-                    ui[0].label("Luminosity End Range");
+                    ui[0].label("Hue End Range");
                     ui[1].add(
-                        egui::DragValue::new(&mut color_system.palette_params.end_range.x.start).speed(0.001),
+                        egui::DragValue::new(&mut color_system.palette_params.end_range.x.start).speed(0.1),
                     );
                     ui[2].add(
-                        egui::DragValue::new(&mut color_system.palette_params.end_range.x.end).speed(0.001),
+                        egui::DragValue::new(&mut color_system.palette_params.end_range.x.end).speed(0.1),
                     );
                     if color_system.palette_params.end_range.x.start >= color_system.palette_params.end_range.x.end {
                         if old_start != color_system.palette_params.end_range.x.start { color_system.palette_params.end_range.x.start = color_system.palette_params.end_range.x.end.next_down();}
@@ -777,12 +777,12 @@ impl RenderSystem {
                 ui.columns(3, |ui| {
                     let old_start = color_system.palette_params.end_range.y.start;
                     let old_end = color_system.palette_params.end_range.y.end;
-                    ui[0].label("Chromaticity End Range");
+                    ui[0].label("Saturation End Range");
                     ui[1].add(
-                        egui::DragValue::new(&mut color_system.palette_params.end_range.y.start).speed(0.001),
+                        egui::DragValue::new(&mut color_system.palette_params.end_range.y.start).speed(0.1),
                     );
                     ui[2].add(
-                        egui::DragValue::new(&mut color_system.palette_params.end_range.y.end).speed(0.001),
+                        egui::DragValue::new(&mut color_system.palette_params.end_range.y.end).speed(0.1),
                     );
                     if color_system.palette_params.end_range.y.start >= color_system.palette_params.end_range.y.end {
                         if old_start != color_system.palette_params.end_range.y.start { color_system.palette_params.end_range.y.start = color_system.palette_params.end_range.y.end.next_down();}
@@ -794,12 +794,12 @@ impl RenderSystem {
                 ui.columns(3, |ui| {
                     let old_start = color_system.palette_params.end_range.z.start;
                     let old_end = color_system.palette_params.end_range.z.end;
-                    ui[0].label("Hue End Range");
+                    ui[0].label("Light End Range");
                     ui[1].add(
-                        egui::DragValue::new(&mut color_system.palette_params.end_range.z.start).speed(0.001),
+                        egui::DragValue::new(&mut color_system.palette_params.end_range.z.start).speed(0.1),
                     );
                     ui[2].add(
-                        egui::DragValue::new(&mut color_system.palette_params.end_range.z.end).speed(0.001),
+                        egui::DragValue::new(&mut color_system.palette_params.end_range.z.end).speed(0.1),
                     );
                     if color_system.palette_params.end_range.z.start >= color_system.palette_params.end_range.z.end {
                         if old_start != color_system.palette_params.end_range.z.start { color_system.palette_params.end_range.z.start = color_system.palette_params.end_range.z.end.next_down();}

@@ -1,4 +1,3 @@
-use std::f32::consts::PI;
 use std::ops::Range;
 use std::sync::Arc;
 use egui_wgpu::wgpu;
@@ -241,9 +240,9 @@ impl World{
             },
         };
         let palette_params = PaletteParams {
-            start_range: ColorRange { x: Range{start: 0.6, end: 0.67}, y: Range{start: 0.2, end: 0.25}, z: Range{start: 0.0, end: PI / 4.0} },
-            end_range: ColorRange { x: Range{start: 0.7, end: 0.76}, y: Range{start: 0.25, end: 0.30}, z: Range{start: 2.0 * PI, end: 2.2 * PI} },
-            color_count: 32,
+            start_range: ColorRange { x: Range{start: 0.0, end: 30.0}, y: Range{start: 65.0, end: 75.0}, z: Range{start: 45.0, end: 55.0} },
+            end_range: ColorRange { x: Range{start: 360.0, end: 390.0}, y: Range{start: 85.0, end: 95.0}, z: Range{start: 65.0, end: 75.0} },
+            color_count: 1028,
         };
         #[cfg(all(target_os = "windows", target_arch = "x86_64", target_env = "gnu"))]
         let scale_divider = 100.0;

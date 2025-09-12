@@ -16,7 +16,7 @@ fn main() {
         Vec2::new(0.0, -1.0),
         1.0,
         1.0,
-        ColorRGBA::random_oklab(),
+        ColorRGBA::random_hsl(),
     ));
     polygons.push(Rigidbody::rectangle(
         0.5,
@@ -24,7 +24,7 @@ fn main() {
         Vec2::new(-3.0, -5.0),
         1.0,
         1.0,
-        ColorRGBA::random_oklab(),
+        ColorRGBA::random_hsl(),
     ));
     polygons.push(Rigidbody::rectangle(
         0.5,
@@ -32,7 +32,7 @@ fn main() {
         Vec2::new(-3.0, 5.0),
         1.0,
         1.0,
-        ColorRGBA::random_oklab(),
+        ColorRGBA::random_hsl(),
     ));
     polygons.push(Rigidbody::rectangle(
         0.5,
@@ -40,7 +40,7 @@ fn main() {
         Vec2::new(2.5, 3.0),
         1.0,
         1.0,
-        ColorRGBA::random_oklab(),
+        ColorRGBA::random_hsl(),
     ));
     polygons.push(Rigidbody::rectangle(
         0.5,
@@ -48,7 +48,7 @@ fn main() {
         Vec2::new(3.5, -3.0),
         1.0,
         1.0,
-        ColorRGBA::random_oklab(),
+        ColorRGBA::random_hsl(),
     ));
 
     let mut springs = vec![];

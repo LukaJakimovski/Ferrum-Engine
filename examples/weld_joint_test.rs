@@ -28,7 +28,7 @@ fn main() {
         },
         1.0,
         1.01,
-        ColorRGBA::random_oklab(),
+        ColorRGBA::random_hsl(),
     ));
 
     polygons.push(Rigidbody::polygon(
@@ -40,7 +40,7 @@ fn main() {
         },
         1.0,
         1.01,
-        ColorRGBA::random_oklab(),
+        ColorRGBA::random_hsl(),
     ));
 
     let mut weld_joints = vec![];

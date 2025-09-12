@@ -47,7 +47,7 @@ impl BodyBuilder {
         if palette.is_some() {
             random_color = ColorRGBA::random_from_palette(&palette.clone().unwrap());
         } else {
-            random_color = ColorRGBA::random_oklab();
+            random_color = ColorRGBA::random_hsl();
         }
 
         match self.body_type {
