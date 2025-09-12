@@ -213,7 +213,7 @@ impl World{
             body_type: BodyType::RegularPolygon,
 
             rigidbody_params: RigidbodyParams {
-                sides: 32,
+                sides: 64,
                 radius: 0.3533,
                 pos: Vec2::ZERO,
                 mass: 1.0,

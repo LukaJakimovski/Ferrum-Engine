@@ -184,7 +184,7 @@ impl UiSystem {
     pub fn handle_input(&mut self, physics_system: &mut PhysicsSystem, color_system: &mut ColorSystem) {
         let position = self.get_mouse_world_position();
         if self.pressed_keys[Keys::L as usize] == 1 {
-            if self.get_polygon_under_mouse(physics_system).is_none() {
+            if self.under_mouse_is_clear(physics_system) == true{
                 physics_system.polygons
                     .push(BodyBuilder::create_rigidbody(&self.spawn_parameters, &color_system.color_palette));
                 let length = physics_system.polygons.len() - 1;
