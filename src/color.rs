@@ -192,6 +192,7 @@ pub struct ColorSystem {
     pub palette_params: PaletteParams,
     pub color_palette: Option<Vec<ColorRGBA>>,
     pub clear_color: ColorRGBA,
+    pub update_clear_color: bool,
 }
 
 impl ColorSystem{
@@ -201,7 +202,9 @@ impl ColorSystem{
             let rand = rand::random_range::<usize, Range<usize>, >(1..self.color_palette.as_ref().unwrap().len());
             polygon.color = self.color_palette.clone().unwrap()[rand];
         }
-        self.clear_color = self.color_palette.clone().unwrap()[0];
+        if self.update_clear_color {
+            self.clear_color = self.color_palette.clone().unwrap()[0];
+        }
     }
 
     pub fn view_random_palette(&mut self, polygons: &mut Vec<Rigidbody>){
@@ -213,7 +216,9 @@ impl ColorSystem{
             polygon.color = self.color_palette.clone().unwrap()[rand];
             i += 1;
         }
-        self.clear_color = self.color_palette.clone().unwrap()[0];
+        if self.update_clear_color {
+            self.clear_color = self.color_palette.clone().unwrap()[0];
+        }
     }
 }
 

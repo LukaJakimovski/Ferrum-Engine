@@ -241,8 +241,8 @@ impl World{
             },
         };
         let palette_params = PaletteParams {
-            start_range: ColorRange { x: Range{start: 0.10, end: 0.15}, y: Range{start: 0.05, end: 0.10}, z: Range{start: 0.0, end: 2.0 * PI} },
-            end_range: ColorRange { x: Range{start: 0.25, end: 0.45}, y: Range{start: 0.20, end: 0.25}, z: Range{start: 2.0 * PI, end: 4.0 * PI} },
+            start_range: ColorRange { x: Range{start: 0.6, end: 0.67}, y: Range{start: 0.2, end: 0.25}, z: Range{start: 0.0, end: PI / 4.0} },
+            end_range: ColorRange { x: Range{start: 0.7, end: 0.76}, y: Range{start: 0.25, end: 0.30}, z: Range{start: 2.0 * PI, end: 2.2 * PI} },
             color_count: 32,
         };
         #[cfg(all(target_os = "windows", target_arch = "x86_64", target_env = "gnu"))]
@@ -290,6 +290,7 @@ impl World{
             palette_params,
             color_palette: None,
             clear_color: ColorRGBA { r: 0.0, g: 0.0, b: 0.0, a: 0.0 },
+            update_clear_color: false,
         };
 
         let ui: UiSystem = UiSystem {

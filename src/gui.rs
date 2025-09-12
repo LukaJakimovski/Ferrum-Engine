@@ -690,6 +690,8 @@ impl RenderSystem {
             .show(self.egui_renderer.context(), |ui| {
                 ui.heading("Color Menu");
                 ui.columns(3, |ui| {
+                    let old_start = color_system.palette_params.start_range.x.start;
+                    let old_end = color_system.palette_params.start_range.x.end;
                     ui[0].label("Luminosity Start Range");
                     ui[1].add(
                         egui::DragValue::new(&mut color_system.palette_params.start_range.x.start).speed(0.001),
@@ -697,8 +699,16 @@ impl RenderSystem {
                     ui[2].add(
                         egui::DragValue::new(&mut color_system.palette_params.start_range.x.end).speed(0.001),
                     );
+                    if  color_system.palette_params.start_range.x.start >= color_system.palette_params.start_range.x.end {
+                        if old_start != color_system.palette_params.start_range.x.start { color_system.palette_params.start_range.x.start = color_system.palette_params.start_range.x.end.next_down();}
+                        if old_end != color_system.palette_params.start_range.x.end { color_system.palette_params.start_range.x.end = color_system.palette_params.start_range.x.start.next_up();}
+                    }
+                    if color_system.palette_params.start_range.x.start < 0.0 { color_system.palette_params.start_range.x.start = 0.0; }
+                    if color_system.palette_params.start_range.x.end < 0.0 { color_system.palette_params.start_range.x.end = (0.0f32).next_up(); }
                 });
                 ui.columns(3, |ui| {
+                    let old_start = color_system.palette_params.start_range.y.start;
+                    let old_end = color_system.palette_params.start_range.y.end;
                     ui[0].label("Chromaticity Start Range");
                     ui[1].add(
                         egui::DragValue::new(&mut color_system.palette_params.start_range.y.start).speed(0.001),
@@ -706,8 +716,16 @@ impl RenderSystem {
                     ui[2].add(
                         egui::DragValue::new(&mut color_system.palette_params.start_range.y.end).speed(0.001),
                     );
+                    if color_system.palette_params.start_range.y.start >= color_system.palette_params.start_range.y.end {
+                        if old_start != color_system.palette_params.start_range.y.start { color_system.palette_params.start_range.y.start = color_system.palette_params.start_range.y.end.next_down();}
+                        if old_end != color_system.palette_params.start_range.y.end { color_system.palette_params.start_range.y.end = color_system.palette_params.start_range.y.start.next_up();}
+                    }
+                    if color_system.palette_params.start_range.y.start < 0.0 { color_system.palette_params.start_range.y.start = 0.0; }
+                    if color_system.palette_params.start_range.y.end < 0.0 { color_system.palette_params.start_range.y.end = (0.0f32).next_up(); }
                 });
                 ui.columns(3, |ui| {
+                    let old_start = color_system.palette_params.start_range.z.start;
+                    let old_end = color_system.palette_params.start_range.z.end;
                     ui[0].label("Hue Start Range");
                     ui[1].add(
                         egui::DragValue::new(&mut color_system.palette_params.start_range.z.start).speed(0.001),
@@ -715,8 +733,16 @@ impl RenderSystem {
                     ui[2].add(
                         egui::DragValue::new(&mut color_system.palette_params.start_range.z.end).speed(0.001),
                     );
+                    if color_system.palette_params.start_range.z.start >= color_system.palette_params.start_range.z.end {
+                        if old_start != color_system.palette_params.start_range.z.start { color_system.palette_params.start_range.z.start = color_system.palette_params.start_range.z.end.next_down();}
+                        if old_end != color_system.palette_params.start_range.z.end { color_system.palette_params.start_range.z.end = color_system.palette_params.start_range.z.start.next_up();}
+                    }
+                    if color_system.palette_params.start_range.z.start < 0.0 { color_system.palette_params.start_range.z.start = 0.0; }
+                    if color_system.palette_params.start_range.z.end < 0.0 { color_system.palette_params.start_range.z.end = (0.0f32).next_up(); }
                 });
                 ui.columns(3, |ui| {
+                    let old_start = color_system.palette_params.end_range.x.start;
+                    let old_end = color_system.palette_params.end_range.x.end;
                     ui[0].label("Luminosity End Range");
                     ui[1].add(
                         egui::DragValue::new(&mut color_system.palette_params.end_range.x.start).speed(0.001),
@@ -724,8 +750,16 @@ impl RenderSystem {
                     ui[2].add(
                         egui::DragValue::new(&mut color_system.palette_params.end_range.x.end).speed(0.001),
                     );
+                    if color_system.palette_params.end_range.x.start >= color_system.palette_params.end_range.x.end {
+                        if old_start != color_system.palette_params.end_range.x.start { color_system.palette_params.end_range.x.start = color_system.palette_params.end_range.x.end.next_down();}
+                        if old_end != color_system.palette_params.end_range.x.end { color_system.palette_params.end_range.x.end = color_system.palette_params.end_range.x.start.next_up();}
+                    }
+                    if color_system.palette_params.end_range.x.start < 0.0 { color_system.palette_params.end_range.x.start = 0.0; }
+                    if color_system.palette_params.end_range.x.end < 0.0 { color_system.palette_params.end_range.x.end = (0.0f32).next_up(); }
                 });
                 ui.columns(3, |ui| {
+                    let old_start = color_system.palette_params.end_range.y.start;
+                    let old_end = color_system.palette_params.end_range.y.end;
                     ui[0].label("Chromaticity End Range");
                     ui[1].add(
                         egui::DragValue::new(&mut color_system.palette_params.end_range.y.start).speed(0.001),
@@ -733,8 +767,16 @@ impl RenderSystem {
                     ui[2].add(
                         egui::DragValue::new(&mut color_system.palette_params.end_range.y.end).speed(0.001),
                     );
+                    if color_system.palette_params.end_range.y.start >= color_system.palette_params.end_range.y.end {
+                        if old_start != color_system.palette_params.end_range.y.start { color_system.palette_params.end_range.y.start = color_system.palette_params.end_range.y.end.next_down();}
+                        if old_end != color_system.palette_params.end_range.y.end { color_system.palette_params.end_range.y.end = color_system.palette_params.end_range.y.start.next_up();}
+                    }
+                    if color_system.palette_params.end_range.y.start < 0.0 { color_system.palette_params.end_range.y.start = 0.0; }
+                    if color_system.palette_params.end_range.y.end < 0.0 { color_system.palette_params.end_range.y.end = (0.0f32).next_up(); }
                 });
                 ui.columns(3, |ui| {
+                    let old_start = color_system.palette_params.end_range.z.start;
+                    let old_end = color_system.palette_params.end_range.z.end;
                     ui[0].label("Hue End Range");
                     ui[1].add(
                         egui::DragValue::new(&mut color_system.palette_params.end_range.z.start).speed(0.001),
@@ -742,13 +784,33 @@ impl RenderSystem {
                     ui[2].add(
                         egui::DragValue::new(&mut color_system.palette_params.end_range.z.end).speed(0.001),
                     );
+                    if color_system.palette_params.end_range.z.start >= color_system.palette_params.end_range.z.end {
+                        if old_start != color_system.palette_params.end_range.z.start { color_system.palette_params.end_range.z.start = color_system.palette_params.end_range.z.end.next_down();}
+                        if old_end != color_system.palette_params.end_range.z.end { color_system.palette_params.end_range.z.end = color_system.palette_params.end_range.z.start.next_up();}
+                    }
+                    if color_system.palette_params.end_range.z.start < 0.0 { color_system.palette_params.end_range.z.start = 0.0; }
+                    if color_system.palette_params.end_range.z.end < 0.0 { color_system.palette_params.end_range.z.end = (0.0f32).next_up(); }
                 });
                 ui.columns(2, |ui|{
                     ui[0].label("Color Count");
                     ui[1].add(
                         egui::DragValue::new(&mut color_system.palette_params.color_count).speed(1),
                     );
+                    if color_system.palette_params.color_count < 1 { color_system.palette_params.color_count = 1; }
                 });
+                ui.columns(1, |ui|{
+                    ui[0].add(
+                        egui::Checkbox::new(&mut color_system.update_clear_color, "Update Background Color"),
+                    );
+                });
+                let param_color =
+                    &mut color_system.clear_color;
+                let mut color: [f32; 3] = [param_color.r, param_color.g, param_color.b];
+                ui.columns(2, |ui| {
+                    ui[0].label("Background Color");
+                    ui[1].color_edit_button_rgb(&mut color);
+                });
+                color_system.clear_color = ColorRGBA {r: color[0], b: color[1], g : color[2], a: 1.0 }
             });
     }
 }
