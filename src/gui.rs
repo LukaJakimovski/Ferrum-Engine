@@ -240,7 +240,7 @@ impl RenderSystem {
                         ui.selectable_value(
                             &mut spawn_parameters.body_type,
                             BodyType::PivotJoint,
-                            "Weld Join"
+                            "Pivot Joint"
                         );
                     });
                 match spawn_parameters.body_type {

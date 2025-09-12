@@ -46,7 +46,7 @@ fn main() {
     let mut pivot_joints = vec![];
 
     pivot_joints.push(
-        PivotJoint::new(Vec2::new(0.0, 0.0), Vec2::new(0.0, -1.0), 0, 1, &mut polygons)
+        PivotJoint::new(Vec2::new(0.0, 0.0), Vec2::new(0.0, -1.0), &mut polygons,0, 1)
     );
 
     polygons.push(Rigidbody::rectangle(
@@ -62,7 +62,7 @@ fn main() {
     ));
 
     pivot_joints.push(
-        PivotJoint::new(Vec2::new(0.0, 1.0), Vec2::new(-1.0, 0.0), 1, 2, &mut polygons)
+        PivotJoint::new(Vec2::new(0.0, 1.0), Vec2::new(-1.0, 0.0), &mut polygons,1, 2)
     );
 
 

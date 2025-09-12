@@ -18,8 +18,8 @@ impl WeldJoint {
         let b;
         if body_a > body_b {
             let (left, right) = rigidbodys.split_at_mut(body_a);
-            a = &mut left[body_b];
-            b = &mut right[0];
+            b = &mut left[body_b];
+            a = &mut right[0];
         } else {
             let (left, right) = rigidbodys.split_at_mut(body_b);
             a = &mut left[body_a];

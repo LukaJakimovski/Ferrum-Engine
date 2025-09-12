@@ -91,6 +91,20 @@ impl UiSystem {
         polygon_index
     }
 
+    pub fn get_all_polygons_under_mouse(&self, physics_system: &mut PhysicsSystem) -> Vec<usize> {
+        let mut polygons = vec![];
+        let position = self.get_mouse_world_position();
+        let mouse_polygon =
+            Rigidbody::rectangle(0.03, 0.03, position, 1.0, 1.0, ColorRGBA::white());
+        for i in (0..physics_system.polygons.len()).rev() {
+            let result = sat_collision(&physics_system.polygons[i], &mouse_polygon);
+            if result[1].y != 0.0 && (self.spawn_ghost_polygon == None || i != self.spawn_ghost_polygon.unwrap()) && (self.spring_polygon == None || i != self.spring_polygon.unwrap()) {
+                polygons.push(i);
+            }
+        }
+        polygons
+    }
+
     pub fn under_mouse_is_clear(&self, physics_system: &mut PhysicsSystem) -> bool{
         let position = self.get_mouse_world_position();
         let mut mouse_polygon =

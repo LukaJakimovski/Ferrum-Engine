@@ -2,7 +2,7 @@ use glam::Vec2;
 use crate::body_builder::{BodyBuilder, SpringParams};
 use crate::enums::{BodyType, DraggingState, InputMode, Keys, Menu, Mouse};
 use crate::spring::Spring;
-use crate::{Camera, ColorRGBA, Parameters, Rigidbody};
+use crate::{Camera, ColorRGBA, Parameters, PivotJoint, Rigidbody, WeldJoint};
 use winit::dpi::PhysicalPosition;
 use winit::event::{ElementState, MouseButton, MouseScrollDelta};
 use winit::event_loop::ActiveEventLoop;
@@ -314,6 +314,21 @@ impl UiSystem {
                                 .push(BodyBuilder::create_rigidbody(&self.spawn_parameters, &color_system.color_palette));
                             let length = physics_system.polygons.len() - 1;
                             physics_system.polygons[length].translate(position);
+                        }
+                    } else if self.spawn_parameters.body_type == BodyType::WeldJoint || self.spawn_parameters.body_type == BodyType::PivotJoint{
+                        let under_mouse = self.get_all_polygons_under_mouse(physics_system);
+                        if under_mouse.len() >= 2 {
+                            for i in 0..under_mouse.len() {
+                                for j in i+1..under_mouse.len() {
+                                    let anchor_a = physics_system.polygons[under_mouse[i]].center - position;
+                                    let anchor_b = physics_system.polygons[under_mouse[j]].center - position;
+                                    if self.spawn_parameters.body_type == BodyType::WeldJoint {
+                                        physics_system.weld_joints.push(WeldJoint::new(anchor_a, anchor_b, &mut physics_system.polygons, under_mouse[i], under_mouse[j]));
+                                    } else if self.spawn_parameters.body_type == BodyType::PivotJoint{
+                                        physics_system.pivot_joints.push(PivotJoint::new(anchor_a, anchor_b, &mut physics_system.polygons, under_mouse[i], under_mouse[j]));
+                                    }
+                                }
+                            }
                         }
                     }
                 }
