@@ -17,6 +17,7 @@ mod world_init;
 mod timing;
 mod weld_joint;
 mod pivot_joint;
+mod collision_resolution;
 
 pub use crate::app::*;
 pub use crate::color::ColorRGBA;

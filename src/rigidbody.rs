@@ -20,6 +20,7 @@ pub struct Rigidbody {
     pub collision: bool,
     pub gravity_multiplier: f32,
     pub eternal: bool,
+    pub connected_anchors: Vec<usize>,
 }
 impl Rigidbody {
     pub fn rectangle(
@@ -68,6 +69,7 @@ impl Rigidbody {
             collision: true,
             gravity_multiplier: 1.0,
             eternal: false,
+            connected_anchors: vec![],
         };
         polygon.calculate_properties();
         polygon.center = pos;
@@ -117,6 +119,7 @@ impl Rigidbody {
             collision: true,
             gravity_multiplier: 1.0,
             eternal: false,
+            connected_anchors: vec![],
         };
         polygon.calculate_properties();
         polygon
@@ -172,6 +175,7 @@ impl Rigidbody {
             collision: true,
             gravity_multiplier: 1.0,
             eternal: false,
+            connected_anchors: vec![],
         };
         polygon.calculate_properties();
         polygon

@@ -30,7 +30,6 @@ fn main() {
         1.01,
         ColorRGBA::random_oklab(),
     ));
-    polygons[0].collision = false;
 
     polygons.push(Rigidbody::polygon(
         32,
@@ -49,8 +48,6 @@ fn main() {
     weld_joints.push(
         WeldJoint::new(Vec2::new(0.2, 0.0), Vec2::new(-0.2, 0.0), &mut polygons, 0, 1)
     );
-
-    polygons[1].collision = false;
 
 
 

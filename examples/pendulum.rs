@@ -30,7 +30,6 @@ fn main() {
         1.01,
         ColorRGBA::random_oklab(),
     ));
-    polygons[0].collision = false;
     polygons[0].gravity_multiplier = 0.0;
 
     polygons.push(Rigidbody::rectangle(
@@ -44,12 +43,10 @@ fn main() {
         1.01,
         ColorRGBA::random_oklab(),
     ));
-    polygons[1].collision = false;
-
     let mut pivot_joints = vec![];
 
     pivot_joints.push(
-        PivotJoint::new(Vec2::new(0.0, 0.0), Vec2::new(0.0, -1.0), 0, 1)
+        PivotJoint::new(Vec2::new(0.0, 0.0), Vec2::new(0.0, -1.0), 0, 1, &mut polygons)
     );
 
     polygons.push(Rigidbody::rectangle(
@@ -65,7 +62,7 @@ fn main() {
     ));
 
     pivot_joints.push(
-        PivotJoint::new(Vec2::new(0.0, 1.0), Vec2::new(-1.0, 0.0), 1, 2)
+        PivotJoint::new(Vec2::new(0.0, 1.0), Vec2::new(-1.0, 0.0), 1, 2, &mut polygons)
     );
 
 

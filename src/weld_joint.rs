@@ -13,9 +13,21 @@ pub struct WeldJoint {
 }
 
 impl WeldJoint {
-    pub fn new(local_anchor_a: Vec2, local_anchor_b: Vec2, rigidbodys: &Vec<Rigidbody>, body_a: usize, body_b: usize) -> Self {
-        let a = &rigidbodys[body_a];
-        let b = &rigidbodys[body_b];
+    pub fn new(local_anchor_a: Vec2, local_anchor_b: Vec2, rigidbodys: &mut Vec<Rigidbody>, body_a: usize, body_b: usize) -> Self {
+        let a;
+        let b;
+        if body_a > body_b {
+            let (left, right) = rigidbodys.split_at_mut(body_a);
+            a = &mut left[body_b];
+            b = &mut right[0];
+        } else {
+            let (left, right) = rigidbodys.split_at_mut(body_b);
+            a = &mut left[body_a];
+            b = &mut right[0];
+        }
+        a.connected_anchors.push(body_b);
+        b.connected_anchors.push(body_a);
+        
         let reference_angle = b.angle - a.angle;
         Self {
             body_a,

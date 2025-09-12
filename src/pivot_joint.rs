@@ -14,7 +14,21 @@ pub struct PivotJoint {
 }
 
 impl PivotJoint {
-    pub fn new(local_anchor_a: Vec2, local_anchor_b: Vec2, body_a: usize, body_b: usize) -> Self {
+    pub fn new(local_anchor_a: Vec2, local_anchor_b: Vec2, body_a: usize, body_b: usize, rigidbodys: &mut Vec<Rigidbody>) -> Self {
+        let a;
+        let b;
+        if body_a > body_b {
+            let (left, right) = rigidbodys.split_at_mut(body_a);
+            a = &mut left[body_b];
+            b = &mut right[0];
+        } else {
+            let (left, right) = rigidbodys.split_at_mut(body_b);
+            a = &mut left[body_a];
+            b = &mut right[0];
+        }
+        a.connected_anchors.push(body_b);
+        b.connected_anchors.push(body_a);
+        
         Self {
             local_anchor_a,
             local_anchor_b,
