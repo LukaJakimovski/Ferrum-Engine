@@ -120,12 +120,12 @@ impl UiSystem {
             winit::keyboard::KeyCode::Digit2 => {
                 if _pressed && self.pressed_keys[Keys::Num2 as usize] == 0 {
                     self.pressed_keys[Keys::Num2 as usize] = 1;
-                    self.input_mode = InputMode::Select;
+                    self.input_mode = InputMode::Edit;
                     self.menus[Menu::Editor as usize] = true;
                     self.menus[Menu::Spawner as usize] = false;
                 } else if _pressed && self.pressed_keys[Keys::Num2 as usize] == 1 {
                     self.pressed_keys[Keys::Num2 as usize] = 0;
-                    self.input_mode = InputMode::Select;
+                    self.input_mode = InputMode::Edit;
                     self.menus[Menu::Editor as usize] = true;
                     self.menus[Menu::Spawner as usize] = false;
                 }
@@ -317,7 +317,7 @@ impl UiSystem {
                         }
                     }
                 }
-                else if self.input_mode == InputMode::Select {
+                else if self.input_mode == InputMode::Edit {
                     self.pressed_buttons[Mouse::Left as usize] = 1;
                     self.selected_polygon = self.get_polygon_under_mouse(physics_system);
                     if self.selected_polygon.is_some() { self.menus[Menu::Editor as usize] = true}

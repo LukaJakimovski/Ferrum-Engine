@@ -232,6 +232,16 @@ impl RenderSystem {
                             BodyType::Spring,
                             "Spring",
                         );
+                        ui.selectable_value(
+                            &mut spawn_parameters.body_type,
+                            BodyType::WeldJoint,
+                            "Weld Joint",
+                        );
+                        ui.selectable_value(
+                            &mut spawn_parameters.body_type,
+                            BodyType::PivotJoint,
+                            "Weld Join"
+                        );
                     });
                 match spawn_parameters.body_type {
                     BodyType::RegularPolygon => {
@@ -326,7 +336,7 @@ impl RenderSystem {
                     _ => {}
                 }
 
-                if spawn_parameters.body_type != BodyType::Spring {
+                if spawn_parameters.body_type == BodyType::Rectangle || spawn_parameters.body_type == BodyType::RegularPolygon {
                     ui.columns(2, |ui| {
                         ui[0].label("Restitution/Bounciness");
                         ui[1].add(
@@ -430,7 +440,7 @@ impl RenderSystem {
                                 Some(ColorRGBA::new(color[0], color[1], color[2], 1.0));
                         }
                     }
-                } else {
+                } else if spawn_parameters.body_type == BodyType::Spring {
                     ui.columns(2, |ui| {
                         ui[0].label("Pull Strength/Stiffness");
                         ui[1].add(
@@ -467,6 +477,10 @@ impl RenderSystem {
                             spawn_parameters.spring_params.rest_length = 0.0
                         };
                     });
+                } else if spawn_parameters.body_type == BodyType::WeldJoint || spawn_parameters.body_type == BodyType::PivotJoint {
+                    ui.columns(2, |ui| {
+                        ui[0].label("Try overlapping two polygons using the move tool and click an overlapping section");
+                    })
                 }
             });
     }
@@ -488,20 +502,21 @@ impl RenderSystem {
                         ui.selectable_value(
                             &mut ui_system.input_mode,
                             InputMode::Spawn,
-                            "Spawn/Despawn Bodies",
+                            "Spawn Bodies",
                         );
                         ui.selectable_value(
                             &mut ui_system.input_mode,
-                            InputMode::Select,
-                            "Select/Deselect Bodies",
+                            InputMode::Edit,
+                            "Edit Bodies",
                         );
-                        ui.selectable_value(&mut ui_system.input_mode, InputMode::Drag, "Drag Bodies");
+                        ui.selectable_value(&mut ui_system.input_mode, InputMode::Drag, "Drag Body w/ Spring");
+                        ui.selectable_value(&mut ui_system.input_mode, InputMode::Move, "Move Body w/ Mouse")
                     });
                 if ui_system.input_mode != current_mode {
                     if ui_system.input_mode == InputMode::Spawn {
                         ui_system.menus[Menu::Spawner as usize] = true;
                         ui_system.menus[Menu::Editor as usize] = false;
-                    } else if ui_system.input_mode == InputMode::Select {
+                    } else if ui_system.input_mode == InputMode::Edit {
                         ui_system.menus[Menu::Spawner as usize] = false;
                         ui_system.menus[Menu::Editor as usize] = true;
                     } else if ui_system.input_mode == InputMode::Spawn {

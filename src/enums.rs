@@ -79,6 +79,8 @@ pub enum BodyType {
     RegularPolygon = 0,
     Rectangle = 1,
     Spring = 2,
+    WeldJoint = 3,
+    PivotJoint = 4,
 }
 
 #[derive(Debug, PartialEq, Clone)]
@@ -90,8 +92,9 @@ pub enum ColorType {
 #[derive(Debug, PartialEq, Clone, Copy)]
 pub enum InputMode {
     Spawn = 0,
-    Select = 1,
+    Edit = 1,
     Drag = 2,
+    Move = 3,
 }
 
 #[derive(Debug, PartialEq)]
