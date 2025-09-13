@@ -1,5 +1,6 @@
 use glam::{Mat2, Vec2};
 use crate::Rigidbody;
+use crate::utility::rotate;
 
 /// 2D Ball-and-Socket (pivot/pin) joint: constrains anchors to coincide, allows free rotation.
 #[derive(Clone)]
@@ -8,6 +9,7 @@ pub struct PivotJoint {
     local_anchor_b: Vec2,
     body_a: usize,
     body_b: usize,
+    start_angle: f32,
 
     /// Baumgarte stabilization factor for positional drift (small: 0.01..0.2)
     pub beta: f32,
@@ -34,6 +36,7 @@ impl PivotJoint {
             local_anchor_b,
             body_a,
             body_b,
+            start_angle: a.angle,
             beta: 0.12,
         }
     }
@@ -126,5 +129,9 @@ impl PivotJoint {
 
         b.velocity += impulse * inv_mb;
         b.angular_velocity += inv_ib * rb.perp_dot(impulse);
+    }
+
+    pub fn get_anchor_world_position(&self, rigidbodys: &Vec<Rigidbody>) -> Vec2 {
+        rigidbodys[self.body_a].center - rotate(self.local_anchor_a, Vec2::ZERO, rigidbodys[self.body_a].angle - self.start_angle)
     }
 }

@@ -75,6 +75,7 @@ pub enum Menu {
 
 #[repr(usize)]
 #[derive(Debug, PartialEq)]
+#[derive(Clone)]
 pub enum BodyType {
     RegularPolygon = 0,
     Rectangle = 1,

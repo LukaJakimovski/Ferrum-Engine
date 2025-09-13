@@ -139,7 +139,7 @@ impl UiSystem {
             physics_system.polygons.remove(self.spawn_ghost_polygon.unwrap());
         }
         self.spawn_ghost_polygon = None;
-        if self.input_mode == InputMode::Spawn && self.spawn_parameters.body_type != BodyType::Spring {
+        if self.input_mode == InputMode::Spawn && (self.spawn_parameters.body_type == BodyType::Rectangle || self.spawn_parameters.body_type == BodyType::RegularPolygon) {
             physics_system.polygons.push(BodyBuilder::create_rigidbody(&self.spawn_parameters, &None));
             let length = physics_system.polygons.len() - 1;
             let position = self.get_mouse_world_position();
@@ -147,12 +147,26 @@ impl UiSystem {
             physics_system.polygons[length].change_color(ColorRGBA::new(1.0, 1.0, 1.0, 0.3));
             physics_system.polygons[length].collision = false;
             self.spawn_ghost_polygon = Some(length);
+        } else if self.input_mode == InputMode::Spawn && (self.spawn_parameters.body_type == BodyType::WeldJoint || self.spawn_parameters.body_type == BodyType::PivotJoint) {
+            physics_system.polygons.push(BodyBuilder::create_joint());
+            let length = physics_system.polygons.len() - 1;
+            let position = self.get_mouse_world_position();
+            physics_system.polygons[length].move_to(position);
+            physics_system.polygons[length].change_color(ColorRGBA::new(1.0, 1.0, 1.0, 0.3));
+            self.spawn_ghost_polygon = Some(length);
         }
     }
 }
 
-pub fn rotate(to_rotate: &mut Vec2, center: Vec2, angle: f32) -> &mut Vec2 {
+pub fn rotate_in_place(to_rotate: &mut Vec2, center: Vec2, angle: f32) -> &mut Vec2 {
     let rot = Mat2::from_angle(angle);
     *to_rotate = rot.mul_vec2(*to_rotate - center) + center;
     to_rotate
+}
+
+pub fn rotate(to_rotate: Vec2, center: Vec2, angle: f32) -> Vec2 {
+    let rot = Mat2::from_angle(angle);
+    let mut start_vec = to_rotate;
+    start_vec = rot.mul_vec2(start_vec - center) + center;
+    start_vec
 }

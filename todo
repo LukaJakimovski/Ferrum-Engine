@@ -1,6 +1,5 @@
 For version 0.3.0
 
-Method to view joints
 Method to properly erase a joint
 Method to edit the properties of a joint
 Way to clamp anchors to ensure they are on polygons.

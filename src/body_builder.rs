@@ -1,7 +1,7 @@
 use glam::Vec2;
 use crate::enums::{BodyType, ColorType};
 use crate::spring::Spring;
-use crate::{ColorRGBA, Rigidbody};
+use crate::{color, ColorRGBA, Rigidbody};
 
 #[derive(Clone)]
 pub struct RigidbodyParams {
@@ -33,6 +33,7 @@ pub struct SpringParams {
     pub(crate) anchor_b: Vec2,
 }
 
+#[derive(Clone)]
 pub struct BodyBuilder {
     pub(crate) body_type: BodyType,
     pub(crate) rigidbody_params: RigidbodyParams,
@@ -116,5 +117,20 @@ impl BodyBuilder {
             spring_params.dampening,
             rigidbodies,
         )
+    }
+
+    pub fn create_joint() -> Rigidbody {
+        let mut rigidbody = Rigidbody::polygon(
+            32,
+            0.05,
+            Vec2::ZERO,
+            1.0,
+            0.0,
+            ColorRGBA::white(),
+        );
+        rigidbody.eternal = false;
+        rigidbody.collision = false;
+        rigidbody.gravity_multiplier = 0.0;
+        rigidbody
     }
 }

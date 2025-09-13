@@ -1,5 +1,6 @@
-use glam::{Vec2, Vec3, Mat3};
+use glam::{Vec2, Vec3, Mat3, Mat2};
 use crate::Rigidbody;
+use crate::utility::{rotate, rotate_in_place};
 
 #[derive(Clone)]
 pub struct WeldJoint {
@@ -7,6 +8,7 @@ pub struct WeldJoint {
     body_b: usize,
     local_anchor_a: Vec2,
     local_anchor_b: Vec2,
+    start_angle: f32,
     reference_angle: f32,
 
     pub beta: f32,
@@ -34,6 +36,7 @@ impl WeldJoint {
             body_b,
             local_anchor_a,
             local_anchor_b,
+            start_angle: a.angle,
             reference_angle,
             beta: 0.05,
         }
@@ -131,5 +134,9 @@ impl WeldJoint {
 
         b.velocity += lin_impulse * inv_mb;
         b.angular_velocity += inv_ib * (rb.perp_dot(lin_impulse) + ang_impulse);
+    }
+
+    pub fn get_anchor_world_position(&self, rigidbodys: &Vec<Rigidbody>) -> Vec2 {
+        rigidbodys[self.body_a].center - rotate(self.local_anchor_a, Vec2::ZERO, rigidbodys[self.body_a].angle - self.start_angle)
     }
 }

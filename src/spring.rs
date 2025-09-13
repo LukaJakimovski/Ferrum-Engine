@@ -3,7 +3,7 @@ use glam::Vec2;
 use crate::ode_solver::{rk4_angular_step, rk4_step};
 use crate::rigidbody::Rigidbody;
 use crate::{ColorRGBA};
-use crate::utility::rotate;
+use crate::utility::rotate_in_place;
 
 #[derive(Clone, Debug, Default)]
 pub struct Spring {
@@ -155,12 +155,12 @@ impl Spring {
         a.angular_velocity = new_omega_a;
         let diff = new_angle_a - self.angle_a;
         self.angle_a = new_angle_a;
-        rotate(&mut self.anchor_a, Vec2::ZERO, diff);
+        rotate_in_place(&mut self.anchor_a, Vec2::ZERO, diff);
 
         b.angular_velocity = new_omega_b;
         let diff = new_angle_b - self.angle_b;
         self.angle_b = new_angle_b;
-        rotate(&mut self.anchor_b, Vec2::ZERO, diff);
+        rotate_in_place(&mut self.anchor_b, Vec2::ZERO, diff);
     }
 
     pub fn update_connector(&mut self, rigidbodys: &Vec<Rigidbody>) {

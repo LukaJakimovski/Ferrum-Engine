@@ -33,7 +33,7 @@ impl World{
             aspect_ratio,
             padding: [0.0; 7],
         };
-        let (vertices, indices) = World::get_vertices_and_indices(&polygons, &springs);
+        let (vertices, indices) = World::get_vertices_and_indices(&polygons, &springs, &weld_joints, &pivot_joints);
         // The instance is a handle to our GPU
         // BackendBit::PRIMARY => Vulkan + Metal + DX12 + Browser WebGPU
         let instance = wgpu::Instance::new(&wgpu::InstanceDescriptor {

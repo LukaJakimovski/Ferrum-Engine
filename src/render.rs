@@ -1,11 +1,12 @@
 use crate::spring::Spring;
-use crate::{ColorRGBA, Rigidbody, World};
+use crate::{ColorRGBA, PivotJoint, Rigidbody, WeldJoint, World};
 use egui_wgpu::wgpu;
 use std::iter;
 use std::sync::Arc;
 use glam::{Vec2, Vec4};
 use wgpu::util::DeviceExt;
 use winit::window::Window;
+use crate::body_builder::BodyBuilder;
 use crate::egui_tools::EguiRenderer;
 
 #[repr(C)]
@@ -66,6 +67,8 @@ impl World {
     pub fn get_vertices_and_indices(
         polygons: &Vec<Rigidbody>,
         springs: &Vec<Spring>,
+        weld_joints: &Vec<WeldJoint>,
+        pivot_joints: &Vec<PivotJoint>,
     ) -> (Vec<Vertex>, Vec<u32>) {
         let mut vertices: Vec<Vertex> = Vec::with_capacity(
             polygons.iter().map(|p| p.vertices.len() + 1).sum::<usize>()
@@ -105,12 +108,26 @@ impl World {
                 &spring.connector.indices,
             );
         }
+        
+        for weld_joint in weld_joints {
+            let mut polygon = BodyBuilder::create_joint();
+            let position = weld_joint.get_anchor_world_position(&polygons);
+            polygon.move_to(position);
+            process(&polygon.vertices, polygon.color, polygon.center, &polygon.indices);
+        }
+
+        for pivot_joint in pivot_joints {
+            let mut polygon = BodyBuilder::create_joint();
+            let position = pivot_joint.get_anchor_world_position(&polygons);
+            polygon.move_to(position);
+            process(&polygon.vertices, polygon.color, polygon.center, &polygon.indices);
+        }
 
         (vertices, indices)
     }
 
     pub(crate) fn render(&mut self) -> Result<(), wgpu::SurfaceError> {
-        let (vertices, indices) = &Self::get_vertices_and_indices(&self.physics.polygons, &self.physics.springs);
+        let (vertices, indices) = &Self::get_vertices_and_indices(&self.physics.polygons, &self.physics.springs, &self.physics.weld_joints, &self.physics.pivot_joints);
         self.ui.window_dimensions.x = self.render.config.width as f32;
         self.ui.window_dimensions.y = self.render.config.height as f32;
 
