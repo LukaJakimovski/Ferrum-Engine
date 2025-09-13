@@ -7,8 +7,8 @@ use crate::utility::rotate;
 pub struct PivotJoint {
     local_anchor_a: Vec2,
     local_anchor_b: Vec2,
-    body_a: usize,
-    body_b: usize,
+    pub(crate) body_a: usize,
+    pub(crate) body_b: usize,
     start_angle: f32,
 
     /// Baumgarte stabilization factor for positional drift (small: 0.01..0.2)

@@ -1,11 +1,11 @@
-use glam::{Vec2, Vec3, Mat3, Mat2};
+use glam::{Vec2, Vec3, Mat3};
 use crate::Rigidbody;
-use crate::utility::{rotate, rotate_in_place};
+use crate::utility::{rotate};
 
 #[derive(Clone)]
 pub struct WeldJoint {
-    body_a: usize,
-    body_b: usize,
+    pub(crate) body_a: usize,
+    pub(crate) body_b: usize,
     local_anchor_a: Vec2,
     local_anchor_b: Vec2,
     start_angle: f32,

@@ -1,7 +1,7 @@
 use glam::Vec2;
 use crate::enums::{BodyType, ColorType};
 use crate::spring::Spring;
-use crate::{color, ColorRGBA, Rigidbody};
+use crate::{ColorRGBA, Rigidbody};
 
 #[derive(Clone)]
 pub struct RigidbodyParams {

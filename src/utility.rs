@@ -8,7 +8,6 @@ use crate::physics::PhysicsSystem;
 
 impl PhysicsSystem {
     pub fn remove_rigidbody(&mut self, index: usize, ui_system: &mut UiSystem) {
-        self.polygons.remove(index);
         let mut i = 0;
         loop {
             if i >= self.springs.len() {
@@ -26,6 +25,40 @@ impl PhysicsSystem {
             }
             i += 1;
         }
+        let mut i = 0;
+        loop {
+            if i >= self.weld_joints.len() {
+                break;
+            }
+            if  self.weld_joints[i].body_a == index || self.weld_joints[i].body_b == index {
+                self.remove_weld_joint(i);
+                continue;
+            }
+            if self.weld_joints[i].body_a > index {
+                self.weld_joints[i].body_a -= 1;
+            }
+            if self.weld_joints[i].body_b > index {
+                self.weld_joints[i].body_b -= 1;
+            }
+            i += 1;
+        }
+        let mut i = 0;
+        loop {
+            if i >= self.pivot_joints.len() {
+                break;
+            }
+            if  self.pivot_joints[i].body_a == index || self.pivot_joints[i].body_b == index {
+                self.remove_pivot_joint(i);
+                continue;
+            }
+            if self.pivot_joints[i].body_a > index {
+                self.pivot_joints[i].body_a -= 1;
+            }
+            if self.pivot_joints[i].body_b > index {
+                self.pivot_joints[i].body_b -= 1;
+            }
+            i += 1;
+        }
         if ui_system.mouse_spring.is_some() && ui_system.mouse_spring.unwrap() > index {
             ui_system.mouse_spring = Some(ui_system.mouse_spring.unwrap() - 1);
         }
@@ -33,6 +66,7 @@ impl PhysicsSystem {
         Self::move_indices(&mut ui_system.selected_polygon, index);
         Self::move_indices(&mut ui_system.spring_polygon, index);
         Self::move_indices(&mut ui_system.spawn_ghost_polygon, index);
+        self.polygons.remove(index);
     }
 
     fn move_indices(option: &mut Option<usize>, index: usize){
@@ -57,6 +91,63 @@ impl PhysicsSystem {
             ui_system.selected_spring = None;
         }
     }
+    pub fn remove_weld_joint(&mut self, index: usize) {
+        let a = self.weld_joints[index].body_a;
+        let b = self.weld_joints[index].body_b;
+
+        let mut i = 0;
+        loop {
+            if i >= self.polygons[a].connected_anchors.len() {
+                break;
+            }
+            if self.polygons[a].connected_anchors[i] == b {
+                self.polygons[a].connected_anchors.remove(i);
+                continue;
+            }
+            i += 1;
+        }
+        let mut i = 0;
+        loop {
+            if i >= self.polygons[b].connected_anchors.len() {
+                break;
+            }
+            if self.polygons[b].connected_anchors[i] == a {
+                self.polygons[b].connected_anchors.remove(i);
+                continue;
+            }
+            i += 1;
+        }
+        self.weld_joints.remove(index);
+    }
+
+    pub fn remove_pivot_joint(&mut self, index: usize) {
+        let a = self.pivot_joints[index].body_a;
+        let b = self.pivot_joints[index].body_b;
+        let mut i = 0;
+        loop {
+            if i >= self.polygons[a].connected_anchors.len() {
+                break;
+            }
+            if self.polygons[a].connected_anchors[i] == b {
+                self.polygons[a].connected_anchors.remove(i);
+                continue;
+            }
+            i += 1;
+        }
+        let mut i = 0;
+        loop {
+            if i >= self.polygons[b].connected_anchors.len() {
+                break;
+            }
+            if self.polygons[b].connected_anchors[i] == a {
+                self.polygons[b].connected_anchors.remove(i);
+                continue;
+            }
+            i += 1;
+        }
+        self.pivot_joints.remove(index);
+    }
+
 }
 
 
