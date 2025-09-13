@@ -10,6 +10,8 @@ pub struct WeldJoint {
     local_anchor_b: Vec2,
     start_angle: f32,
     reference_angle: f32,
+    pub a_index: usize,
+    pub b_index: usize,
 
     pub beta: f32,
 }
@@ -28,7 +30,9 @@ impl WeldJoint {
             b = &mut right[0];
         }
         a.connected_anchors.push(body_b);
+        let a_index = a.connected_anchors.len() - 1;
         b.connected_anchors.push(body_a);
+        let b_index = b.connected_anchors.len() - 1;
         
         let reference_angle = b.angle - a.angle;
         Self {
@@ -36,6 +40,8 @@ impl WeldJoint {
             body_b,
             local_anchor_a,
             local_anchor_b,
+            a_index,
+            b_index,
             start_angle: a.angle,
             reference_angle,
             beta: 0.05,

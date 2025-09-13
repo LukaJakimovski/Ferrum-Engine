@@ -379,12 +379,39 @@ impl UiSystem {
         if button == MouseButton::Right {
             if state.is_pressed() && !self.is_pointer_used {
                 self.pressed_buttons[Mouse::Right as usize] = 1;
-                let polygon_under_mouse = self.get_polygon_under_mouse(physics_system);
-                if polygon_under_mouse.is_some() {
-                physics_system.remove_rigidbody(polygon_under_mouse.unwrap(), self);
+                let mut erased = false;
+                for i in (0..physics_system.weld_joints.len()).rev() {
+                    let mut polygon = BodyBuilder::create_joint();
+                    let position = physics_system.weld_joints[i].get_anchor_world_position(&physics_system.polygons);
+                    polygon.move_to(position);
+                    if self.is_colliding_mouse(&polygon){
+                        physics_system.remove_weld_joint(i);
+                        erased = true;
+                        break;
+                    }
                 }
+
+                for i in (0..physics_system.pivot_joints.len()).rev() {
+                    let mut polygon = BodyBuilder::create_joint();
+                    let position = physics_system.pivot_joints[i].get_anchor_world_position(&physics_system.polygons);
+                    polygon.move_to(position);
+                    if self.is_colliding_mouse(&polygon) && !erased{
+                        physics_system.remove_pivot_joint(i);
+                        erased = true;
+                        break;
+                    }
+                }
+
                 let spring_under_mouse = self.get_spring_under_mouse(physics_system);
-                if spring_under_mouse.is_some() {physics_system.remove_spring(spring_under_mouse.unwrap(), self); }
+                if spring_under_mouse.is_some() && !erased{
+                    physics_system.remove_spring(spring_under_mouse.unwrap(), self);
+                    erased = true;
+                }
+
+                let polygon_under_mouse = self.get_polygon_under_mouse(physics_system);
+                if polygon_under_mouse.is_some() && !erased{
+                    physics_system.remove_rigidbody(polygon_under_mouse.unwrap(), self);
+                }
             } else {
                 self.pressed_buttons[Mouse::Right as usize] = 0;
             }

@@ -122,7 +122,7 @@ impl BodyBuilder {
     pub fn create_joint() -> Rigidbody {
         let mut rigidbody = Rigidbody::polygon(
             32,
-            0.05,
+            0.03,
             Vec2::ZERO,
             1.0,
             0.0,

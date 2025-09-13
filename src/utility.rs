@@ -94,28 +94,25 @@ impl PhysicsSystem {
     pub fn remove_weld_joint(&mut self, index: usize) {
         let a = self.weld_joints[index].body_a;
         let b = self.weld_joints[index].body_b;
-
-        let mut i = 0;
-        loop {
-            if i >= self.polygons[a].connected_anchors.len() {
-                break;
+        let a_i = self.weld_joints[index].a_index;
+        let b_i = self.weld_joints[index].b_index;
+        self.polygons[a].connected_anchors.remove(a_i);
+        self.polygons[b].connected_anchors.remove(b_i);
+        for weld_joint in &mut self.weld_joints{
+            if weld_joint.a_index > index {
+                weld_joint.a_index -= 1;
             }
-            if self.polygons[a].connected_anchors[i] == b {
-                self.polygons[a].connected_anchors.remove(i);
-                continue;
+            if weld_joint.b_index > index {
+                weld_joint.b_index -= 1;
             }
-            i += 1;
         }
-        let mut i = 0;
-        loop {
-            if i >= self.polygons[b].connected_anchors.len() {
-                break;
+        for pivot_joint in &mut self.pivot_joints{
+            if pivot_joint.a_index > index {
+                pivot_joint.a_index -= 1;
             }
-            if self.polygons[b].connected_anchors[i] == a {
-                self.polygons[b].connected_anchors.remove(i);
-                continue;
+            if pivot_joint.b_index > index {
+                pivot_joint.b_index -= 1;
             }
-            i += 1;
         }
         self.weld_joints.remove(index);
     }
@@ -123,27 +120,25 @@ impl PhysicsSystem {
     pub fn remove_pivot_joint(&mut self, index: usize) {
         let a = self.pivot_joints[index].body_a;
         let b = self.pivot_joints[index].body_b;
-        let mut i = 0;
-        loop {
-            if i >= self.polygons[a].connected_anchors.len() {
-                break;
+        let a_i = self.pivot_joints[index].a_index;
+        let b_i = self.pivot_joints[index].b_index;
+        self.polygons[a].connected_anchors.remove(a_i);
+        self.polygons[b].connected_anchors.remove(b_i);
+        for weld_joint in &mut self.weld_joints{
+            if weld_joint.a_index > index {
+                weld_joint.a_index -= 1;
             }
-            if self.polygons[a].connected_anchors[i] == b {
-                self.polygons[a].connected_anchors.remove(i);
-                continue;
+            if weld_joint.b_index > index {
+                weld_joint.b_index -= 1;
             }
-            i += 1;
         }
-        let mut i = 0;
-        loop {
-            if i >= self.polygons[b].connected_anchors.len() {
-                break;
+        for pivot_joint in &mut self.pivot_joints{
+            if pivot_joint.a_index > index {
+                pivot_joint.a_index -= 1;
             }
-            if self.polygons[b].connected_anchors[i] == a {
-                self.polygons[b].connected_anchors.remove(i);
-                continue;
+            if pivot_joint.b_index > index {
+                pivot_joint.b_index -= 1;
             }
-            i += 1;
         }
         self.pivot_joints.remove(index);
     }
@@ -171,7 +166,7 @@ impl UiSystem {
         let mut polygon_index = None;
         let position = self.get_mouse_world_position();
         let mouse_polygon =
-            Rigidbody::rectangle(0.03, 0.03, position, 1.0, 1.0, ColorRGBA::white());
+            Rigidbody::rectangle(0.02, 0.02, position, 1.0, 1.0, ColorRGBA::white());
         for i in (0..physics_system.polygons.len()).rev() {
             let result = sat_collision(&physics_system.polygons[i], &mouse_polygon);
             if result[1].y != 0.0 && (self.spawn_ghost_polygon == None || i != self.spawn_ghost_polygon.unwrap()) && (self.spring_polygon == None || i != self.spring_polygon.unwrap()) {
@@ -186,7 +181,7 @@ impl UiSystem {
         let mut polygons = vec![];
         let position = self.get_mouse_world_position();
         let mouse_polygon =
-            Rigidbody::rectangle(0.03, 0.03, position, 1.0, 1.0, ColorRGBA::white());
+            Rigidbody::rectangle(0.02, 0.02, position, 1.0, 1.0, ColorRGBA::white());
         for i in (0..physics_system.polygons.len()).rev() {
             let result = sat_collision(&physics_system.polygons[i], &mouse_polygon);
             if result[1].y != 0.0 && (self.spawn_ghost_polygon == None || i != self.spawn_ghost_polygon.unwrap()) && (self.spring_polygon == None || i != self.spring_polygon.unwrap()) {
@@ -210,11 +205,22 @@ impl UiSystem {
         true
     }
 
+    pub fn is_colliding_mouse(&self, polygon: &Rigidbody) -> bool{
+        let position = self.get_mouse_world_position();
+        let mouse_polygon =
+            Rigidbody::rectangle(0.02, 0.02, position, 1.0, 1.0, ColorRGBA::white());
+        let result = sat_collision(polygon, &mouse_polygon);
+        if result[1].y != 0.0 {
+            return true;
+        }
+        false
+    }
+
     pub fn get_spring_under_mouse(&self, physics_system: &mut PhysicsSystem) -> Option<usize> {
         let mut spring_index = None;
         let position = self.get_mouse_world_position();
         let mouse_spring =
-            Rigidbody::rectangle(0.03, 0.03, position, 1.0, 1.0, ColorRGBA::white());
+            Rigidbody::rectangle(0.02, 0.02, position, 1.0, 1.0, ColorRGBA::white());
         for i in 0..physics_system.springs.len() {
             let result = sat_collision(&mouse_spring, &physics_system.springs[i].connector);
             if result[1].y != 0.0 && (self.spring_polygon == None || i != self.spring_polygon.unwrap()) {
