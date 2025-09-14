@@ -1,12 +1,10 @@
 For version 0.3.0
 
-Method to edit the properties of a joint
 Way to clamp anchors to ensure they are on polygons.
+Method to edit the properties of a joint
 Method to edit dragging strength
-Fixed time step
 
 Recovery from long step calculation time (crash prevention)
 Calculation of potential energy
 Motors
 Better performance monitoring tools
-Make it so that things dont phase

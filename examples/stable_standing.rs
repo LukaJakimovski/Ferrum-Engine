@@ -46,9 +46,9 @@ fn main() {
         ColorRGBA::random_hsl(),
     ));
     polygons.push(Rigidbody::rectangle(
-        1000.0,
+        20.0,
         1.0,
-        Vec2 { x: 1.0, y: 0.0 },
+        Vec2 { x: 0.0, y: 0.0 },
         f32::MAX / 100000000000.0,
         0.6,
         ColorRGBA::random_hsl(),
@@ -59,8 +59,8 @@ fn main() {
         polygon.rotate(1.0);
     }
     let parameters = Parameters {
-        delta_time: 0.00001,
-        updates_per_frame: 25,
+        delta_time: 0.0,
+        updates_per_frame: 1,
         angular_velocity: true,
         initial_camera: Camera {
             camera_pos: Vec4::new(0.0, 2.5, 0.0, -3.0),

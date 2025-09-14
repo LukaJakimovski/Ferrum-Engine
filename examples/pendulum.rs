@@ -30,6 +30,7 @@ fn main() {
         1.01,
         ColorRGBA::random_hsl(),
     ));
+    polygons[0].collision = false;
     polygons[0].gravity_multiplier = 0.0;
 
     polygons.push(Rigidbody::rectangle(

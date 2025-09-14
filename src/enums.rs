@@ -96,6 +96,7 @@ pub enum InputMode {
     Edit = 1,
     Drag = 2,
     Move = 3,
+    Nothing,
 }
 
 #[derive(Debug, PartialEq)]

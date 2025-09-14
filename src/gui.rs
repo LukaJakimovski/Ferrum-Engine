@@ -486,7 +486,7 @@ impl RenderSystem {
     }
 
     fn input_menu(&mut self, ui_system: &mut UiSystem) {
-        egui::Window::new("Input Mode")
+        egui::Window::new("Left Click Mode")
             .resizable(false)
             .vscroll(false)
             .default_open(true)
@@ -495,22 +495,15 @@ impl RenderSystem {
             .title_bar(false)
             .show(self.egui_renderer.context(), |ui| {
                 let current_mode = ui_system.input_mode;
-                ui.heading("Input Mode Selector");
+                ui.heading("Left Click Mode Selector");
                 egui::ComboBox::from_label("Mode")
                     .selected_text(format!("{:?}", ui_system.input_mode))
                     .show_ui(ui, |ui| {
-                        ui.selectable_value(
-                            &mut ui_system.input_mode,
-                            InputMode::Spawn,
-                            "Spawn Bodies",
-                        );
-                        ui.selectable_value(
-                            &mut ui_system.input_mode,
-                            InputMode::Edit,
-                            "Edit Bodies",
-                        );
+                        ui.selectable_value(&mut ui_system.input_mode, InputMode::Spawn, "Spawn Bodies", );
+                        ui.selectable_value(&mut ui_system.input_mode, InputMode::Edit, "Edit Bodies", );
                         ui.selectable_value(&mut ui_system.input_mode, InputMode::Drag, "Drag Body w/ Spring");
-                        ui.selectable_value(&mut ui_system.input_mode, InputMode::Move, "Move Body w/ Mouse")
+                        //ui.selectable_value(&mut ui_system.input_mode, InputMode::Move, "Move Body w/ Mouse");
+                        ui.selectable_value(&mut ui_system.input_mode, InputMode::Nothing, "Nothing", );
                     });
                 if ui_system.input_mode != current_mode {
                     if ui_system.input_mode == InputMode::Spawn {
