@@ -88,6 +88,8 @@ impl World{
             .find(|f| f.is_srgb())
             .unwrap_or(surface_caps.formats[0]);
 
+        #[cfg(target_os = "windows")]
+        let vsync_mode = 2;
         #[cfg(all(target_os = "windows", target_arch = "x86_64", target_env = "gnu"))]
         let vsync_mode = 1;
         #[cfg(not(all(target_os = "windows", target_arch = "x86_64", target_env = "gnu")))]
