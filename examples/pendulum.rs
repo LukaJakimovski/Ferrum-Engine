@@ -69,5 +69,5 @@ fn main() {
 
 
 
-    run(polygons, vec![], vec![], pivot_joints, parameters).unwrap();
+    run(polygons, vec![], vec![], pivot_joints, parameters);
 }

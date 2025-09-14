@@ -25,7 +25,7 @@ impl World{
         weld_joints: Vec<WeldJoint>,
         pivot_joints: Vec<PivotJoint>,
         parameters: Parameters,
-    ) -> anyhow::Result<World> {
+    ) -> Self{
         let size = window.inner_size();
         let aspect_ratio = size.width as f32 / size.height as f32;
         let uniforms = Uniforms {
@@ -34,21 +34,11 @@ impl World{
             padding: [0.0; 7],
         };
         let (vertices, indices) = World::get_vertices_and_indices(&polygons, &springs, &weld_joints, &pivot_joints);
-        // The instance is a handle to our GPU
-        // BackendBit::PRIMARY => Vulkan + Metal + DX12 + Browser WebGPU
         let instance = wgpu::Instance::new(&wgpu::InstanceDescriptor {
-            #[cfg(not(target_arch = "wasm32"))]
             backends: wgpu::Backends::PRIMARY,
-            #[cfg(target_arch = "wasm32")]
-            backends: wgpu::Backends::GL,
             ..Default::default()
         });
-
-        // # Safety
-        //
-        // The surface needs to live as long as the window that created it.
-        // State owns the window so this should be safe.
-        let surface = instance.create_surface(window.clone())?;
+        let surface = instance.create_surface(window.clone()).expect("Unable to create surface");
 
         let adapter = instance
             .request_adapter(&wgpu::RequestAdapterOptions {
@@ -64,23 +54,14 @@ impl World{
                 &wgpu::DeviceDescriptor {
                     label: None,
                     required_features: wgpu::Features::empty(),
-                    // WebGL doesn't support all of wgpu's features, so if
-                    // we're building for the web we'll have to disable some.
-                    required_limits: if cfg!(target_arch = "wasm32") {
-                        wgpu::Limits::downlevel_webgl2_defaults()
-                    } else {
-                        wgpu::Limits::default()
-                    },
+                    required_limits: Default::default(),
                     memory_hints: Default::default(),
                 },
                 None,
             )
-            .await?;
+            .await.expect("Failed to get device");
 
         let surface_caps = surface.get_capabilities(&adapter);
-        // Shader code in this tutorial assumes a@ Srgb surface texture. Using a different
-        // one will result all the colors coming out darker. If you want to support non
-        // Srgb surfaces, you'll need to account for that when drawing to the frame.
         let surface_format = surface_caps
             .formats
             .iter()
@@ -181,12 +162,8 @@ impl World{
                 strip_index_format: None,
                 front_face: wgpu::FrontFace::Ccw,
                 cull_mode: None,
-                // Setting this to anything other than Fill requires Features::POLYGON_MODE_LINE
-                // or Features::POLYGON_MODE_POINT
                 polygon_mode: wgpu::PolygonMode::Fill,
-                // Requires Features::DEPTH_CLIP_CONTROL
                 unclipped_depth: false,
-                // Requires Features::CONSERVATIVE_RASTERIZATION
                 conservative: false,
             },
             depth_stencil: None,
@@ -195,10 +172,7 @@ impl World{
                 mask: !0,
                 alpha_to_coverage_enabled: false,
             },
-            // If the pipeline will be used with a multiview render pass, this
-            // indicates how many array layers the attachments will have.
             multiview: None,
-            // Useful for optimizing shader compilation on Android
             cache: None,
         });
 
@@ -318,17 +292,13 @@ impl World{
             window_dimensions: Vec2::new(render.config.width as f32, render.config.height as f32),
         };
 
-
-
-
-
-        Ok(Self {
+        Self {
             render,
             physics,
             timing,
             color_system,
             ui,
             parameters,
-        })
+        }
     }
 }

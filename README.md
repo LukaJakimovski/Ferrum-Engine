@@ -130,3 +130,5 @@ and its direction. This value is two-dimensional first value is horizontal gravi
 
 Kinetic energy info: Displays the total amount of kinetic energy in the simulation.
 
+### Acknowledgements 
+- [Learn wgpu](https://sotrh.github.io/learn-wgpu/) by sotrh – Helped me with boiler plate for the wgpu code.

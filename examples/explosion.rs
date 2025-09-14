@@ -39,5 +39,5 @@ fn main() {
         clear_color: ColorRGBA::new(0.0, 0.0, 0.0, 1.0),
         is_running: false,
     };
-    run(polygons, vec![], vec![], vec![], parameters).unwrap();
+    run(polygons, vec![], vec![], vec![], parameters);
 }

@@ -133,7 +133,6 @@ impl World {
 
         self.render.window.request_redraw();
 
-        // We can't render unless the surface is configured
         if !self.render.is_surface_configured {
             return Ok(());
         }
@@ -169,7 +168,6 @@ impl World {
                 occlusion_query_set: None,
                 timestamp_writes: None,
             });
-            // Always update uniforms
             let size = self.render.window.inner_size();
             self.render.uniforms.camera_pos = self.ui.camera.camera_pos;
             self.render.uniforms.aspect_ratio = size.width as f32 / size.height as f32;

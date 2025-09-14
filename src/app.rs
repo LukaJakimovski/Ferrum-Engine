@@ -12,9 +12,7 @@ use crate::pivot_joint::PivotJoint;
 use crate::weld_joint::WeldJoint;
 
 pub struct App {
-    #[cfg(target_arch = "wasm32")]
-    proxy: Option<winit::event_loop::EventLoopProxy<State>>,
-    state: Option<World>,
+    world: Option<World>,
     polygons: Vec<Rigidbody>,
     springs: Vec<Spring>,
     weld_joints: Vec<WeldJoint>,
@@ -25,19 +23,14 @@ pub struct App {
 
 impl App {
     pub fn new(
-        #[cfg(target_arch = "wasm32")] event_loop: &EventLoop<State>,
         polygons: Vec<Rigidbody>,
         springs: Vec<Spring>,
         weld_joints: Vec<WeldJoint>,
         pivot_joints: Vec<PivotJoint>,
         parameters: Parameters,
     ) -> Self {
-        #[cfg(target_arch = "wasm32")]
-        let proxy = Some(event_loop.create_proxy());
         Self {
-            state: None,
-            #[cfg(target_arch = "wasm32")]
-            proxy,
+            world: None,
             polygons,
             springs,
             weld_joints,
@@ -52,25 +45,8 @@ impl ApplicationHandler<World> for App {
         #[allow(unused_mut)]
         let mut window_attributes = Window::default_attributes();
 
-        #[cfg(target_arch = "wasm32")]
-        {
-            use wasm_bindgen::JsCast;
-            use winit::platform::web::WindowAttributesExtWebSys;
-
-            const CANVAS_ID: &str = "canvas";
-
-            let window = wgpu::web_sys::window().unwrap_throw();
-            let document = window.document().unwrap_throw();
-            let canvas = document.get_element_by_id(CANVAS_ID).unwrap_throw();
-            let html_canvas_element = canvas.unchecked_into();
-            window_attributes = window_attributes.with_canvas(Some(html_canvas_element));
-        }
-
         let window = Arc::new(event_loop.create_window(window_attributes).unwrap());
-
-        #[cfg(not(target_arch = "wasm32"))]
-        {
-            self.state = Some(
+            self.world = Some(
                 pollster::block_on(World::new(
                     window,
                     self.polygons.clone(),
@@ -78,40 +54,13 @@ impl ApplicationHandler<World> for App {
                     self.weld_joints.clone(),
                     self.pivot_joints.clone(),
                     self.parameters.clone(),
-                ))
-                .unwrap(),
+                )),
             );
-        }
-
-        #[cfg(target_arch = "wasm32")]
-        {
-            if let Some(proxy) = self.proxy.take() {
-                wasm_bindgen_futures::spawn_local(async move {
-                    assert!(
-                        proxy
-                            .send_event(
-                                State::new(window)
-                                    .await
-                                    .expect("Unable to create canvas!!!")
-                            )
-                            .is_ok()
-                    )
-                });
-            }
-        }
     }
 
     #[allow(unused_mut)]
     fn user_event(&mut self, _event_loop: &ActiveEventLoop, mut event: World) {
-        #[cfg(target_arch = "wasm32")]
-        {
-            event.window.request_redraw();
-            event.resize(
-                event.window.inner_size().width,
-                event.window.inner_size().height,
-            );
-        }
-        self.state = Some(event);
+        self.world = Some(event);
     }
 
     fn window_event(
@@ -120,12 +69,12 @@ impl ApplicationHandler<World> for App {
         _window_id: winit::window::WindowId,
         event: WindowEvent,
     ) {
-        let state = self.state.as_mut().unwrap();
+        let state = self.world.as_mut().unwrap();
         state
             .render.egui_renderer
             .handle_input(state.render.window.as_ref(), &event);
 
-        let world = match &mut self.state {
+        let world = match &mut self.world {
             Some(canvas) => canvas,
             None => return,
         };
@@ -142,7 +91,7 @@ impl ApplicationHandler<World> for App {
                         world.resize(size.width, size.height);
                     }
                     Err(e) => {
-                        log::error!("Unable to render {}", e);
+                        eprintln!("Unable to render {}", e);
                     }
                 }
             }
@@ -171,36 +120,14 @@ pub fn run(
     weld_joints: Vec<WeldJoint>,
     pivot_joints: Vec<PivotJoint>,
     parameters: Parameters,
-) -> anyhow::Result<()> {
-    #[cfg(not(target_arch = "wasm32"))]
-    {
-        env_logger::init();
-    }
-    #[cfg(target_arch = "wasm32")]
-    {
-        console_log::init_with_level(log::Level::Info).unwrap_throw();
-    }
-
-    let event_loop = EventLoop::with_user_event().build()?;
+) {
+    let event_loop = EventLoop::with_user_event().build().expect("Unable to create event loop");
     let mut app = App::new(
         rigidbodys,
         springs,
         weld_joints,
         pivot_joints,
         parameters,
-        #[cfg(target_arch = "wasm32")]
-        &event_loop,
     );
-    event_loop.run_app(&mut app)?;
-
-    Ok(())
-}
-
-#[cfg(target_arch = "wasm32")]
-#[wasm_bindgen(start)]
-pub fn run_web() -> Result<(), wasm_bindgen::JsValue> {
-    console_error_panic_hook::set_once();
-    run().unwrap_throw();
-
-    Ok(())
+    event_loop.run_app(&mut app).expect("Error");
 }
