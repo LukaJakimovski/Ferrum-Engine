@@ -33,7 +33,6 @@ impl RenderSystem {
                 ui.checkbox(&mut ui_system.menus[Menu::Energy as usize], "Kinetic Energy Info", );
                 ui.checkbox(&mut ui_system.menus[Menu::FPS as usize], "Show FPS");
                 ui.checkbox(&mut ui_system.menus[Menu::Color as usize], "Color Menu");
-                //ui.checkbox(&mut ui_system.menus[Menu::Debug as usize], "Debug Menu");
                 ui.checkbox(&mut ui_system.menus[Menu::Advanced as usize], "Advanced Settings");
             });
 
@@ -60,9 +59,6 @@ impl RenderSystem {
         }
         if ui_system.menus[Menu::Advanced as usize] {
             self.advanced_menu(parameters)
-        }
-        if ui_system.menus[Menu::Debug as usize] {
-            //self.debug_menu(physics_system, ui_system)
         }
         if ui_system.menus[Menu::Color as usize] {
             self.color_menu(color_system)
@@ -697,22 +693,6 @@ impl RenderSystem {
                     ui.label("Try left clicking one");
                 });
         }
-    }
-
-    fn debug_menu(&mut self, physics_system: &mut PhysicsSystem, ui_system: &mut UiSystem) {
-        egui::Window::new("Debug Menu")
-            .resizable(false)
-            .vscroll(false)
-            .default_open(true)
-            .default_height(275.0)
-            .title_bar(false)
-            .show(self.egui_renderer.context(), |ui| {
-                ui.heading("Debug Menu");
-                ui.label(format!("Polygons: {}", physics_system.polygons.len()));
-                if ui_system.spawn_ghost_polygon.is_some(){
-                    ui.label(format!("Ghost polygon: {}", ui_system.spawn_ghost_polygon.unwrap()));
-                }
-            });
     }
     
     fn color_menu(&mut self, color_system: &mut ColorSystem) {

@@ -24,7 +24,7 @@ impl World{
         springs: Vec<Spring>,
         weld_joints: Vec<WeldJoint>,
         pivot_joints: Vec<PivotJoint>,
-        mut parameters: Parameters,
+        parameters: Parameters,
     ) -> anyhow::Result<World> {
         let size = window.inner_size();
         let aspect_ratio = size.width as f32 / size.height as f32;
@@ -87,12 +87,18 @@ impl World{
             .copied()
             .find(|f| f.is_srgb())
             .unwrap_or(surface_caps.formats[0]);
+
+        #[cfg(all(target_os = "windows", target_arch = "x86_64", target_env = "gnu"))]
+        let vsync_mode = 1;
+        #[cfg(not(all(target_os = "windows", target_arch = "x86_64", target_env = "gnu")))]
+        let vsync_mode = 0;
+
         let config = wgpu::SurfaceConfiguration {
             usage: wgpu::TextureUsages::RENDER_ATTACHMENT,
             format: surface_format,
             width: size.width,
             height: size.height,
-            present_mode: surface_caps.present_modes[0],
+            present_mode: surface_caps.present_modes[vsync_mode],
             alpha_mode: surface_caps.alpha_modes[0],
             view_formats: vec![],
             desired_maximum_frame_latency: 2,
@@ -244,11 +250,6 @@ impl World{
             end_range: ColorRange { x: Range{start: 360.0, end: 390.0}, y: Range{start: 85.0, end: 95.0}, z: Range{start: 65.0, end: 75.0} },
             color_count: 1028,
         };
-        #[cfg(all(target_os = "windows", target_arch = "x86_64", target_env = "gnu"))]
-        let scale_divider = 100.0;
-        #[cfg(not(all(target_os = "windows", target_arch = "x86_64", target_env = "gnu")))]
-        let scale_divider = 1.0;
-        parameters.initial_camera.scaling_factor /= scale_divider;
         let mut menus = [false; 16];
         menus[Menu::Input as usize] = true;
         menus[Menu::Config as usize] = true;

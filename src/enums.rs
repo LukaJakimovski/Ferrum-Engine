@@ -69,7 +69,6 @@ pub enum Menu {
     Editor = 6,
     DragParams = 7,
     Advanced = 8,
-    Debug = 9,
     Color = 10,
 }
 
