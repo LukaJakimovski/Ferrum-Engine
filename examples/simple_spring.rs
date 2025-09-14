@@ -46,7 +46,7 @@ fn main() {
         world_size: 100.0,
         gravity_force: Vec2::new(0.0, -9.81),
         clear_color: ColorRGBA::new(0.0, 0.0, 0.0, 1.0),
-        is_running: true,
+        is_running: false,
     };
     run(rigidbodies, springs, vec![], vec![], parameters).unwrap();
 }

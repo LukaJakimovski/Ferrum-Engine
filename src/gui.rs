@@ -33,7 +33,7 @@ impl RenderSystem {
                 ui.checkbox(&mut ui_system.menus[Menu::Energy as usize], "Kinetic Energy Info", );
                 ui.checkbox(&mut ui_system.menus[Menu::FPS as usize], "Show FPS");
                 ui.checkbox(&mut ui_system.menus[Menu::Color as usize], "Color Menu");
-                ui.checkbox(&mut ui_system.menus[Menu::Debug as usize], "Debug Menu");
+                //ui.checkbox(&mut ui_system.menus[Menu::Debug as usize], "Debug Menu");
                 ui.checkbox(&mut ui_system.menus[Menu::Advanced as usize], "Advanced Settings");
             });
 
@@ -62,7 +62,7 @@ impl RenderSystem {
             self.advanced_menu(parameters)
         }
         if ui_system.menus[Menu::Debug as usize] {
-            self.debug_menu(physics_system, ui_system)
+            //self.debug_menu(physics_system, ui_system)
         }
         if ui_system.menus[Menu::Color as usize] {
             self.color_menu(color_system)
@@ -245,6 +245,7 @@ impl RenderSystem {
                     });
                 match spawn_parameters.body_type {
                     BodyType::RegularPolygon => {
+                        ui.label("Click anywhere on the screen not overlapping another rigidbody to spawn a rigidbody");
                         egui::ComboBox::from_label("Color")
                             .selected_text(format!(
                                 "{:?}",
@@ -291,6 +292,7 @@ impl RenderSystem {
                         });
                     }
                     BodyType::Rectangle => {
+                        ui.label("Click anywhere on the screen not overlapping another rigidbody to spawn another");
                         egui::ComboBox::from_label("Color")
                             .selected_text(format!(
                                 "{:?}",
@@ -441,6 +443,10 @@ impl RenderSystem {
                         }
                     }
                 } else if spawn_parameters.body_type == BodyType::Spring {
+                    ui.label("To spawn a spring:");
+                    ui.label("Click on a rigidbody and drag.");
+                    ui.label("Drop the spring on a different rigidbody to spawn a spring.");
+                    ui.label("Will drag rigidbody if simulation is running");
                     ui.columns(2, |ui| {
                         ui[0].label("Pull Strength/Stiffness");
                         ui[1].add(
@@ -478,9 +484,13 @@ impl RenderSystem {
                         };
                     });
                 } else if spawn_parameters.body_type == BodyType::WeldJoint || spawn_parameters.body_type == BodyType::PivotJoint {
-                    ui.columns(2, |ui| {
-                        ui[0].label("Try overlapping two polygons using the move tool and click an overlapping section");
-                    })
+                    ui.label("To spawn a joint:");
+                    ui.label("Stop the simulation using the config menu.");
+                    ui.label("Go to select mode.");
+                    ui.label("Select a rigidbody.");
+                    ui.label("Change it's position to be overlapping another rigidbody.");
+                    ui.label("Change to spawn mode.");
+                    ui.label("Click an overlapping section to spawn a rigidbody");
                 }
             });
     }
