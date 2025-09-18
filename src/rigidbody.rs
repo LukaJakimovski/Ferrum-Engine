@@ -11,7 +11,7 @@ pub struct Rigidbody {
     pub mass: f32,
     pub velocity: Vec2,
     pub angular_velocity: f32,
-    pub moment_of_inertia: f32,
+    pub inertia: f32,
     pub area: f32,
     pub restitution: f32,
     pub force: Vec2,
@@ -54,7 +54,7 @@ impl Rigidbody {
         let mut polygon = Rigidbody {
             angular_velocity: 0.0,
             area: 0.0,
-            moment_of_inertia: 0.0,
+            inertia: 0.0,
             mass,
             velocity: Vec2::ZERO,
             radius: 0.0,
@@ -105,7 +105,7 @@ impl Rigidbody {
             angular_velocity: 0.0,
             area: 0.0,
             color,
-            moment_of_inertia: 0.0,
+            inertia: 0.0,
             mass,
             velocity: Vec2::ZERO,
             radius: 0.0,
@@ -160,7 +160,7 @@ impl Rigidbody {
         let mut polygon = Rigidbody {
             angular_velocity: 0.0,
             area: 0.0,
-            moment_of_inertia: 0.0,
+            inertia: 0.0,
             mass,
             velocity: Vec2::ZERO,
             color,
@@ -294,7 +294,7 @@ impl Rigidbody {
         let cy = self.center.y;
         let inertia_centroid = inertia_origin - self.area * (cx * cx + cy * cy);
 
-        self.moment_of_inertia = inertia_centroid * (self.mass / self.area.abs());
+        self.inertia = inertia_centroid * (self.mass / self.area.abs());
     }
 
     pub fn translate(&mut self, pos: Vec2) -> &mut Self {
@@ -340,7 +340,7 @@ impl Rigidbody {
             self.angle,
             self.angular_velocity,
             dt,
-            self.moment_of_inertia,
+            self.inertia,
             &force,
         );
         let diff = new_angle_b - self.angle;
@@ -357,7 +357,7 @@ impl Rigidbody {
         let mut kinetic_energy = 0.0;
         kinetic_energy += 0.5 * self.mass * self.velocity.dot(self.velocity);
         kinetic_energy +=
-            0.5 * self.moment_of_inertia * self.angular_velocity * self.angular_velocity;
+            0.5 * self.inertia * self.angular_velocity * self.angular_velocity;
         if kinetic_energy < 0.0 {
             return 0.0;
         }

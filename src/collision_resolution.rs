@@ -176,8 +176,8 @@ impl PhysicsSystem {
 
             let restitution = (polygon1.restitution + polygon2.restitution) / 2.0;
 
-            let i1 = 1.0 / polygon1.moment_of_inertia;
-            let i2 = 1.0 / polygon2.moment_of_inertia;
+            let i1 = 1.0 / polygon1.inertia;
+            let i2 = 1.0 / polygon2.inertia;
 
             let rn1 = r1.perp_dot(normal);
             let rn2 = r2.perp_dot(normal);

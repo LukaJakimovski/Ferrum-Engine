@@ -1,5 +1,5 @@
 use glam::{Vec2, Vec4};
-use ferrum_engine::{run, Camera, ColorRGBA, Parameters, Rigidbody, WeldJoint};
+use ferrum_engine::{run, Camera, ColorRGBA, Parameters, PivotJoint, Rigidbody};
 
 fn main() {
     let parameters = Parameters {
@@ -46,10 +46,10 @@ fn main() {
     let mut weld_joints = vec![];
 
     weld_joints.push(
-        WeldJoint::new(Vec2::new(0.2, 0.0), Vec2::new(-0.2, 0.0), &mut polygons, 1, 0)
+        PivotJoint::new(Vec2::new(0.135, 0.0), &mut polygons, 1, 0)
     );
 
 
 
-    run(polygons, vec![], weld_joints, vec![], parameters);
+    run(polygons, vec![], vec![], weld_joints, parameters);
 }

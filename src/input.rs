@@ -1,3 +1,4 @@
+use std::fmt::Debug;
 use glam::Vec2;
 use crate::body_builder::{BodyBuilder, SpringParams};
 use crate::enums::{BodyType, DraggingState, InputMode, Keys, Menu, Mouse};
@@ -175,6 +176,13 @@ impl UiSystem {
                     self.pressed_keys[Keys::Minus as usize] = 0
                 }
             }
+            winit::keyboard::KeyCode::ControlLeft => {
+                if _pressed {
+                    self.pressed_keys[Keys::LeftCtrl as usize] = 1;
+                } else if !_pressed {
+                    self.pressed_keys[Keys::LeftCtrl as usize] = 0;
+                }
+            }
             winit::keyboard::KeyCode::Escape => {
                 event_loop.exit();
             }
@@ -320,12 +328,10 @@ impl UiSystem {
                         if under_mouse.len() >= 2 {
                             for i in 0..under_mouse.len() {
                                 for j in i+1..under_mouse.len() {
-                                    let anchor_a = position - physics_system.polygons[under_mouse[i]].center;
-                                    let anchor_b = position - physics_system.polygons[under_mouse[j]].center;
                                     if self.spawn_parameters.body_type == BodyType::WeldJoint {
-                                        physics_system.weld_joints.push(WeldJoint::new(anchor_a, anchor_b, &mut physics_system.polygons, under_mouse[i], under_mouse[j]));
+                                        physics_system.weld_joints.push(WeldJoint::new(position, &mut physics_system.polygons, under_mouse[i], under_mouse[j]));
                                     } else if self.spawn_parameters.body_type == BodyType::PivotJoint{
-                                        physics_system.pivot_joints.push(PivotJoint::new(anchor_a, anchor_b, &mut physics_system.polygons, under_mouse[i], under_mouse[j]));
+                                        physics_system.pivot_joints.push(PivotJoint::new(position, &mut physics_system.polygons, under_mouse[i], under_mouse[j]));
                                     }
                                 }
                             }
@@ -422,6 +428,9 @@ impl UiSystem {
             } else {
                 self.pressed_buttons[Mouse::Middle as usize] = 0;
             }
+        }
+        if button == MouseButton::Left && self.pressed_keys[Keys::LeftCtrl as usize] == 1 {
+            println!("{}", self.get_mouse_world_position());
         }
     }
 }

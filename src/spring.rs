@@ -140,7 +140,7 @@ impl Spring {
             a.angle,
             a.angular_velocity,
             dt,
-            a.moment_of_inertia,
+            a.inertia,
             &torque_fn_a,
         );
         let (new_angle_b, new_omega_b) = rk4_angular_step(
@@ -148,7 +148,7 @@ impl Spring {
             b.angle,
             b.angular_velocity,
             dt,
-            b.moment_of_inertia,
+            b.inertia,
             &torque_fn_b,
         );
 

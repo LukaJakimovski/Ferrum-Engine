@@ -32,10 +32,22 @@ impl PhysicsSystem {
                 weld_joint.solve_velocity_constraints(&mut self.polygons, self.dt);
             }
         }
-
+        
         for pivot_joint in &mut self.pivot_joints {
-            for _ in 0..1000 {
-                pivot_joint.solve_velocity_constraints(&mut self.polygons, self.dt);
+            let baumgarte = 0.15;
+
+            // pre-step
+            pivot_joint.pre_solve(&mut self.polygons, self.dt, baumgarte);
+
+            // iterative velocity solves (commonly 8-10 iterations)
+            for _ in 0..10 {
+                pivot_joint.solve_velocity(&mut self.polygons);
+            }
+
+            // position correction (1-2 iterations)
+            for _ in 0..2 {
+                let err = pivot_joint.solve_position(&mut self.polygons);
+                if err < 1e-4 { break; }
             }
         }
 

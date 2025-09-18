@@ -17,7 +17,7 @@ pub struct WeldJoint {
 }
 
 impl WeldJoint {
-    pub fn new(local_anchor_a: Vec2, local_anchor_b: Vec2, rigidbodys: &mut Vec<Rigidbody>, body_a: usize, body_b: usize) -> Self {
+    pub fn new(world_anchor_position: Vec2, rigidbodys: &mut Vec<Rigidbody>, body_a: usize, body_b: usize) -> Self {
         let a;
         let b;
         if body_a > body_b {
@@ -33,7 +33,8 @@ impl WeldJoint {
         let a_index = a.connected_anchors.len() - 1;
         b.connected_anchors.push(body_a);
         let b_index = b.connected_anchors.len() - 1;
-        
+        let local_anchor_a = a.center - world_anchor_position;
+        let local_anchor_b = b.center - world_anchor_position;
         let reference_angle = b.angle - a.angle;
         Self {
             body_a,
@@ -66,8 +67,8 @@ impl WeldJoint {
 
         let inv_ma = 1.0 / a.mass;
         let inv_mb = 1.0 / b.mass;
-        let inv_ia = 1.0 / a.moment_of_inertia;
-        let inv_ib = 1.0 / b.moment_of_inertia;
+        let inv_ia = 1.0 / a.inertia;
+        let inv_ib = 1.0 / b.inertia;
 
         // Jacobian builds constraints:
         // Cdot = J * v

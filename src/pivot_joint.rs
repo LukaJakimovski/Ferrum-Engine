@@ -1,23 +1,28 @@
 use glam::{Mat2, Vec2};
 use crate::Rigidbody;
-use crate::utility::rotate;
 
-/// 2D Ball-and-Socket (pivot/pin) joint: constrains anchors to coincide, allows free rotation.
+/// 2D Pivot joint that constrains world(anchor_a) == world(anchor_b)
 #[derive(Clone)]
 pub struct PivotJoint {
-    local_anchor_a: Vec2,
-    local_anchor_b: Vec2,
-    pub(crate) body_a: usize,
-    pub(crate) body_b: usize,
+    pub body_a: usize,
+    pub body_b: usize,
     pub a_index: usize,
     pub b_index: usize,
+    pub local_anchor_a: Vec2,
+    pub local_anchor_b: Vec2,
 
-    /// Baumgarte stabilization factor for positional drift (small: 0.01..0.2)
-    pub beta: f32,
+    // solver state (for warm starting)
+    impulse: Vec2,
+
+    // precomputed per-solve step:
+    r_a: Vec2,
+    r_b: Vec2,
+    effective_mass: Mat2, // inverse of K (2x2)
+    bias: Vec2,
 }
 
 impl PivotJoint {
-    pub fn new(world_anchor_a: Vec2, world_anchor_b: Vec2, rigidbodys: &mut Vec<Rigidbody>, body_a: usize, body_b: usize) -> Self {
+    pub fn new( world_anchor: Vec2, rigidbodys: &mut Vec<Rigidbody>, body_a: usize, body_b: usize) -> Self {
         let a;
         let b;
         if body_a > body_b {
@@ -33,197 +38,254 @@ impl PivotJoint {
         let a_index = a.connected_anchors.len() - 1;
         b.connected_anchors.push(body_a);
         let b_index = b.connected_anchors.len() - 1;
-        let local_anchor_a = rotate(world_anchor_a, Vec2::ZERO, -a.angle);
-        let local_anchor_b = rotate(world_anchor_b, Vec2::ZERO, -b.angle);
+        let local_anchor_a = world_anchor - a.center;
+        let local_anchor_b = world_anchor - b.center;
+        println!("local_anchor_a: {:?}", local_anchor_a);
+        println!("local_anchor_b: {:?}", local_anchor_b);
+        println!("world_anchor: {:?}", world_anchor);
         Self {
-            local_anchor_a,
-            local_anchor_b,
             body_a,
             body_b,
             a_index,
             b_index,
-            beta: 0.0,
+            local_anchor_a,
+            local_anchor_b,
+            impulse: Vec2::ZERO,
+            r_a: Vec2::ZERO,
+            r_b: Vec2::ZERO,
+            effective_mass: Mat2::ZERO,
+            bias: Vec2::ZERO,
         }
     }
 
-    /// Solve velocity-level linear constraints (2D block solve).
-    /// Call multiple times per physics step inside the solver iteration loop.
-    pub fn solve_velocity_constraints(&self, rigidbodys: &mut Vec<Rigidbody>, dt: f32) {
-        let a;
-        let b;
+    /// rotate local -> world
+    fn rotate(v: Vec2, angle: f32) -> Vec2 {
+        let (s, c) = angle.sin_cos();
+        Vec2::new(c * v.x - s * v.y, s * v.x + c * v.y)
+    }
+
+    /// pre_solve: compute effective mass, bias, warm-start
+    /// - dt: timestep
+    /// - baumgarte: typically 0.05..0.2 (fraction)
+    pub fn pre_solve(&mut self, rigidbodys: &mut Vec<Rigidbody>, dt: f32, baumgarte: f32) {
+        let body_a;
+        let body_b;
         if self.body_a > self.body_b {
             let (left, right) = rigidbodys.split_at_mut(self.body_a);
-            a = &mut left[self.body_b];
-            b = &mut right[0];
+            body_b = &mut left[self.body_b];
+            body_a = &mut right[0];
         } else {
             let (left, right) = rigidbodys.split_at_mut(self.body_b);
-            a = &mut left[self.body_a];
-            b = &mut right[0];
+            body_a = &mut left[self.body_a];
+            body_b = &mut right[0];
         }
-        // world-space anchor offsets
-        let ra = a.rotation_matrix() * self.local_anchor_a;
-        let rb = b.rotation_matrix() * self.local_anchor_b;
 
-        let inv_ma = 1.0 / a.mass;
-        let inv_mb = 1.0 / b.mass;
-        let inv_ia = 1.0 / a.moment_of_inertia;
-        let inv_ib = 1.0 / b.moment_of_inertia;
+        // r_a/r_b are offsets from COM in world
+        self.r_a = Self::rotate(self.local_anchor_a, body_a.angle);
+        self.r_b = Self::rotate(self.local_anchor_b, body_b.angle);
 
-        // relative velocity at anchors
-        let va_anchor = a.velocity + Vec2::new(-a.angular_velocity * ra.y, a.angular_velocity * ra.x);
-        let vb_anchor = b.velocity + Vec2::new(-b.angular_velocity * rb.y, b.angular_velocity * rb.x);
-        let v_rel = vb_anchor - va_anchor;
+        // world anchor positions
+        let p_a = body_a.center + self.r_a;
+        let p_b = body_b.center + self.r_b;
 
-        // position error and bias (Baumgarte)
-        let pa = a.center + ra;
-        let pb = b.center + rb;
-        let pos_err = pb - pa;
-        let bias = (self.beta / dt) * pos_err; // 2-vector
+        // NOTE: use Box2D sign convention: C = pB - pA
+        let c = p_b - p_a;
 
-        // Build 2x2 effective mass matrix K = J M^{-1} J^T
-        // Base linear terms:
-        let mut k = Mat2::from_diagonal(Vec2::splat(inv_ma + inv_mb));
+        // mass / inertia
+        let m_a = 1.0 / body_a.mass;
+        let m_b = 1.0 / body_b.mass;
+        let i_a = 1.0 / body_a.inertia;
+        let i_b = 1.0 / body_b.inertia;
 
-        // rotational contributions: for 2D, these are scalar but produce 2x2 additions.
-        // For a given ra, the term is inv_ia * ([ -ra.y; ra.x ] * [ -ra.y, ra.x ]) = inv_ia * (ra_perp * ra_perp^T)
-        // where ra_perp = perpendicular vector = (-ra.y, ra.x)
-        let ra_perp = Vec2::new(-ra.y, ra.x);
-        let rb_perp = Vec2::new(-rb.y, rb.x);
+        // Build K = J * invM * J^T (2x2). See Box2D source for same formula.
+        // Using r.x and r.y directly (Box2D uses r.y^2 etc)
+        let k11 = m_a + m_b + i_a * self.r_a.y * self.r_a.y + i_b * self.r_b.y * self.r_b.y;
+        let k12 = -i_a * self.r_a.x * self.r_a.y - i_b * self.r_b.x * self.r_b.y;
+        let k22 = m_a + m_b + i_a * self.r_a.x * self.r_a.x + i_b * self.r_b.x * self.r_b.x;
 
-        k += Mat2::from_cols(
-            Vec2::new(ra_perp.x * ra_perp.x, ra_perp.y * ra_perp.x), // col0 = (m00, m10)
-            Vec2::new(ra_perp.x * ra_perp.y, ra_perp.y * ra_perp.y), // col1 = (m01, m11)
-        ) * inv_ia;
-
-        k += Mat2::from_cols(
-            Vec2::new(rb_perp.x * rb_perp.x, rb_perp.y * rb_perp.x),
-            Vec2::new(rb_perp.x * rb_perp.y, rb_perp.y * rb_perp.y),
-        ) * inv_ib;
-
-        // threshold for singularity
-        const EPS: f32 = 1e-6;
-        let rhs = -(v_rel + bias);
-
-        // matrix entries (Mat2 stores columns as x_axis, y_axis)
-        let a_k = k.x_axis.x;
-        let b_k = k.y_axis.x;
-        let c = k.x_axis.y;
-        let d = k.y_axis.y;
-
-        // determinant
-        let det = a_k * d - b_k * c;
-
-        let lambda = if det.abs() > EPS {
-            // Cramer's rule (explicit solve)
+        // invert 2x2 with regularization if nearly singular
+        let det = k11 * k22 - k12 * k12;
+        let eps = 1e-9_f32;
+        if det.abs() > eps {
             let inv_det = 1.0 / det;
-            Vec2::new(
-                ( d * rhs.x - b_k * rhs.y) * inv_det,
-                (-c * rhs.x + a_k * rhs.y) * inv_det,
-            )
+            self.effective_mass = Mat2::from_cols(
+                Vec2::new(k22 * inv_det, -k12 * inv_det),
+                Vec2::new(-k12 * inv_det, k11 * inv_det),
+            );
         } else {
-            // fallback: diagonal approximation (safe)
-            let diag_a = a_k;
-            let diag_d = d;
-            let mut lx = 0.0;
-            let mut ly = 0.0;
-            if diag_a.abs() > EPS { lx = rhs.x / diag_a; }
-            if diag_d.abs() > EPS { ly = rhs.y / diag_d; }
-            Vec2::new(lx, ly)
-        };
+            // small regularizer to avoid dividing by zero (common practice)
+            let reg = 1e-6_f32;
+            let k11r = k11 + reg;
+            let k22r = k22 + reg;
+            let det_r = k11r * k22r - k12 * k12;
+            let inv_det = 1.0 / det_r.max(eps);
+            self.effective_mass = Mat2::from_cols(
+                Vec2::new(k22r * inv_det, -k12 * inv_det),
+                Vec2::new(-k12 * inv_det, k11r * inv_det),
+            );
+        }
 
-        // Apply linear impulse and corresponding angular effect
-        // impulse is applied as +lambda to B, -lambda to A
-        let impulse = lambda;
+        // Baumgarte positional bias: bias = -(beta / dt) * C
+        let beta = baumgarte.clamp(0.0, 0.2);
+        self.bias = -(beta / dt) * c;
 
-        a.velocity -= impulse * inv_ma;
-        // torque change = r x F = perp_dot(r, F)
-        a.angular_velocity -= inv_ia * ra.perp_dot(impulse);
+        // Warm starting: apply last frame's accumulated impulse
+        if self.impulse != Vec2::ZERO {
+            // apply -P to A and +P to B (Box2D convention)
+            body_a.velocity -= self.impulse * m_a;
+            body_a.angular_velocity -= i_a * cross(self.r_a, self.impulse);
 
-        b.velocity += impulse * inv_mb;
-        b.angular_velocity += inv_ib * rb.perp_dot(impulse);
+            body_b.velocity += self.impulse * m_b;
+            body_b.angular_velocity += i_b * cross(self.r_b, self.impulse);
+        }
     }
 
-    pub fn solve_position_constraints(&self, rigidbodys: &mut Vec<Rigidbody>) {
-        let a;
-        let b;
+    /// velocity solver: iterative sequential impulse
+    pub fn solve_velocity(&mut self, rigidbodys: &mut Vec<Rigidbody>) {
+        let body_a;
+        let body_b;
         if self.body_a > self.body_b {
             let (left, right) = rigidbodys.split_at_mut(self.body_a);
-            a = &mut left[self.body_b];
-            b = &mut right[0];
+            body_b = &mut left[self.body_b];
+            body_a = &mut right[0];
         } else {
             let (left, right) = rigidbodys.split_at_mut(self.body_b);
-            a = &mut left[self.body_a];
-            b = &mut right[0];
+            body_a = &mut left[self.body_a];
+            body_b = &mut right[0];
         }
 
-        // world-space anchor offsets
-        let ra = a.rotation_matrix() * self.local_anchor_a;
-        let rb = b.rotation_matrix() * self.local_anchor_b;
 
+        let m_a = 1.0 / body_a.mass;
+        let m_b = 1.0 / body_b.mass;
+        let i_a = 1.0 / body_a.inertia;
+        let i_b = 1.0 / body_b.inertia;
+        
+        // relative velocity at anchors: Jv = vB + ωB×rB - vA - ωA×rA (Box2D)
+        let vel_a_anchor = body_a.velocity + cross_scalar_vec(body_a.angular_velocity, self.r_a);
+        let vel_b_anchor = body_b.velocity + cross_scalar_vec(body_b.angular_velocity, self.r_b);
+        let rel_vel = vel_b_anchor - vel_a_anchor;
 
-        let pa = a.center + ra;
-        let pb = b.center + rb;
+        // solve: P = -M * (Jv + bias)
+        let rhs = -(rel_vel + self.bias);
+        let p = self.effective_mass * rhs;
 
-        // correction vector (anchor separation)
-        let correction = pb - pa;
+        // accumulate impulse (no limits here; you can clamp if needed)
+        self.impulse += p;
 
-        // if already close enough, skip
-        const LINEAR_SLOP: f32 = 0.005; // tweak as needed
-        if correction.length_squared() < LINEAR_SLOP * LINEAR_SLOP {
-            return;
-        }
+        // apply impulses: A -= P, B += P  (linear) & angular updates
+        body_a.velocity -= p * m_a;
+        body_a.angular_velocity -= i_a * cross(self.r_a, p);
 
-        // inverse masses and inertias
-        let inv_ma = 1.0 / a.mass;
-        let inv_mb = 1.0 / b.mass;
-        let inv_ia = 1.0 / a.moment_of_inertia;
-        let inv_ib = 1.0 / b.moment_of_inertia;
-
-        // effective mass matrix
-        let mut k = Mat2::from_diagonal(Vec2::splat(inv_ma + inv_mb));
-        let ra_perp = Vec2::new(-ra.y, ra.x);
-        let rb_perp = Vec2::new(-rb.y, rb.x);
-
-        k += Mat2::from_cols(ra_perp * ra_perp.x * inv_ia, ra_perp * ra_perp.y * inv_ia);
-        k += Mat2::from_cols(rb_perp * rb_perp.x * inv_ib, rb_perp * rb_perp.y * inv_ib);
-
-        // solve K * λ = -correction
-        let rhs = -correction;
-
-        let a_k = k.x_axis.x;
-        let b_k = k.y_axis.x;
-        let c   = k.x_axis.y;
-        let d   = k.y_axis.y;
-
-        const EPS: f32 = 1e-6;
-        let det = a_k * d - b_k * c;
-
-        let lambda = if det.abs() > EPS {
-            let inv_det = 1.0 / det;
-            Vec2::new(
-                ( d * rhs.x - b_k * rhs.y) * inv_det,
-                (-c * rhs.x + a_k * rhs.y) * inv_det,
-            )
-        } else {
-            Vec2::ZERO
-        };
-
-        // apply corrections directly to positions + orientations
-        a.translate(-(lambda * inv_ma));
-        a.rotate(-(inv_ia * ra.perp_dot(lambda)));
-        a.angle -= inv_ia * ra.perp_dot(lambda);
-
-        b.translate(lambda * inv_mb);
-        b.rotate(inv_ib * rb.perp_dot(lambda));
-        b.angle += inv_ib * rb.perp_dot(lambda);
+        body_b.velocity += p * m_b;
+        body_b.angular_velocity += i_b * cross(self.r_b, p);
     }
 
+    /// position correction pass (recompute K here). Returns remaining error magnitude.
+    pub fn solve_position(&mut self, rigidbodys: &mut Vec<Rigidbody>) -> f32 {
+        let body_a;
+        let body_b;
+        if self.body_a > self.body_b {
+            let (left, right) = rigidbodys.split_at_mut(self.body_a);
+            body_b = &mut left[self.body_b];
+            body_a = &mut right[0];
+        } else {
+            let (left, right) = rigidbodys.split_at_mut(self.body_b);
+            body_a = &mut left[self.body_a];
+            body_b = &mut right[0];
+        }
+
+        // recompute offsets (angles might have changed)
+        self.r_a = Self::rotate(self.local_anchor_a, body_a.angle);
+        self.r_b = Self::rotate(self.local_anchor_b, body_b.angle);
+
+        let p_a = body_a.center + self.r_a;
+        let p_b = body_b.center + self.r_b;
+
+        // Box2D convention: C = pB - pA
+        let c = p_b - p_a;
+
+        // small tolerance: linear slop (Box2D uses ~0.005)
+        const LINEAR_SLOP: f32 = 0.005;
+        const MAX_CORRECTION: f32 = 0.2;
+
+        let err = c.length();
+        if err <= LINEAR_SLOP {
+            return err;
+        }
+
+        // clamp the correction to avoid overshoot
+        let correction = if err > MAX_CORRECTION {
+            -c.normalize() * MAX_CORRECTION
+        } else {
+            -c
+        };
+
+        // recompute K and invert (same formula)
+        let m_a = 1.0 / body_a.mass;
+        let m_b = 1.0 / body_b.mass;
+        let i_a = 1.0 / body_a.inertia;
+        let i_b = 1.0 / body_b.inertia;
+
+        let k11 = m_a + m_b + i_a * self.r_a.y * self.r_a.y + i_b * self.r_b.y * self.r_b.y;
+        let k12 = -i_a * self.r_a.x * self.r_a.y - i_b * self.r_b.x * self.r_b.y;
+        let k22 = m_a + m_b + i_a * self.r_a.x * self.r_a.x + i_b * self.r_b.x * self.r_b.x;
+
+        let det = k11 * k22 - k12 * k12;
+        let eps = 1e-9_f32;
+        let k_inv = if det.abs() > eps {
+            let inv_det = 1.0 / det;
+            Mat2::from_cols(
+                Vec2::new(k22 * inv_det, -k12 * inv_det),
+                Vec2::new(-k12 * inv_det, k11 * inv_det),
+            )
+        } else {
+            let reg = 1e-6_f32;
+            let k11r = k11 + reg;
+            let k22r = k22 + reg;
+            let det_r = k11r * k22r - k12 * k12;
+            let inv_det = 1.0 / det_r.max(eps);
+            Mat2::from_cols(
+                Vec2::new(k22r * inv_det, -k12 * inv_det),
+                Vec2::new(-k12 * inv_det, k11r * inv_det),
+            )
+        };
+
+        // position impulse: p = K^{-1} * correction
+        let p = k_inv * correction;
+
+        // apply positional correction: A -= inv_mass * p, angle -= inv_inertia * (rA × p)
+        let translation = p * m_a;
+        body_a.translate(-translation);
+        let rotation = i_a * cross(self.r_a, p);
+        body_a.rotate(-rotation);
+        body_a.angle -= rotation;
+
+        let translation = p * m_b;
+        body_b.translate(translation);
+        let rotation = i_b * cross(self.r_b, p);
+        body_b.rotate(rotation);
+        body_b.angle += rotation;
+
+        err
+    }
 
     pub fn get_anchor_world_position_a(&self, rigidbodys: &Vec<Rigidbody>) -> Vec2 {
-        rigidbodys[self.body_a].center + rotate(self.local_anchor_a, Vec2::ZERO, rigidbodys[self.body_a].angle )
+        rigidbodys[self.body_a].center + Self::rotate(self.local_anchor_a, rigidbodys[self.a_index].angle )
     }
-
     pub fn get_anchor_world_position_b(&self, rigidbodys: &Vec<Rigidbody>) -> Vec2 {
-        rigidbodys[self.body_b].center + rotate(self.local_anchor_b, Vec2::ZERO, rigidbodys[self.body_b].angle )
+        rigidbodys[self.body_b].center + Self::rotate(self.local_anchor_b, rigidbodys[self.b_index].angle )
     }
 }
+
+/// 2D cross helpers
+
+/// 2D cross: scalar x vec -> vec (ω × r): (-ω * r.y, ω * r.x)
+fn cross_scalar_vec(s: f32, v: Vec2) -> Vec2 {
+    Vec2::new(-s * v.y, s * v.x)
+}
+
+/// vec x vec -> scalar (a × b)
+fn cross(a: Vec2, b: Vec2) -> f32 {
+    a.x * b.y - a.y * b.x
+}
+
