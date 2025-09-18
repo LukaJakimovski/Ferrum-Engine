@@ -34,7 +34,7 @@ impl PhysicsSystem {
         }
 
         for pivot_joint in &mut self.pivot_joints {
-            for _ in 0..50 {
+            for _ in 0..1000 {
                 pivot_joint.solve_velocity_constraints(&mut self.polygons, self.dt);
             }
         }

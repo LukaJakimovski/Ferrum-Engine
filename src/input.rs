@@ -320,8 +320,8 @@ impl UiSystem {
                         if under_mouse.len() >= 2 {
                             for i in 0..under_mouse.len() {
                                 for j in i+1..under_mouse.len() {
-                                    let anchor_a = physics_system.polygons[under_mouse[i]].center - position;
-                                    let anchor_b = physics_system.polygons[under_mouse[j]].center - position;
+                                    let anchor_a = position - physics_system.polygons[under_mouse[i]].center;
+                                    let anchor_b = position - physics_system.polygons[under_mouse[j]].center;
                                     if self.spawn_parameters.body_type == BodyType::WeldJoint {
                                         physics_system.weld_joints.push(WeldJoint::new(anchor_a, anchor_b, &mut physics_system.polygons, under_mouse[i], under_mouse[j]));
                                     } else if self.spawn_parameters.body_type == BodyType::PivotJoint{
@@ -393,7 +393,7 @@ impl UiSystem {
 
                 for i in (0..physics_system.pivot_joints.len()).rev() {
                     let mut polygon = BodyBuilder::create_joint();
-                    let position = physics_system.pivot_joints[i].get_anchor_world_position(&physics_system.polygons);
+                    let position = physics_system.pivot_joints[i].get_anchor_world_position_a(&physics_system.polygons);
                     polygon.move_to(position);
                     if self.is_colliding_mouse(&polygon) && !erased{
                         physics_system.remove_pivot_joint(i);

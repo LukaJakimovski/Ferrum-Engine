@@ -118,7 +118,15 @@ impl World {
 
         for pivot_joint in pivot_joints {
             let mut polygon = BodyBuilder::create_joint();
-            let position = pivot_joint.get_anchor_world_position(&polygons);
+            polygon.color = ColorRGBA::blue();
+            let position = pivot_joint.get_anchor_world_position_a(&polygons);
+            polygon.move_to(position);
+            process(&polygon.vertices, polygon.color, polygon.center, &polygon.indices);
+        }
+
+        for pivot_joint in pivot_joints {
+            let mut polygon = BodyBuilder::create_joint();
+            let position = pivot_joint.get_anchor_world_position_b(&polygons);
             polygon.move_to(position);
             process(&polygon.vertices, polygon.color, polygon.center, &polygon.indices);
         }

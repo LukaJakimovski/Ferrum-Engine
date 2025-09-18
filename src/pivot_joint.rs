@@ -9,7 +9,6 @@ pub struct PivotJoint {
     local_anchor_b: Vec2,
     pub(crate) body_a: usize,
     pub(crate) body_b: usize,
-    start_angle: f32,
     pub a_index: usize,
     pub b_index: usize,
 
@@ -18,7 +17,7 @@ pub struct PivotJoint {
 }
 
 impl PivotJoint {
-    pub fn new(local_anchor_a: Vec2, local_anchor_b: Vec2, rigidbodys: &mut Vec<Rigidbody>, body_a: usize, body_b: usize) -> Self {
+    pub fn new(world_anchor_a: Vec2, world_anchor_b: Vec2, rigidbodys: &mut Vec<Rigidbody>, body_a: usize, body_b: usize) -> Self {
         let a;
         let b;
         if body_a > body_b {
@@ -34,7 +33,8 @@ impl PivotJoint {
         let a_index = a.connected_anchors.len() - 1;
         b.connected_anchors.push(body_a);
         let b_index = b.connected_anchors.len() - 1;
-        
+        let local_anchor_a = rotate(world_anchor_a, Vec2::ZERO, -a.angle);
+        let local_anchor_b = rotate(world_anchor_b, Vec2::ZERO, -b.angle);
         Self {
             local_anchor_a,
             local_anchor_b,
@@ -42,8 +42,7 @@ impl PivotJoint {
             body_b,
             a_index,
             b_index,
-            start_angle: a.angle,
-            beta: 0.12,
+            beta: 0.0,
         }
     }
 
@@ -91,8 +90,15 @@ impl PivotJoint {
         let ra_perp = Vec2::new(-ra.y, ra.x);
         let rb_perp = Vec2::new(-rb.y, rb.x);
 
-        k += Mat2::from_cols(ra_perp * ra_perp.x * inv_ia, ra_perp * ra_perp.y * inv_ia);
-        k += Mat2::from_cols(rb_perp * rb_perp.x * inv_ib, rb_perp * rb_perp.y * inv_ib);
+        k += Mat2::from_cols(
+            Vec2::new(ra_perp.x * ra_perp.x, ra_perp.y * ra_perp.x), // col0 = (m00, m10)
+            Vec2::new(ra_perp.x * ra_perp.y, ra_perp.y * ra_perp.y), // col1 = (m01, m11)
+        ) * inv_ia;
+
+        k += Mat2::from_cols(
+            Vec2::new(rb_perp.x * rb_perp.x, rb_perp.y * rb_perp.x),
+            Vec2::new(rb_perp.x * rb_perp.y, rb_perp.y * rb_perp.y),
+        ) * inv_ib;
 
         // threshold for singularity
         const EPS: f32 = 1e-6;
@@ -137,7 +143,87 @@ impl PivotJoint {
         b.angular_velocity += inv_ib * rb.perp_dot(impulse);
     }
 
-    pub fn get_anchor_world_position(&self, rigidbodys: &Vec<Rigidbody>) -> Vec2 {
-        rigidbodys[self.body_a].center - rotate(self.local_anchor_a, Vec2::ZERO, rigidbodys[self.body_a].angle - self.start_angle)
+    pub fn solve_position_constraints(&self, rigidbodys: &mut Vec<Rigidbody>) {
+        let a;
+        let b;
+        if self.body_a > self.body_b {
+            let (left, right) = rigidbodys.split_at_mut(self.body_a);
+            a = &mut left[self.body_b];
+            b = &mut right[0];
+        } else {
+            let (left, right) = rigidbodys.split_at_mut(self.body_b);
+            a = &mut left[self.body_a];
+            b = &mut right[0];
+        }
+
+        // world-space anchor offsets
+        let ra = a.rotation_matrix() * self.local_anchor_a;
+        let rb = b.rotation_matrix() * self.local_anchor_b;
+
+
+        let pa = a.center + ra;
+        let pb = b.center + rb;
+
+        // correction vector (anchor separation)
+        let correction = pb - pa;
+
+        // if already close enough, skip
+        const LINEAR_SLOP: f32 = 0.005; // tweak as needed
+        if correction.length_squared() < LINEAR_SLOP * LINEAR_SLOP {
+            return;
+        }
+
+        // inverse masses and inertias
+        let inv_ma = 1.0 / a.mass;
+        let inv_mb = 1.0 / b.mass;
+        let inv_ia = 1.0 / a.moment_of_inertia;
+        let inv_ib = 1.0 / b.moment_of_inertia;
+
+        // effective mass matrix
+        let mut k = Mat2::from_diagonal(Vec2::splat(inv_ma + inv_mb));
+        let ra_perp = Vec2::new(-ra.y, ra.x);
+        let rb_perp = Vec2::new(-rb.y, rb.x);
+
+        k += Mat2::from_cols(ra_perp * ra_perp.x * inv_ia, ra_perp * ra_perp.y * inv_ia);
+        k += Mat2::from_cols(rb_perp * rb_perp.x * inv_ib, rb_perp * rb_perp.y * inv_ib);
+
+        // solve K * λ = -correction
+        let rhs = -correction;
+
+        let a_k = k.x_axis.x;
+        let b_k = k.y_axis.x;
+        let c   = k.x_axis.y;
+        let d   = k.y_axis.y;
+
+        const EPS: f32 = 1e-6;
+        let det = a_k * d - b_k * c;
+
+        let lambda = if det.abs() > EPS {
+            let inv_det = 1.0 / det;
+            Vec2::new(
+                ( d * rhs.x - b_k * rhs.y) * inv_det,
+                (-c * rhs.x + a_k * rhs.y) * inv_det,
+            )
+        } else {
+            Vec2::ZERO
+        };
+
+        // apply corrections directly to positions + orientations
+        a.translate(-(lambda * inv_ma));
+        a.rotate(-(inv_ia * ra.perp_dot(lambda)));
+        a.angle -= inv_ia * ra.perp_dot(lambda);
+
+        b.translate(lambda * inv_mb);
+        b.rotate(inv_ib * rb.perp_dot(lambda));
+        b.angle += inv_ib * rb.perp_dot(lambda);
+    }
+
+
+    pub fn get_anchor_world_position_a(&self, rigidbodys: &Vec<Rigidbody>) -> Vec2 {
+        rigidbodys[self.body_a].center + rotate(self.local_anchor_a, Vec2::ZERO, rigidbodys[self.body_a].angle )
+    }
+
+    pub fn get_anchor_world_position_b(&self, rigidbodys: &Vec<Rigidbody>) -> Vec2 {
+        rigidbodys[self.body_b].center + rotate(self.local_anchor_b, Vec2::ZERO, rigidbodys[self.body_b].angle )
     }
 }
