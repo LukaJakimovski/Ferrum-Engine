@@ -70,18 +70,18 @@ impl World{
             .unwrap_or(surface_caps.formats[0]);
 
         #[cfg(target_os = "windows")]
-        let vsync_mode = 2;
+        let _vsync_mode = 2;
         #[cfg(all(target_os = "windows", target_arch = "x86_64", target_env = "gnu"))]
-        let vsync_mode = 1;
+        let _vsync_mode = 1;
         #[cfg(not(target_os = "windows"))]
-        let vsync_mode = 0;
+        let _vsync_mode = 0;
 
         let config = wgpu::SurfaceConfiguration {
             usage: wgpu::TextureUsages::RENDER_ATTACHMENT,
             format: surface_format,
             width: size.width,
             height: size.height,
-            present_mode: surface_caps.present_modes[vsync_mode],
+            present_mode: surface_caps.present_modes[_vsync_mode],
             alpha_mode: surface_caps.alpha_modes[0],
             view_formats: vec![],
             desired_maximum_frame_latency: 2,
