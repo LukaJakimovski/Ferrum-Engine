@@ -73,7 +73,7 @@ impl World{
         let vsync_mode = 2;
         #[cfg(all(target_os = "windows", target_arch = "x86_64", target_env = "gnu"))]
         let vsync_mode = 1;
-        #[cfg(not(all(target_os = "windows", target_arch = "x86_64", target_env = "gnu")))]
+        #[cfg(not(target_os = "windows"))]
         let vsync_mode = 0;
 
         let config = wgpu::SurfaceConfiguration {
