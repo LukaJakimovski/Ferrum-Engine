@@ -46,7 +46,7 @@ fn main() {
     let mut weld_joints = vec![];
 
     weld_joints.push(
-        WeldJoint::new(Vec2::new(0.2, 0.0), Vec2::new(-0.2, 0.0), &mut polygons, 1, 0)
+        WeldJoint::new(Vec2::new(0.2, 0.0), Vec2::new(-0.2, 0.0), &mut polygons, 0, 1)
     );
 
 
