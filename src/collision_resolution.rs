@@ -202,17 +202,11 @@ impl PhysicsSystem {
         let inv_m_sum = inv_m1 + inv_m2;
         if inv_m_sum == 0.0 { return; }
 
-        // Baumgarte-style bias, small cap to avoid pops
-        let percent = 0.6;  // 60% of remaining error
-        let slop    = 0.005; // 5 mm (tune to your units)
 
         // Share the penetration across contacts
-        let per_contact_pen = (penetration - slop).max(0.0) / (contact_count as f32);
-        let correction = normal * (percent * per_contact_pen / inv_m_sum);
-
-        // Single translation per pair
-        body1.translate(-correction * inv_m1);
-        body2.translate( correction * inv_m2);
+        let correction = normal * penetration.clamp(0.0, 0.05) * 0.8; // 80% correction, up to 5cm
+        body1.translate(-correction * (inv_m1 / inv_m_sum));
+        body2.translate(correction * (inv_m2 / inv_m_sum));
     }
 
 
@@ -233,7 +227,7 @@ impl PhysicsSystem {
         if contacts.is_empty() { return; }
 
         // --- Velocity solver (sequential impulses). Iterate for stacks.
-        const VEL_ITERS: usize = 8; // tweak (4–10)
+        const VEL_ITERS: usize = 1; // tweak (4–10)
         for _ in 0..VEL_ITERS {
             for &c in &contacts {
                 Self::resolve_contact_velocity(body1, body2, c, normal);
