@@ -126,77 +126,123 @@ impl PhysicsSystem {
             }
         }
     }
+    fn resolve_contact_velocity(body1: &mut Rigidbody, body2: &mut Rigidbody, contact: Vec2, normal: Vec2) {
+        // Effective masses
+        let m1 = if body1.is_static { 0.0 } else { 1.0 / body1.mass };
+        let m2 = if body2.is_static { 0.0 } else { 1.0 / body2.mass };
+        let i1 = if body1.is_static { 0.0 } else { 1.0 / body1.moment_of_inertia };
+        let i2 = if body2.is_static { 0.0 } else { 1.0 / body2.moment_of_inertia };
 
-    pub fn check_and_resolve(
+        // Contact offsets
+        let r1 = contact - body1.center;
+        let r2 = contact - body2.center;
+
+        // Velocities at contact
+        let v1 = body1.velocity + r1.perp() * body1.angular_velocity;
+        let v2 = body2.velocity + r2.perp() * body2.angular_velocity;
+        let rv = v2 - v1;
+
+        // Normal impulse
+        let vel_n = rv.dot(normal);
+
+        // Restitution OFF for resting contacts (prevents bounciness in stacks)
+        let restitution_vel_threshold = 1e-2; // tweak
+        let mut e = (body1.restitution + body2.restitution) * 0.5;
+        if vel_n.abs() < restitution_vel_threshold { e = 0.0; }
+
+        if vel_n > 0.0 {
+            return; // separating
+        }
+
+        let rn1 = r1.perp_dot(normal);
+        let rn2 = r2.perp_dot(normal);
+        let k_normal = m1 + m2 + rn1*rn1*i1 + rn2*rn2*i2;
+
+        let jn = -(1.0 + e) * vel_n / k_normal;
+        let impulse_n = normal * jn;
+
+        // Apply normal impulse
+        body1.velocity -= impulse_n * m1;
+        body2.velocity += impulse_n * m2;
+        body1.angular_velocity -= rn1 * jn * i1;
+        body2.angular_velocity += rn2 * jn * i2;
+
+        // Friction (Coulomb) — uses same effective mass in tangent dir
+        //let tangent = (rv - normal * vel_n).normalize_or_zero();
+        //let vel_t = rv.dot(tangent);
+        //let k_tangent = m1 + m2
+        //    + (r1.perp_dot(tangent)).powi(2) * i1
+        //    + (r2.perp_dot(tangent)).powi(2) * i2;
+
+        //let jt = -vel_t / k_tangent;
+        //let mu = (body1.friction + body2.friction) * 0.5;
+
+        // Clamp friction to Coulomb cone
+        //let jt_clamped = jt.clamp(-jn * mu, jn * mu);
+        //let impulse_t = tangent * jt_clamped;
+
+        //body1.velocity -= impulse_t * m1;
+        //body2.velocity += impulse_t * m2;
+        //body1.angular_velocity -= r1.perp_dot(impulse_t) * i1;
+        //body2.angular_velocity += r2.perp_dot(impulse_t) * i2;
+    }
+
+    fn positional_correction_pair(
         body1: &mut Rigidbody,
         body2: &mut Rigidbody,
+        normal: Vec2,
+        penetration: f32,
+        contact_count: usize,
     ) {
-        let result = sat_collision(&body1, &body2);
-        if result[1].y != 0.0 {
-            let polygon1 = &body1;
-            let polygon2 = &body2;
-            let v1 = polygon1.velocity;
-            let v2 = polygon2.velocity;
-            let m1 = 1.0 / polygon1.mass;
-            let m2 = 1.0 / polygon2.mass;
-            let m_total = m1 + m2;
-            let penetration = result[1].x;
-            let normal;
-            if result[0].normalize().dot(polygon1.center)
-                < result[0].normalize().dot(polygon2.center)
-            {
-                normal = result[0].normalize();
-            } else {
-                normal = -result[0].normalize();
-            }
-            // Contact Points
-            let contact_points = find_contact_points(polygon1, polygon2, &result);
-            let mut average_point = Vec2::ZERO;
-            for point in &contact_points {
-                average_point += *point;
-            }
-            average_point /= contact_points.len() as f32;
-            //Move them out of each other
-            body1.translate(-normal * penetration * (m1 / m_total));
-            body2.translate(normal * penetration * (m2 / m_total));
+        if penetration <= 0.0 || contact_count == 0 { return; }
 
-            // Impulse
-            let polygon1 = &body1;
-            let polygon2 = &body2;
+        // Treat static bodies as infinite mass
+        let inv_m1 = if body1.is_static { 0.0 } else { 1.0 / body1.mass };
+        let inv_m2 = if body2.is_static { 0.0 } else { 1.0 / body2.mass };
+        let inv_m_sum = inv_m1 + inv_m2;
+        if inv_m_sum == 0.0 { return; }
 
-            let r1 = average_point - polygon1.center;
-            let r2 = average_point - polygon2.center;
+        // Baumgarte-style bias, small cap to avoid pops
+        let percent = 0.6;  // 60% of remaining error
+        let slop    = 0.005; // 5 mm (tune to your units)
 
-            let tangent_v1 = r1.perp() * polygon1.angular_velocity;
-            let tangent_v2 = r2.perp() * polygon2.angular_velocity;
-            let fv1 = v1 + tangent_v1;
-            let fv2 = v2 + tangent_v2;
-            let relative_velocity = fv2 - fv1;
-            let vel_along_normal = relative_velocity.dot(normal);
+        // Share the penetration across contacts
+        let per_contact_pen = (penetration - slop).max(0.0) / (contact_count as f32);
+        let correction = normal * (percent * per_contact_pen / inv_m_sum);
 
-            let restitution = (polygon1.restitution + polygon2.restitution) / 2.0;
-
-            let i1 = 1.0 / polygon1.moment_of_inertia;
-            let i2 = 1.0 / polygon2.moment_of_inertia;
-
-            let rn1 = r1.perp_dot(normal);
-            let rn2 = r2.perp_dot(normal);
-
-            let angle_term1: f32;
-            let angle_term2: f32;
-
-            angle_term1 = (rn1 * rn1) * i1;
-            angle_term2 = (rn2 * rn2) * i2;
-
-            let impulse_magnitude =
-                -(1.0 + restitution) * vel_along_normal / (m1 + m2 + angle_term1 + angle_term2);
-            let impulse_vector = normal * impulse_magnitude;
-
-            body1.velocity = v1 - impulse_vector * m1;
-            body2.velocity = v2 + impulse_vector * m2;
-            body1.angular_velocity = body1.angular_velocity - r1.perp_dot(impulse_vector) * i1;
-            body2.angular_velocity = body2.angular_velocity + r2.perp_dot(impulse_vector) * i2;
-        }
+        // Single translation per pair
+        body1.translate(-correction * inv_m1);
+        body2.translate( correction * inv_m2);
     }
+
+
+    pub fn check_and_resolve(body1: &mut Rigidbody, body2: &mut Rigidbody) {
+        let result = sat_collision(&body1, &body2);
+        // assume: result[1].y != 0 indicates collision, result[0] = axis, result[1].x = depth
+        if result[1].y == 0.0 { return; }
+
+        // Ensure axis points from body1 -> body2 (have SAT return this if possible)
+        let mut normal = result[0].normalize();
+        if normal.dot(body2.center - body1.center) < 0.0 {
+            normal = -normal;
+        }
+        let penetration = result[1].x;
+
+        // Build manifold
+        let contacts = find_contact_points(&body1, &body2, &result);
+        if contacts.is_empty() { return; }
+
+        // --- Velocity solver (sequential impulses). Iterate for stacks.
+        const VEL_ITERS: usize = 8; // tweak (4–10)
+        for _ in 0..VEL_ITERS {
+            for &c in &contacts {
+                Self::resolve_contact_velocity(body1, body2, c, normal);
+            }
+        }
+
+        // --- Single positional correction for the pair
+        Self::positional_correction_pair(body1, body2, normal, penetration, contacts.len());
+    }
+
 
 }

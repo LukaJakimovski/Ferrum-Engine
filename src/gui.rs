@@ -162,8 +162,8 @@ impl RenderSystem {
                     ui.columns(2, |ui| {
                         ui[0].label("Time multiplier");
                         ui[1].add(egui::DragValue::new(&mut parameters.time_multiplier).speed(0.01));
-                        if parameters.time_multiplier < 0.0 {
-                            parameters.time_multiplier = 0.0;
+                        if parameters.time_multiplier <= 0.0 {
+                            parameters.time_multiplier = 0.0000001;
                         }
                     });
                 }
