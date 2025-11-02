@@ -352,15 +352,4 @@ impl Rigidbody {
         let diff = new_x - self.center;
         self.translate(diff);
     }
-
-    pub fn calculate_energy(&self) -> f64 {
-        let mut kinetic_energy = 0.0;
-        kinetic_energy += 0.5 * self.mass * self.velocity.dot(self.velocity);
-        kinetic_energy +=
-            0.5 * self.moment_of_inertia * self.angular_velocity * self.angular_velocity;
-        if kinetic_energy < 0.0 {
-            return 0.0;
-        }
-        kinetic_energy as f64
-    }
 }

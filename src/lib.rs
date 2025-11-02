@@ -18,6 +18,7 @@ mod timing;
 mod weld_joint;
 mod pivot_joint;
 mod collision_resolution;
+mod energy;
 
 pub use crate::app::*;
 pub use crate::color::ColorRGBA;

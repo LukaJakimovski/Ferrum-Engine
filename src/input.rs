@@ -223,6 +223,7 @@ impl UiSystem {
                 let mut mouse_polygon =
                     Rigidbody::rectangle(0.03, 0.03, position, f32::MAX / 10000.0, 1.0, ColorRGBA::white());
                 mouse_polygon.collision = false;
+                mouse_polygon.gravity_multiplier = 0.0;
                 let selected_polygon;
                 if self.selected_polygon.unwrap() < physics_system.polygons.len(){
                     selected_polygon = &mut physics_system.polygons[self.selected_polygon.unwrap()];

@@ -113,12 +113,17 @@ impl RenderSystem {
             .resizable(false)
             .vscroll(true)
             .default_open(true)
-            .max_height(25.0)
-            .max_width(200.0)
+            .max_height(100.0)
+            .max_width(300.0)
             .title_bar(false)
             .show(self.egui_renderer.context(), |ui| {
                 ui.heading("Energy");
-                ui.label(format!("Energy: {:.3} Joules", physics_system.total_energy));
+                ui.label(format!("Spring Energy: {:.3} Joules", physics_system.energy.spring_energy));
+                ui.label(format!("Kinetic Energy: {:.3} Joules", physics_system.energy.kinetic_energy));
+                ui.label(format!("Potential Energy: {:.3} Joules", physics_system.energy.potential_energy));
+                ui.label(format!("Total Energy: {:.3} Joules", physics_system.energy.get_energy()));
+
+
             });
     }
     fn fps_menu(&mut self, timing: &mut Timing) {

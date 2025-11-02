@@ -186,17 +186,4 @@ impl Spring {
         );
         self.connector.rotate(direction + PI / 2.0);
     }
-
-    pub fn calculate_energy(&self, rigidbodys: &Vec<Rigidbody>) -> f64 {
-        let a = &rigidbodys[self.body_a];
-        let b = &rigidbodys[self.body_b];
-
-        let world_anchor_a = a.center + self.anchor_a;
-        let world_anchor_b = b.center + self.anchor_b;
-
-        let distance = world_anchor_a.distance(world_anchor_b);
-        let stretch = distance - self.rest_length;
-
-        (0.5 * self.stiffness * stretch * stretch) as f64
-    }
 }

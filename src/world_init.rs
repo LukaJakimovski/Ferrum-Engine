@@ -259,7 +259,7 @@ impl World{
             weld_joints,
             pivot_joints,
             dt: 0.0,
-            total_energy: 0.0,
+            energy: Default::default(),
         };
 
         let color_system: ColorSystem = ColorSystem {

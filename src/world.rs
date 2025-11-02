@@ -81,13 +81,8 @@ impl World {
             self.timing.timer = Timing::now();
         }
 
-        self.physics.total_energy = 0.0;
-        for polygon in &self.physics.polygons {
-            self.physics.total_energy += polygon.calculate_energy();
-        }
-        for spring in &mut self.physics.springs {
-            self.physics.total_energy += spring.calculate_energy(&self.physics.polygons);
-        }
+        self.physics.energy.update_energy(&self.physics.polygons, &self.physics.springs, self.parameters.gravity_force.y,  -self.parameters.world_size);
+
         self.ui.create_mouse_ghost(&mut self.physics);
     }
 }
