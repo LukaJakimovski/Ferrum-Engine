@@ -22,7 +22,13 @@ impl PhysicsSystem {
         } else {
             g = Vec2 { x: 0.0, y: 0.0 };
         }
+        for spring in &mut self.springs {
+            spring.apply(self.dt, &mut self.polygons);
+        }
 
+        for polygon in &mut self.polygons {
+            polygon.update_rigidbody(g, self.dt);
+        }
         for weld_joint in &mut self.weld_joints {
             for _ in 0..1 {
                 weld_joint.solve_velocity_constraints(&mut self.polygons, self.dt);
@@ -35,12 +41,5 @@ impl PhysicsSystem {
             }
         }
 
-        for spring in &mut self.springs {
-            spring.apply(self.dt, &mut self.polygons);
-        }
-
-        for polygon in &mut self.polygons {
-            polygon.update_rigidbody(g, self.dt);
-        }
     }
 }

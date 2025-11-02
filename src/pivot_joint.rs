@@ -130,7 +130,6 @@ impl PivotJoint {
         let impulse = lambda;
 
         a.velocity -= impulse * inv_ma;
-        // torque change = r x F = perp_dot(r, F)
         a.angular_velocity -= inv_ia * ra.perp_dot(impulse);
 
         b.velocity += impulse * inv_mb;

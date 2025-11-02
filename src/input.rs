@@ -8,6 +8,7 @@ use winit::event::{ElementState, MouseButton, MouseScrollDelta};
 use winit::event_loop::ActiveEventLoop;
 use crate::color::ColorSystem;
 use crate::physics::PhysicsSystem;
+use crate::utility::rotate_in_place;
 
 pub struct UiSystem{
     pub pressed_keys: [u8; 64],
@@ -233,7 +234,8 @@ impl UiSystem {
                 }
 
                 if self.dragging == DraggingState::StartDragging {
-                    let anchor_pos = mouse_polygon.center - selected_polygon.center;
+                    let mut anchor_pos = mouse_polygon.center - selected_polygon.center;
+                    rotate_in_place(&mut anchor_pos, Vec2::ZERO, -selected_polygon.angle);
                     physics_system.polygons.push(mouse_polygon);
                     let length = physics_system.polygons.len() - 1;
                     let spring;
