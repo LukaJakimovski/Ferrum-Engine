@@ -15,6 +15,7 @@ pub struct Rigidbody {
     pub area: f32,
     pub restitution: f32,
     pub force: Vec2,
+    pub gravity_force: Vec2,
     pub torque: f32,
     pub angle: f32,
     pub collision: bool,
@@ -65,6 +66,7 @@ impl Rigidbody {
             indices,
             restitution,
             force: Vec2::ZERO,
+            gravity_force: Vec2::ZERO,
             torque: 0.0,
             angle: 0.0,
             collision: true,
@@ -112,6 +114,7 @@ impl Rigidbody {
             velocity: Vec2::ZERO,
             radius: 0.0,
             center: Vec2::ZERO,
+            gravity_force: Vec2::ZERO,
             vertices,
             indices,
             restitution,
@@ -169,6 +172,7 @@ impl Rigidbody {
             color,
             radius,
             center: pos,
+            gravity_force: Vec2::ZERO,
             vertices,
             indices,
             restitution,
@@ -336,7 +340,7 @@ impl Rigidbody {
     }
 
     pub fn update_rigidbody(&mut self, g: Vec2, dt: f32) {
-        let force = |_: f32, _: Vec2, _: Vec2| g * self.mass * self.gravity_multiplier + self.force;
+        let force = |_: f32, _: Vec2, _: Vec2| g * self.mass * self.gravity_multiplier + self.force + self.gravity_force;
         let (new_x, new_v) = rk4_step(0.0, self.center, self.velocity, dt, self.mass, &force);
         let force = |_: f32, _: f32, _: f32| 0.0;
         let (new_angle_b, new_omega_b) = rk4_angular_step(0.0, self.angle, self.angular_velocity, dt, self.moment_of_inertia, &force, );

@@ -9,6 +9,7 @@ use crate::input::UiSystem;
 use crate::physics::PhysicsSystem;
 use crate::render::RenderSystem;
 use crate::timing::Timing;
+use crate::utility::vec2_to_string;
 
 impl RenderSystem {
     pub fn create_gui(&mut self, ui_system: &mut UiSystem, physics_system: &mut PhysicsSystem, color_system: &mut ColorSystem, timing: &mut Timing, parameters: &mut Parameters, encoder: &mut wgpu::CommandEncoder, view: &wgpu::TextureView) {
@@ -138,6 +139,7 @@ impl RenderSystem {
                 ui.heading("FPS");
                 ui.label(format!("FPS: {:.3}", timing.fps));
                 ui.label(format!("ms/frame {:.3}", 1000.0 / timing.fps));
+                ui.label(format!("{:.3}s", timing.runtime));
             });
     }
     fn config_menu(&mut self, parameters: &mut Parameters) {
@@ -628,6 +630,15 @@ impl RenderSystem {
                         ui[0].label("Eternal");
                         ui[1].add(egui::Checkbox::new(&mut selected_polygon.eternal, "Eternal"));
                     });
+                    let param_grav_force = &mut selected_polygon.gravity_force;
+                    ui.columns(2, |ui| {
+                        ui[0].label(format!("Gravity Force {:.4}", param_grav_force));
+                    });
+                    ui.columns(1, |ui| {
+                        ui[0].label(format!("Velocity Polar Form {}", vec2_to_string(selected_polygon.velocity)));
+
+                    });
+
                     let param_color = &mut selected_polygon.color;
                     let mut color: [f32; 3] = [param_color.r, param_color.g, param_color.b];
                     ui.columns(2, |ui| {

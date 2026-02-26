@@ -4,6 +4,8 @@ use crate::energy::Energy;
 use crate::pivot_joint::PivotJoint;
 use crate::weld_joint::WeldJoint;
 
+//const G: f64 = 6.674 * 0.00000000001;
+const G: f64 = 0.0;
 pub struct PhysicsSystem {
     pub springs: Vec<Spring>,
     pub polygons: Vec<Rigidbody>,
@@ -14,6 +16,39 @@ pub struct PhysicsSystem {
 }
 
 impl PhysicsSystem {
+    pub fn get_gravity(&mut self) {
+        for polygon in &mut self.polygons {
+            polygon.gravity_force = Vec2::ZERO;
+        }
+        for i in 0..self.polygons.len() {
+            for j in (i + 1)..self.polygons.len() {
+
+                let pos_i = self.polygons[i].center;
+                let pos_j = self.polygons[j].center;
+
+                let direction = pos_j - pos_i;
+                let distance = direction.length();
+
+                // Prevent division by zero or extremely small distances
+                if distance <= 0.0001 {
+                    continue;
+                }
+
+                let mass_product = self.polygons[i].mass * self.polygons[j].mass;
+
+                // Correct gravity formula: F = G * m1 * m2 / r^2
+                let force_magnitude = G as f32 * mass_product / (distance * distance);
+
+                // Normalize direction vector
+                let force = direction.normalize() * force_magnitude;
+
+                self.polygons[i].gravity_force += force;
+                self.polygons[j].gravity_force -= force;
+            }
+        }
+    }
+
+
     pub fn update_physics(&mut self, parameters: &Parameters) {
         self.collision_resolution();
         let g: Vec2;
@@ -26,6 +61,7 @@ impl PhysicsSystem {
             spring.apply(self.dt, &mut self.polygons);
         }
 
+        self.get_gravity();
         for polygon in &mut self.polygons {
             polygon.update_rigidbody(g, self.dt);
         }

@@ -1,3 +1,4 @@
+use std::f32::consts::PI;
 use glam::{Mat2, Vec2};
 use crate::{ ColorRGBA, Rigidbody};
 use crate::body_builder::BodyBuilder;
@@ -266,4 +267,19 @@ pub fn rotate(to_rotate: Vec2, center: Vec2, angle: f32) -> Vec2 {
     let mut start_vec = to_rotate;
     start_vec = rot.mul_vec2(start_vec - center) + center;
     start_vec
+}
+
+pub fn vec2_to_string(v: Vec2) -> String {
+    let angle = v.to_angle() / PI * 180.0;
+    let magnitude = v.length();
+    if 0.0 <= angle && angle <= 90.0 {
+        return format!("{:.3} [E{:.1}N] ou [N{:.1}E]", magnitude, angle, 90.0 - angle).to_string()
+    } else if 90.0 <= angle && angle <= 180.0 {
+        return format!("{:.3} [O{:.1}N] ou [N{:.1}O]", magnitude, 90.0 - angle + 90.0, angle - 90.0).to_string()
+    } else if -180.0 <= angle && angle <= -90.0 {
+        return format!("{:.3} [O{:.1}S] ou [S{:.1}O]", magnitude, angle + 180.0, 90.0 - angle - 180.0).to_string()
+    } else if -90.0 <= angle && angle <= 0.0 {
+        return format!("{:.3} [E{:.1}S] ou [S{:.1}E]", magnitude, -angle, 90.0 + angle).to_string()
+    }
+    return "Error Vector".to_string()
 }

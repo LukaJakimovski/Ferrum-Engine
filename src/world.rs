@@ -1,4 +1,4 @@
-use crate::{ColorRGBA};
+use crate::{ColorRGBA, Rigidbody};
 use glam::{Vec2, Vec4};
 use crate::color::ColorSystem;
 use crate::input::UiSystem;
@@ -45,14 +45,29 @@ impl World {
     }
 
     pub(crate) fn update(&mut self) {
+        if self.physics.polygons[1].center.y >= 196.0 && !self.timing.test{
+            self.physics.polygons.push(Rigidbody::polygon(64, 2.0, self.physics.polygons[1].center, 1.0, 1.0, ColorRGBA::random_hsl()));
+            let len = self.physics.polygons.len() - 1;
+            self.physics.polygons[len].velocity = Vec2::new(8.5 ,14.7);
+            self.timing.test = true;
+        }
+
+        if self.physics.polygons.len() > 2 && self.physics.polygons[2].center.y < 0.1{
+            self.parameters.is_running = false;
+        }
+
         if self.parameters.delta_time == 0.0 {
             let mut dt = Timing::now() - self.timing.start_time;
+            if self.parameters.is_running {
+                self.timing.runtime += dt * self.parameters.time_multiplier as f64;
+            }
             self.timing.start_time = Timing::now();
             dt *= self.parameters.time_multiplier as f64;
             self.physics.dt = dt as f32;
         } else {
             self.physics.dt = self.parameters.delta_time as f32;
         }
+
         for spring in &mut self.physics.springs {
             spring.update_connector(&mut self.physics.polygons);
         }

@@ -248,10 +248,12 @@ impl World{
             egui_renderer,
         };
         let timing: Timing = Timing {
-            start_time: 0.0,
+            start_time: Timing::now(),
             timer: 0.0,
             frame_count: 0,
             fps: 0.0,
+            runtime: 0.0,
+            test: false,
         };
         let physics: PhysicsSystem = PhysicsSystem{
             springs,
