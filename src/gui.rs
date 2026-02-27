@@ -132,14 +132,17 @@ impl RenderSystem {
             .resizable(false)
             .vscroll(true)
             .default_open(true)
-            .max_height(50.0)
+            .max_height(100.0)
             .max_width(100.0)
             .title_bar(false)
             .show(self.egui_renderer.context(), |ui| {
                 ui.heading("FPS");
                 ui.label(format!("FPS: {:.3}", timing.fps));
                 ui.label(format!("ms/frame {:.3}", 1000.0 / timing.fps));
-                ui.label(format!("{:.3}s", timing.runtime));
+                ui.label(format!("Runtime: {:.3}s", timing.runtime));
+                if ui.button("Reset Time").clicked() {
+                    timing.runtime = 0.0;
+                }
             });
     }
     fn config_menu(&mut self, parameters: &mut Parameters) {
@@ -631,7 +634,7 @@ impl RenderSystem {
                         ui[1].add(egui::Checkbox::new(&mut selected_polygon.eternal, "Eternal"));
                     });
                     let param_grav_force = &mut selected_polygon.gravity_force;
-                    ui.columns(2, |ui| {
+                    ui.columns(1, |ui| {
                         ui[0].label(format!("Gravity Force {:.4}", param_grav_force));
                     });
                     ui.columns(1, |ui| {

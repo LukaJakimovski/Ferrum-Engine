@@ -1,6 +1,6 @@
 use glam::{Mat2, Vec2};
 use crate::color::ColorRGBA;
-use crate::ode_solver::{rk4_angular_step, rk4_step};
+use crate::ode_solver::{rk4_angular_step, dormand_prince_step};
 #[derive(Clone, Default, Debug)]
 pub struct Rigidbody {
     pub center: Vec2,
@@ -341,7 +341,7 @@ impl Rigidbody {
 
     pub fn update_rigidbody(&mut self, g: Vec2, dt: f32) {
         let force = |_: f32, _: Vec2, _: Vec2| g * self.mass * self.gravity_multiplier + self.force + self.gravity_force;
-        let (new_x, new_v) = rk4_step(0.0, self.center, self.velocity, dt, self.mass, &force);
+        let ((new_x, new_v), (_x_error, _v_error)) = dormand_prince_step(0.0, self.center, self.velocity, dt, self.mass, &force);
         let force = |_: f32, _: f32, _: f32| 0.0;
         let (new_angle_b, new_omega_b) = rk4_angular_step(0.0, self.angle, self.angular_velocity, dt, self.moment_of_inertia, &force, );
         let diff = new_angle_b - self.angle;

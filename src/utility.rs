@@ -244,6 +244,7 @@ impl UiSystem {
             physics_system.polygons[length].move_to(position);
             physics_system.polygons[length].change_color(ColorRGBA::new(1.0, 1.0, 1.0, 0.3));
             physics_system.polygons[length].collision = false;
+            physics_system.polygons[length].gravity_multiplier = 0.0;
             self.spawn_ghost_polygon = Some(length);
         } else if self.input_mode == InputMode::Spawn && (self.spawn_parameters.body_type == BodyType::WeldJoint || self.spawn_parameters.body_type == BodyType::PivotJoint) {
             physics_system.polygons.push(BodyBuilder::create_joint());
