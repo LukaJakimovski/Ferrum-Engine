@@ -1,4 +1,4 @@
-use glam::{DVec2, Vec2};
+use glam::{DVec2};
 use crate::enums::{BodyType, ColorType};
 use crate::spring::Spring;
 use crate::{ColorRGBA, Rigidbody};

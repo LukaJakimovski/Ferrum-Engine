@@ -1,4 +1,4 @@
-use glam::{DVec2, Vec2, Vec4};
+use glam::{DVec2, Vec4};
 use ferrum_engine::{run, Camera, ColorRGBA, Parameters, Rigidbody, WeldJoint};
 
 fn main() {

@@ -1,5 +1,5 @@
 use glam::DVec2;
-use ferrum_engine::{run, Camera, ColorRGBA, Parameters, Vec2, Vec4};
+use ferrum_engine::{run, Camera, ColorRGBA, Parameters, Vec4};
 
 fn main(){
     let parameters = Parameters {

@@ -1,4 +1,4 @@
-use glam::{DVec2, Vec2};
+use glam::{DVec2};
 use crate::{Parameters, Rigidbody, Spring};
 use crate::energy::Energy;
 use crate::ode_solver::{dormand_prince_step};

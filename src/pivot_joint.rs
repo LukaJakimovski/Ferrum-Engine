@@ -1,4 +1,4 @@
-use glam::{DMat2, DVec2, Mat2, Vec2};
+use glam::{DMat2, DVec2, Vec2};
 use crate::Rigidbody;
 use crate::utility::rotate;
 

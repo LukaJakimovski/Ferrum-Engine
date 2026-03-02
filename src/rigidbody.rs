@@ -1,4 +1,4 @@
-use glam::{Mat2, Vec2, DVec2, DMat2};
+use glam::{Vec2, DVec2, DMat2};
 use crate::color::ColorRGBA;
 use crate::ode_solver::{rk4_angular_step, dormand_prince_step};
 #[derive(Clone, Default, Debug)]

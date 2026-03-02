@@ -1,4 +1,4 @@
-use glam::{DVec2, Vec2};
+use glam::{DVec2};
 use crate::collision_detection::{find_contact_points, sat_collision};
 use crate::physics::PhysicsSystem;
 use crate::Rigidbody;
