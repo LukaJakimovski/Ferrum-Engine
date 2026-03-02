@@ -3,7 +3,7 @@ use crate::{ColorRGBA, PivotJoint, Rigidbody, WeldJoint, World};
 use egui_wgpu::wgpu;
 use std::iter;
 use std::sync::Arc;
-use glam::{Vec2, Vec4};
+use glam::{DVec2, Vec2, Vec4};
 use wgpu::util::DeviceExt;
 use winit::window::Window;
 use crate::body_builder::BodyBuilder;
@@ -97,14 +97,14 @@ impl World {
         };
 
         for polygon in polygons {
-            process(&polygon.vertices, polygon.color, polygon.center, &polygon.indices);
+            process(&polygon.vertices, polygon.color, Vec2::new(polygon.center.x as f32, polygon.center.y as f32), &polygon.indices);
         }
 
         for spring in springs {
             process(
                 &spring.connector.vertices,
                 spring.connector.color,
-                spring.connector.center,
+                Vec2::new(spring.connector.center.x as f32, spring.connector.center.y as f32),
                 &spring.connector.indices,
             );
         }
@@ -113,14 +113,14 @@ impl World {
             let mut polygon = BodyBuilder::create_joint();
             let position = weld_joint.get_anchor_world_position(&polygons);
             polygon.move_to(position);
-            process(&polygon.vertices, polygon.color, polygon.center, &polygon.indices);
+            process(&polygon.vertices, polygon.color, Vec2::new(polygon.center.x as f32, polygon.center.y as f32), &polygon.indices);
         }
 
         for pivot_joint in pivot_joints {
             let mut polygon = BodyBuilder::create_joint();
             let position = pivot_joint.get_anchor_world_position(&polygons);
-            polygon.move_to(position);
-            process(&polygon.vertices, polygon.color, polygon.center, &polygon.indices);
+            polygon.move_to(DVec2::from(position));
+            process(&polygon.vertices, polygon.color, Vec2::new(polygon.center.x as f32, polygon.center.y as f32), &polygon.indices);
         }
 
         (vertices, indices)

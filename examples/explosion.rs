@@ -1,3 +1,4 @@
+use glam::DVec2;
 use ferrum_engine::*;
 
 fn main() {
@@ -7,9 +8,9 @@ fn main() {
             polygons.push(Rigidbody::polygon(
                 rand::random::<u32>() % 3 + 3,
                 0.3533,
-                Vec2 {
-                    x: i as f32 * 0.5,
-                    y: j as f32 * 0.5,
+                DVec2 {
+                    x: i as f64 * 0.5,
+                    y: j as f64 * 0.5,
                 },
                 1.0,
                 1.01,
@@ -18,11 +19,11 @@ fn main() {
         }
     }
     for i in 0..polygons.len() {
-        polygons[i].velocity = Vec2 {
-            x: (rand::random::<f32>() * 2.0 - 1.0) * 10.0,
-            y: (rand::random::<f32>() * 2.0 - 1.0) * 10.0,
+        polygons[i].velocity = DVec2 {
+            x: (rand::random::<f64>() * 2.0 - 1.0) * 10.0,
+            y: (rand::random::<f64>() * 2.0 - 1.0) * 10.0,
         };
-        polygons[i].angular_velocity = (rand::random::<f32>() * 2.0 - 1.0) * 500.0;
+        polygons[i].angular_velocity = (rand::random::<f64>() * 2.0 - 1.0) * 500.0;
     }
     let parameters = Parameters {
         delta_time: 0.0,
@@ -35,7 +36,7 @@ fn main() {
         time_multiplier: 1.0,
         gravity: false,
         world_size: 300.0,
-        gravity_force: Vec2::new(0.0, -9.81),
+        gravity_force: DVec2::new(0.0, -9.81),
         clear_color: ColorRGBA::new(0.0, 0.0, 0.0, 1.0),
         is_running: false,
         gravitational_constant: 0.0,

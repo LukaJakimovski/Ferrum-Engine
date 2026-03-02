@@ -1,27 +1,27 @@
-use glam::Vec2;
+use glam::{DVec2, Vec2};
 use crate::rigidbody::Rigidbody;
 
 
-pub fn sat_collision(shape1: &Rigidbody, shape2: &Rigidbody) -> [Vec2; 2] {
+pub fn sat_collision(shape1: &Rigidbody, shape2: &Rigidbody) -> [DVec2; 2] {
     // Simple circle check
-    if shape1.center.distance(shape2.center) > shape1.radius + shape2.radius {
+    if shape1.center.distance(shape2.center) > shape1.radius as f64 + shape2.radius as f64{
         return [
-            Vec2 {
+            DVec2 {
                 x: -133.7,
                 y: -133.7,
             },
-            Vec2 { x: -133.7, y: 0.0 },
+            DVec2 { x: -133.7, y: 0.0 },
         ];
     }
     // Treat shapes with more than 31 vertices as circles
     if shape1.vertices.len() >= 32 && shape2.vertices.len() >= 32 {
         let mut delta = shape2.center - shape1.center;
         let dist = delta.length();
-        let overlap = shape1.radius + shape2.radius - dist; // Total overlap amount
-        if delta == Vec2::ZERO {
-            delta = Vec2::new(rand::random::<f32>(), rand::random::<f32>());
+        let overlap = shape1.radius as f64 + shape2.radius as f64 - dist; // Total overlap amount
+        if delta == DVec2::ZERO {
+            delta = DVec2::new(rand::random::<f64>(), rand::random::<f64>());
         }
-        return [delta.normalize(), Vec2 { x: overlap, y: 1.0 }];
+        return [delta.normalize(), DVec2 { x: overlap, y: 1.0 }];
     }
 
     let mut overlap: f32 = 2.0_f32.powf(32.0);
@@ -38,11 +38,11 @@ pub fn sat_collision(shape1: &Rigidbody, shape2: &Rigidbody) -> [Vec2; 2] {
 
         if !overlaps(&p1, &p2) {
             return [
-                Vec2 {
+                DVec2 {
                     x: -133.7,
                     y: -133.7,
                 },
-                Vec2 { x: -133.7, y: 0.0 },
+                DVec2 { x: -133.7, y: 0.0 },
             ];
         } else {
             let o: f32 = get_overlap(&p1, &p2);
@@ -63,11 +63,11 @@ pub fn sat_collision(shape1: &Rigidbody, shape2: &Rigidbody) -> [Vec2; 2] {
 
         if !overlaps(&p1, &p2) {
             return [
-                Vec2 {
+                DVec2 {
                     x: -133.7,
                     y: -133.7,
                 },
-                Vec2 { x: -133.7, y: 0.0 },
+                DVec2 { x: -133.7, y: 0.0 },
             ];
         } else {
             let o: f32 = get_overlap(&p1, &p2);
@@ -81,21 +81,21 @@ pub fn sat_collision(shape1: &Rigidbody, shape2: &Rigidbody) -> [Vec2; 2] {
     }
     if overlap < 0.0001 {
         return [
-            Vec2 {
+            DVec2 {
                 x: -133.7,
                 y: -133.7,
             },
-            Vec2 { x: -133.7, y: 0.0 },
+            DVec2 { x: -133.7, y: 0.0 },
         ];
     }
     [
-        Vec2 {
-            x: smallest.x,
-            y: smallest.y,
+        DVec2 {
+            x: smallest.x as f64,
+            y: smallest.y as f64,
         },
-        Vec2 {
-            x: overlap,
-            y: shape,
+        DVec2 {
+            x: overlap as f64,
+            y: shape as f64,
         },
     ]
 }
@@ -145,7 +145,7 @@ fn get_overlap(interval1: &Vec2, interval2: &Vec2) -> f32 {
     0.0
 }
 
-fn clip(v1: Vec2, v2: Vec2, normal: Vec2, offset: f32) -> Vec<Vec2> {
+fn clip(v1: DVec2, v2: DVec2, normal: DVec2, offset: f64) -> Vec<DVec2> {
     let mut clipped = Vec::new();
     let d1 = normal.dot(v1) - offset;
     let d2 = normal.dot(v2) - offset;
@@ -167,21 +167,21 @@ fn clip(v1: Vec2, v2: Vec2, normal: Vec2, offset: f32) -> Vec<Vec2> {
     }
     clipped
 }
-fn best_edge(polygon: &Rigidbody, normal: Vec2) -> (Vec2, Vec2, Vec2) {
+fn best_edge(polygon: &Rigidbody, normal: DVec2) -> (DVec2, DVec2, DVec2) {
     let c = polygon.vertices.len();
-    let mut max = f32::MIN;
+    let mut max = f64::MIN;
     let mut index = 0;
     for i in 0..c {
-        let projection = normal.dot(polygon.vertices[i]);
+        let projection = normal.dot(DVec2::from(polygon.vertices[i]));
         if projection > max {
             max = projection;
             index = i
         }
     }
 
-    let v = polygon.vertices[index];
-    let v1 = polygon.vertices[(index + 1) % c];
-    let v0 = polygon.vertices[(index + c - 1) % c];
+    let v = DVec2::from(polygon.vertices[index]);
+    let v1 = DVec2::from(polygon.vertices[(index + 1) % c]);
+    let v0 = DVec2::from(polygon.vertices[(index + c - 1) % c]);
 
     let mut l = v - v1;
     let mut r = v - v0;
@@ -199,8 +199,8 @@ fn best_edge(polygon: &Rigidbody, normal: Vec2) -> (Vec2, Vec2, Vec2) {
 pub fn find_contact_points(
     polygon1: &Rigidbody,
     polygon2: &Rigidbody,
-    mtv: &[Vec2; 2],
-) -> Vec<Vec2> {
+    mtv: &[DVec2; 2],
+) -> Vec<DVec2> {
     let normal;
     if mtv[0].normalize().dot(polygon1.center) < mtv[0].normalize().dot(polygon2.center) {
         normal = mtv[0].normalize();
@@ -230,11 +230,11 @@ pub fn find_contact_points(
     let o1 = refv.dot(ref_edge.0);
     let mut clipped = clip(inc_edge.0, inc_edge.1, refv, o1);
     if clipped.len() < 2 {
-        return vec![Vec2::ZERO, Vec2::ZERO];
+        return vec![DVec2::ZERO, DVec2::ZERO];
     };
 
     let mut ref_normal =
-        Vec2::new(ref_edge.1.y - ref_edge.0.y, ref_edge.0.x - ref_edge.1.x).normalize();
+        DVec2::new(ref_edge.1.y - ref_edge.0.y, ref_edge.0.x - ref_edge.1.x).normalize();
 
     if flip {
         ref_normal = -ref_normal;

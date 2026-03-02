@@ -1,4 +1,4 @@
-use glam::{Vec2, Vec3, Mat3};
+use glam::{Vec2, Vec3, Mat3, DVec2, DMat3, DVec3};
 use crate::Rigidbody;
 use crate::utility::{rotate};
 
@@ -6,18 +6,18 @@ use crate::utility::{rotate};
 pub struct WeldJoint {
     pub(crate) body_a: usize,
     pub(crate) body_b: usize,
-    local_anchor_a: Vec2,
-    local_anchor_b: Vec2,
-    start_angle: f32,
-    reference_angle: f32,
+    local_anchor_a: DVec2,
+    local_anchor_b: DVec2,
+    start_angle: f64,
+    reference_angle: f64,
     pub a_index: usize,
     pub b_index: usize,
 
-    pub beta: f32,
+    pub beta: f64,
 }
 
 impl WeldJoint {
-    pub fn new(local_anchor_a: Vec2, local_anchor_b: Vec2, rigidbodys: &mut Vec<Rigidbody>, body_a: usize, body_b: usize) -> Self {
+    pub fn new(local_anchor_a: DVec2, local_anchor_b: DVec2, rigidbodys: &mut Vec<Rigidbody>, body_a: usize, body_b: usize) -> Self {
         let a;
         let b;
         if body_a > body_b {
@@ -48,7 +48,7 @@ impl WeldJoint {
         }
     }
 
-    pub fn solve_velocity_constraints(&self, rigidbodys: &mut Vec<Rigidbody>, dt: f32) {
+    pub fn solve_velocity_constraints(&self, rigidbodys: &mut Vec<Rigidbody>, dt: f64) {
         let a;
         let b;
         if self.body_a > self.body_b {
@@ -76,8 +76,8 @@ impl WeldJoint {
         // We collapse this into a 3x3 effective mass matrix.
 
         // relative velocity at anchors
-        let va_anchor = a.velocity + Vec2::new(-a.angular_velocity * ra.y, a.angular_velocity * ra.x);
-        let vb_anchor = b.velocity + Vec2::new(-b.angular_velocity * rb.y, b.angular_velocity * rb.x);
+        let va_anchor = a.velocity + DVec2::new(-a.angular_velocity * ra.y, a.angular_velocity * ra.x);
+        let vb_anchor = b.velocity + DVec2::new(-b.angular_velocity * rb.y, b.angular_velocity * rb.x);
         let v_rel = vb_anchor - va_anchor;
         let w_rel = b.angular_velocity - a.angular_velocity;
 
@@ -85,7 +85,7 @@ impl WeldJoint {
         let pa = a.center + ra;
         let pb = b.center + rb;
         let pos_err = pb - pa;
-        let ang_err = (b.angle - a.angle) - self.reference_angle;
+        let ang_err = (b.angle - a.angle) - self.reference_angle as f64;
 
         let bias_lin = (self.beta / dt) * pos_err;
         let bias_ang = (self.beta / dt) * ang_err;
@@ -98,7 +98,7 @@ impl WeldJoint {
         // Row/col ordering: [linear.x, linear.y, angular]
 
         // Start with zeros
-        let mut k = Mat3::ZERO;
+        let mut k = DMat3::ZERO;
 
         // Linear terms
         k.x_axis.x = inv_ma + inv_mb;
@@ -124,7 +124,7 @@ impl WeldJoint {
         let k_inv = k.inverse();
 
         // Build constraint velocity error vector
-        let c_dot = Vec3::new(v_rel.x + bias_lin.x,
+        let c_dot = DVec3::new(v_rel.x + bias_lin.x,
                               v_rel.y + bias_lin.y,
                               w_rel + bias_ang);
 
@@ -132,7 +132,7 @@ impl WeldJoint {
         let lambda = -k_inv * c_dot;
 
         // Apply impulses
-        let lin_impulse = Vec2::new(lambda.x, lambda.y);
+        let lin_impulse = DVec2::new(lambda.x, lambda.y);
         let ang_impulse = lambda.z;
 
         a.velocity -= lin_impulse * inv_ma;
@@ -142,7 +142,7 @@ impl WeldJoint {
         b.angular_velocity += inv_ib * (rb.perp_dot(lin_impulse) + ang_impulse);
     }
 
-    pub fn get_anchor_world_position(&self, rigidbodys: &Vec<Rigidbody>) -> Vec2 {
-        rigidbodys[self.body_a].center + rotate(self.local_anchor_a, Vec2::ZERO, rigidbodys[self.body_a].angle - self.start_angle)
+    pub fn get_anchor_world_position(&self, rigidbodys: &Vec<Rigidbody>) -> DVec2 {
+        rigidbodys[self.body_a].center + DVec2::from(rotate(Vec2::new(self.local_anchor_a.x as f32, self.local_anchor_a.y as f32), Vec2::ZERO, (rigidbodys[self.body_a].angle - self.start_angle) as f32))
     }
 }

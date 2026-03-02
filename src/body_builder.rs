@@ -1,4 +1,4 @@
-use glam::Vec2;
+use glam::{DVec2, Vec2};
 use crate::enums::{BodyType, ColorType};
 use crate::spring::Spring;
 use crate::{ColorRGBA, Rigidbody};
@@ -9,28 +9,28 @@ pub struct RigidbodyParams {
     pub(crate) radius: f32,
     pub(crate) width: f32,
     pub(crate) height: f32,
-    pub(crate) pos: Vec2,
-    pub(crate) mass: f32,
+    pub(crate) pos: DVec2,
+    pub(crate) mass: f64,
     pub(crate) restitution: f32,
     pub(crate) color: Option<ColorRGBA>,
     pub(crate) collides: bool,
     pub(crate) rotation: f32,
-    pub(crate) angular_velocity: f32,
-    pub(crate) velocity: Vec2,
+    pub(crate) angular_velocity: f64,
+    pub(crate) velocity: DVec2,
     pub(crate) color_type: ColorType,
-    pub(crate) gravity_multiplier: f32,
+    pub(crate) gravity_multiplier: f64,
     pub(crate) eternal: bool,
 }
 
 #[derive(Clone, Default)]
 pub struct SpringParams {
-    pub(crate) stiffness: f32,
-    pub(crate) dampening: f32,
+    pub(crate) stiffness: f64,
+    pub(crate) dampening: f64,
     pub(crate) rest_length: f32,
     pub(crate) body_a: usize,
     pub(crate) body_b: usize,
-    pub(crate) anchor_a: Vec2,
-    pub(crate) anchor_b: Vec2,
+    pub(crate) anchor_a: DVec2,
+    pub(crate) anchor_b: DVec2,
 }
 
 #[derive(Clone)]
@@ -123,7 +123,7 @@ impl BodyBuilder {
         let mut rigidbody = Rigidbody::polygon(
             32,
             0.03,
-            Vec2::ZERO,
+            DVec2::ZERO,
             1.0,
             0.0,
             ColorRGBA::white(),

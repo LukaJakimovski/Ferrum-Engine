@@ -1,5 +1,5 @@
-use std::f32::consts::PI;
-use glam::{Mat2, Vec2};
+use std::f64::consts::PI;
+use glam::{DMat2, DVec2, Mat2, Vec2};
 use crate::{ ColorRGBA, Rigidbody};
 use crate::body_builder::BodyBuilder;
 use crate::collision_detection::sat_collision;
@@ -148,18 +148,18 @@ impl PhysicsSystem {
 
 
 impl UiSystem {
-    pub fn get_mouse_world_position(&self) -> Vec2 {
-        Vec2 {
-            x: ((self.mouse_pos.x * 2.0 - self.window_dimensions.x)
+    pub fn get_mouse_world_position(&self) -> DVec2 {
+        DVec2 {
+            x: (((self.mouse_pos.x * 2.0 - self.window_dimensions.x)
                 / self.window_dimensions.x
                 + self.camera.camera_pos.x / (-self.camera.camera_pos.w + 1.0))
-                * (-self.camera.camera_pos.w + 1.0),
-            y: ((self.mouse_pos.y * 2.0 - self.window_dimensions.y)
+                * (-self.camera.camera_pos.w + 1.0)) as f64,
+            y: (((self.mouse_pos.y * 2.0 - self.window_dimensions.y)
                 / self.window_dimensions.y
                 + self.camera.camera_pos.y / -(-self.camera.camera_pos.w + 1.0))
                 * -(-self.camera.camera_pos.w + 1.0)
                 * self.window_dimensions.y
-                / self.window_dimensions.x,
+                / self.window_dimensions.x) as f64,
         }
     }
 
@@ -257,8 +257,8 @@ impl UiSystem {
     }
 }
 
-pub fn rotate_in_place(to_rotate: &mut Vec2, center: Vec2, angle: f32) -> &mut Vec2 {
-    let rot = Mat2::from_angle(angle);
+pub fn rotate_in_place(to_rotate: &mut DVec2, center: DVec2, angle: f64) -> &mut DVec2 {
+    let rot = DMat2::from_angle(angle);
     *to_rotate = rot.mul_vec2(*to_rotate - center) + center;
     to_rotate
 }
@@ -270,7 +270,7 @@ pub fn rotate(to_rotate: Vec2, center: Vec2, angle: f32) -> Vec2 {
     start_vec
 }
 
-pub fn vec2_to_string(v: Vec2) -> String {
+pub fn vec2_to_string(v: DVec2) -> String {
     let angle = v.to_angle() / PI * 180.0;
     let magnitude = v.length();
     if 0.0 <= angle && angle <= 90.0 {

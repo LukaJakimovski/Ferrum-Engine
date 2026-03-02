@@ -1,5 +1,5 @@
 use crate::{ColorRGBA};
-use glam::{Vec2, Vec4};
+use glam::{DVec2, Vec2, Vec4};
 use crate::color::ColorSystem;
 use crate::input::UiSystem;
 use crate::physics::PhysicsSystem;
@@ -19,11 +19,11 @@ pub struct Parameters {
     pub angular_velocity: bool,
     pub gravity: bool,
     pub world_size: f32,
-    pub gravity_force: Vec2,
+    pub gravity_force: DVec2,
     pub clear_color: ColorRGBA,
     pub is_running: bool,
     pub initial_camera: Camera,
-    pub gravitational_constant: f32,
+    pub gravitational_constant: f64,
 }
 
 pub struct World {
@@ -51,9 +51,9 @@ impl World {
             let mut dt = Timing::now() - timing.start_time;
             timing.start_time = Timing::now();
             dt *= parameters.time_multiplier as f64;
-            physics.dt = dt as f32;
+            physics.dt = dt;
         } else {
-            physics.dt = parameters.delta_time as f32;
+            physics.dt = parameters.delta_time;
         }
 
         for spring in &mut physics.springs {
@@ -96,7 +96,7 @@ impl World {
         for i in 0..self.physics.polygons.len() {
             if i < self.physics.polygons.len()
                 && self.parameters.world_size > 0.0
-                && self.physics.polygons[i].center.distance(Vec2::ZERO) > self.parameters.world_size
+                && self.physics.polygons[i].center.distance(DVec2::ZERO) > self.parameters.world_size as f64
                 && self.physics.polygons[i].eternal == false
             {
                 self.physics.remove_rigidbody(i, &mut self.ui);

@@ -20,7 +20,7 @@ impl Energy {
         }
         kinetic_energy as f64
     }
-    pub fn calculate_fake_gravitational_energy(rigidbody: &Rigidbody, gravity: f32, origin: f32) -> f64 {
+    pub fn calculate_fake_gravitational_energy(rigidbody: &Rigidbody, gravity: f64, origin: f64) -> f64 {
         let height = origin - rigidbody.center.y;
         rigidbody.mass as f64 * gravity as f64 * rigidbody.gravity_multiplier as f64 * height as f64
 
@@ -34,7 +34,7 @@ impl Energy {
         let world_anchor_b = b.center + spring.anchor_b;
 
         let distance = world_anchor_a.distance(world_anchor_b);
-        let stretch = distance - spring.rest_length;
+        let stretch = distance - spring.rest_length as f64;
 
         (0.5 * spring.stiffness * stretch * stretch) as f64
     }

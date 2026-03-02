@@ -1,14 +1,14 @@
-use glam::Vec2;
+use glam::{DVec2};
 pub fn rk4_gravity_step(
-    _t: f32,
-    x: Vec2,
-    v: Vec2,
-    dt: f32,
-    _m: f32,
+    _t: f64,
+    x: DVec2,
+    v: DVec2,
+    dt: f64,
+    _m: f64,
     // The closure now takes (current_position, current_velocity, time_offset)
     // so it can calculate the "world" at k1, k2, k3, k4
-    accel_fn: &dyn Fn(Vec2, Vec2, f32) -> Vec2,
-) -> (Vec2, Vec2) {
+    accel_fn: &dyn Fn(DVec2, DVec2, f64) -> DVec2,
+) -> (DVec2, DVec2) {
     let k1_v = v;
     let k1_a = accel_fn(x, v, 0.0);
 
@@ -31,14 +31,14 @@ pub fn rk4_gravity_step(
 
 
 pub fn rk4_step(
-    t: f32,
-    x: Vec2,
-    v: Vec2,
-    dt: f32,
-    m: f32,
-    force: &dyn Fn(f32, Vec2, Vec2) -> Vec2,
-) -> (Vec2, Vec2) {
-    let a = |t: f32, x: Vec2, v: Vec2| force(t, x, v) / m;
+    t: f64,
+    x: DVec2,
+    v: DVec2,
+    dt: f64,
+    m: f64,
+    force: &dyn Fn(f64, DVec2, DVec2) -> DVec2,
+) -> (DVec2, DVec2) {
+    let a = |t: f64, x: DVec2, v: DVec2| force(t, x, v) / m;
 
     let k1_x = v;
     let k1_v = a(t, x, v);
@@ -59,14 +59,14 @@ pub fn rk4_step(
 }
 
 pub fn rk4_angular_step(
-    t: f32,
-    angle: f32,
-    angular_velocity: f32,
-    dt: f32,
-    moment_of_inertia: f32,
-    torque: &dyn Fn(f32, f32, f32) -> f32,
-) -> (f32, f32) {
-    let alpha = |t: f32, theta: f32, omega: f32| torque(t, theta, omega) / moment_of_inertia;
+    t: f64,
+    angle: f64,
+    angular_velocity: f64,
+    dt: f64,
+    moment_of_inertia: f64,
+    torque: &dyn Fn(f64, f64, f64) -> f64,
+) -> (f64, f64) {
+    let alpha = |t: f64, theta: f64, omega: f64| torque(t, theta, omega) / moment_of_inertia;
 
     let k1_theta = angular_velocity;
     let k1_omega = alpha(t, angle, angular_velocity);
@@ -100,14 +100,14 @@ pub fn rk4_angular_step(
 }
 
 pub fn dormand_prince_step(
-    t: f32,
-    x: Vec2,
-    v: Vec2,
-    dt: f32,
-    m: f32,
-    force: &dyn Fn(f32, Vec2, Vec2) -> Vec2,
-) -> (Vec2, Vec2){ // ((Vec2, Vec2), (Vec2, Vec2)) {
-    let a = |t: f32, x: Vec2, v: Vec2| force(t, x, v) / m;
+    t: f64,
+    x: DVec2,
+    v: DVec2,
+    dt: f64,
+    m: f64,
+    force: &dyn Fn(f64, DVec2, DVec2) -> DVec2,
+) -> (DVec2, DVec2){ // ((DVec2, DVec2), (DVec2, DVec2)) {
+    let a = |t: f64, x: DVec2, v: DVec2| force(t, x, v) / m;
 
     // k1
     let k1_x = v;
@@ -232,13 +232,13 @@ pub fn dormand_prince_step(
 
 
 pub fn rkdp_step(
-    x: Vec2,
-    v: Vec2,
-    dt: f32,
-    m: f32,
-    accel_fn: &dyn Fn(Vec2, Vec2, f32) -> Vec2,
-    tolerance: f32,
-) -> (Vec2, Vec2, f32) {
+    x: DVec2,
+    v: DVec2,
+    dt: f64,
+    m: f64,
+    accel_fn: &dyn Fn(DVec2, DVec2, f64) -> DVec2,
+    tolerance: f64,
+) -> (DVec2, DVec2, f64) {
     // Butcher Tableau for Dormand-Prince
     // Coefficients for internal stages
     let a21 = 1.0/5.0;
@@ -307,18 +307,18 @@ pub fn rkdp_step(
 }
 
 pub fn saba4_step(
-    t: f32,
-    x: Vec2,
-    v: Vec2,
-    dt: f32,
-    m: f32,
-    force: &dyn Fn(f32, Vec2) -> Vec2,
-) -> (Vec2, Vec2) {
-    let a = |t: f32, x: Vec2| force(t, x) / m;
+    t: f64,
+    x: DVec2,
+    v: DVec2,
+    dt: f64,
+    m: f64,
+    force: &dyn Fn(f64, DVec2) -> DVec2,
+) -> (DVec2, DVec2) {
+    let a = |t: f64, x: DVec2| force(t, x) / m;
 
     // Yoshida coefficients
-    let w1: f32 = 1.35120719195966;
-    let w0: f32 = -1.70241438391932;
+    let w1: f64 = 1.35120719195966;
+    let w0: f64 = -1.70241438391932;
 
     let a1 = w1 / 2.0;
     let a2 = (w0 + w1) / 2.0;

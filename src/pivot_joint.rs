@@ -1,24 +1,24 @@
-use glam::{Mat2, Vec2};
+use glam::{DMat2, DVec2, Mat2, Vec2};
 use crate::Rigidbody;
 use crate::utility::rotate;
 
 /// 2D Ball-and-Socket (pivot/pin) joint: constrains anchors to coincide, allows free rotation.
 #[derive(Clone)]
 pub struct PivotJoint {
-    local_anchor_a: Vec2,
-    local_anchor_b: Vec2,
+    local_anchor_a: DVec2,
+    local_anchor_b: DVec2,
     pub(crate) body_a: usize,
     pub(crate) body_b: usize,
-    start_angle: f32,
+    start_angle: f64,
     pub a_index: usize,
     pub b_index: usize,
 
     /// Baumgarte stabilization factor for positional drift (small: 0.01..0.2)
-    pub beta: f32,
+    pub beta: f64,
 }
 
 impl PivotJoint {
-    pub fn new(local_anchor_a: Vec2, local_anchor_b: Vec2, rigidbodys: &mut Vec<Rigidbody>, body_a: usize, body_b: usize) -> Self {
+    pub fn new(local_anchor_a: DVec2, local_anchor_b: DVec2, rigidbodys: &mut Vec<Rigidbody>, body_a: usize, body_b: usize) -> Self {
         let a;
         let b;
         if body_a > body_b {
@@ -49,7 +49,7 @@ impl PivotJoint {
 
     /// Solve velocity-level linear constraints (2D block solve).
     /// Call multiple times per physics step inside the solver iteration loop.
-    pub fn solve_velocity_constraints(&self, rigidbodys: &mut Vec<Rigidbody>, dt: f32) {
+    pub fn solve_velocity_constraints(&self, rigidbodys: &mut Vec<Rigidbody>, dt: f64) {
         let a;
         let b;
         if self.body_a > self.body_b {
@@ -71,8 +71,8 @@ impl PivotJoint {
         let inv_ib = 1.0 / b.moment_of_inertia;
 
         // relative velocity at anchors
-        let va_anchor = a.velocity + Vec2::new(-a.angular_velocity * ra.y, a.angular_velocity * ra.x);
-        let vb_anchor = b.velocity + Vec2::new(-b.angular_velocity * rb.y, b.angular_velocity * rb.x);
+        let va_anchor = a.velocity + DVec2::new(-a.angular_velocity * ra.y, a.angular_velocity * ra.x);
+        let vb_anchor = b.velocity + DVec2::new(-b.angular_velocity * rb.y, b.angular_velocity * rb.x);
         let v_rel = vb_anchor - va_anchor;
 
         // position error and bias (Baumgarte)
@@ -83,19 +83,19 @@ impl PivotJoint {
 
         // Build 2x2 effective mass matrix K = J M^{-1} J^T
         // Base linear terms:
-        let mut k = Mat2::from_diagonal(Vec2::splat(inv_ma + inv_mb));
+        let mut k = DMat2::from_diagonal(DVec2::splat(inv_ma + inv_mb));
 
         // rotational contributions: for 2D, these are scalar but produce 2x2 additions.
         // For a given ra, the term is inv_ia * ([ -ra.y; ra.x ] * [ -ra.y, ra.x ]) = inv_ia * (ra_perp * ra_perp^T)
         // where ra_perp = perpendicular vector = (-ra.y, ra.x)
-        let ra_perp = Vec2::new(-ra.y, ra.x);
-        let rb_perp = Vec2::new(-rb.y, rb.x);
+        let ra_perp = DVec2::new(-ra.y, ra.x);
+        let rb_perp = DVec2::new(-rb.y, rb.x);
 
-        k += Mat2::from_cols(ra_perp * ra_perp.x * inv_ia, ra_perp * ra_perp.y * inv_ia);
-        k += Mat2::from_cols(rb_perp * rb_perp.x * inv_ib, rb_perp * rb_perp.y * inv_ib);
+        k += DMat2::from_cols(ra_perp * ra_perp.x * inv_ia, ra_perp * ra_perp.y * inv_ia);
+        k += DMat2::from_cols(rb_perp * rb_perp.x * inv_ib, rb_perp * rb_perp.y * inv_ib);
 
         // threshold for singularity
-        const EPS: f32 = 1e-6;
+        const EPS: f64 = 1e-6;
         let rhs = -(v_rel + bias);
 
         // matrix entries (Mat2 stores columns as x_axis, y_axis)
@@ -110,7 +110,7 @@ impl PivotJoint {
         let lambda = if det.abs() > EPS {
             // Cramer's rule (explicit solve)
             let inv_det = 1.0 / det;
-            Vec2::new(
+            DVec2::new(
                 ( d * rhs.x - b_k * rhs.y) * inv_det,
                 (-c * rhs.x + a_k * rhs.y) * inv_det,
             )
@@ -122,7 +122,7 @@ impl PivotJoint {
             let mut ly = 0.0;
             if diag_a.abs() > EPS { lx = rhs.x / diag_a; }
             if diag_d.abs() > EPS { ly = rhs.y / diag_d; }
-            Vec2::new(lx, ly)
+            DVec2::new(lx, ly)
         };
 
         // Apply linear impulse and corresponding angular effect
@@ -136,7 +136,7 @@ impl PivotJoint {
         b.angular_velocity += inv_ib * rb.perp_dot(impulse);
     }
 
-    pub fn get_anchor_world_position(&self, rigidbodys: &Vec<Rigidbody>) -> Vec2 {
-        rigidbodys[self.body_a].center + rotate(self.local_anchor_a, Vec2::ZERO, rigidbodys[self.body_a].angle - self.start_angle)
+    pub fn get_anchor_world_position(&self, rigidbodys: &Vec<Rigidbody>) -> DVec2 {
+        rigidbodys[self.body_a].center + DVec2::from(rotate(Vec2::new(self.local_anchor_a.x as f32, self.local_anchor_a.y as f32), Vec2::ZERO, (rigidbodys[self.body_a].angle - self.start_angle) as f32))
     }
 }

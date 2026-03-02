@@ -2,7 +2,7 @@ use std::ops::Range;
 use std::sync::Arc;
 use egui_wgpu::wgpu;
 use egui_wgpu::wgpu::util::DeviceExt;
-use glam::Vec2;
+use glam::{DVec2, Vec2};
 use winit::window::Window;
 use crate::{ColorRGBA, Parameters, Rigidbody, World};
 use crate::body_builder::{BodyBuilder, RigidbodyParams, SpringParams};
@@ -196,7 +196,7 @@ impl World{
             rigidbody_params: RigidbodyParams {
                 sides: 64,
                 radius: 0.3533,
-                pos: Vec2::ZERO,
+                pos: DVec2::ZERO,
                 mass: 1.0,
                 width: 0.5,
                 height: 0.5,
@@ -205,7 +205,7 @@ impl World{
                 collides: true,
                 rotation: 0.0,
                 angular_velocity: 0.0,
-                velocity: Vec2::ZERO,
+                velocity: DVec2::ZERO,
                 color_type: ColorType::Random,
                 gravity_multiplier: 1.0,
                 eternal: false,

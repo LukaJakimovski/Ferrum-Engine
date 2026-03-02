@@ -582,7 +582,7 @@ impl RenderSystem {
                                 .speed(0.1),
                         );
                         let angle_radians = angle_degrees.to_radians();
-                        selected_polygon.rotate(angle_radians - old_angle);
+                        selected_polygon.rotate((angle_radians - old_angle) as f32);
                         selected_polygon.angle += angle_radians - old_angle;
                     });
                     ui.columns(2, |ui| {

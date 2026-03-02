@@ -1,4 +1,4 @@
-use glam::Vec2;
+use glam::{DVec2, Vec2};
 use crate::{Parameters, Rigidbody, Spring};
 use crate::energy::Energy;
 use crate::ode_solver::{dormand_prince_step};
@@ -11,12 +11,12 @@ pub struct PhysicsSystem {
     pub polygons: Vec<Rigidbody>,
     pub(crate) weld_joints: Vec<WeldJoint>,
     pub(crate) pivot_joints: Vec<PivotJoint>,
-    pub dt: f32,
+    pub dt: f64,
     pub energy: Energy,
 }
 
 impl PhysicsSystem {
-    pub fn calculate_gravitational_energy(rigidbodys: &Vec<Rigidbody>, g: f32) -> f32{
+    pub fn calculate_gravitational_energy(rigidbodys: &Vec<Rigidbody>, g: f64) -> f64{
         let mut potential = 0.0;
         for i in 0..rigidbodys.len() {
             for j in (i + 1)..rigidbodys.len() {
@@ -28,15 +28,15 @@ impl PhysicsSystem {
         potential
     }
 
-    pub fn gravity_step(&mut self, g: f32){
+    pub fn gravity_step(&mut self, g: f64){
         let snapshot = self.polygons.clone();
         let mut next_bodies: Vec<Rigidbody> = Vec::with_capacity(self.polygons.len());
 
         for i in 0..self.polygons.len() {
             let p = &self.polygons[i];
 
-            let compute_accel = |dt_offset: f32, my_pos: Vec2, _my_vel: Vec2| {
-                let mut accel = Vec2::ZERO;
+            let compute_accel = |dt_offset: f64, my_pos: DVec2, _my_vel: DVec2| {
+                let mut accel = DVec2::ZERO;
                 for (j, other) in snapshot.iter().enumerate() {
                     if i == j {continue; }
 
@@ -61,11 +61,11 @@ impl PhysicsSystem {
 
     pub fn update_physics(&mut self, parameters: &Parameters) {
         self.collision_resolution();
-        let g: Vec2;
+        let g: DVec2;
         if parameters.gravity == true {
             g = parameters.gravity_force;
         } else {
-            g = Vec2 { x: 0.0, y: 0.0 };
+            g = DVec2 { x: 0.0, y: 0.0 };
         }
         for spring in &mut self.springs {
             spring.apply(self.dt, &mut self.polygons);
