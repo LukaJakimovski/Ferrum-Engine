@@ -45,7 +45,6 @@ impl Energy {
         self.potential_energy = 0.0;
         for polygon in rigidbodys {
             self.kinetic_energy += Self::calculate_kinetic_energy(polygon);
-            //self.potential_energy += Self::calculate_fake_gravitational_energy(polygon, gravity, origin);
         }
         self.potential_energy = PhysicsSystem::calculate_gravitational_energy(rigidbodys, parameters.gravitational_constant) as f64;
         for spring in springs {

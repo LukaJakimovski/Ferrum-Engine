@@ -198,8 +198,8 @@ impl RenderSystem {
                     if parameters.delta_time < 0.0 {
                         parameters.delta_time = 0.0;
                     }
-                    if parameters.delta_time > 0.005 {
-                        parameters.delta_time = 0.005;
+                    if parameters.delta_time > 0.1 {
+                        parameters.delta_time = 0.1;
                     }
                 });
                 ui.columns(2, |ui| {

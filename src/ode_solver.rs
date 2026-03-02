@@ -1,4 +1,34 @@
 use glam::Vec2;
+pub fn rk4_gravity_step(
+    _t: f32,
+    x: Vec2,
+    v: Vec2,
+    dt: f32,
+    _m: f32,
+    // The closure now takes (current_position, current_velocity, time_offset)
+    // so it can calculate the "world" at k1, k2, k3, k4
+    accel_fn: &dyn Fn(Vec2, Vec2, f32) -> Vec2,
+) -> (Vec2, Vec2) {
+    let k1_v = v;
+    let k1_a = accel_fn(x, v, 0.0);
+
+    let k2_v = v + k1_a * (dt * 0.5);
+    let k2_a = accel_fn(x + k1_v * (dt * 0.5), v + k1_a * (dt * 0.5), dt * 0.5);
+
+    let k3_v = v + k2_a * (dt * 0.5);
+    let k3_a = accel_fn(x + k2_v * (dt * 0.5), v + k2_a * (dt * 0.5), dt * 0.5);
+
+    let k4_v = v + k3_a * dt;
+    let k4_a = accel_fn(x + k3_v * dt, v + k3_a * dt, dt);
+
+    let new_x = x + (k1_v + k2_v * 2.0 + k3_v * 2.0 + k4_v) * (dt / 6.0);
+    let new_v = v + (k1_a + k2_a * 2.0 + k3_a * 2.0 + k4_a) * (dt / 6.0);
+
+    (new_x, new_v)
+}
+
+
+
 
 pub fn rk4_step(
     t: f32,
@@ -76,7 +106,7 @@ pub fn dormand_prince_step(
     dt: f32,
     m: f32,
     force: &dyn Fn(f32, Vec2, Vec2) -> Vec2,
-) -> ((Vec2, Vec2), (Vec2, Vec2)) {
+) -> (Vec2, Vec2){ // ((Vec2, Vec2), (Vec2, Vec2)) {
     let a = |t: f32, x: Vec2, v: Vec2| force(t, x, v) / m;
 
     // k1
@@ -181,14 +211,14 @@ pub fn dormand_prince_step(
         + k6_v * (11.0 / 84.0));
 
     // 4th order estimate (for error estimate)
-    let x_star = x
+    let _x_star = x
         + dt * (k1_x * (5179.0 / 57600.0)
         + k3_x * (7571.0 / 16695.0)
         + k4_x * (393.0 / 640.0)
         + k5_x * (-92097.0 / 339200.0)
         + k6_x * (187.0 / 2100.0)
         + k7_x * (1.0 / 40.0));
-    let v_star = v
+    let _v_star = v
         + dt * (k1_v * (5179.0 / 57600.0)
         + k3_v * (7571.0 / 16695.0)
         + k4_v * (393.0 / 640.0)
@@ -196,5 +226,137 @@ pub fn dormand_prince_step(
         + k6_v * (187.0 / 2100.0)
         + k7_v * (1.0 / 40.0));
 
-    ((x_next, v_next), (x_next - x_star, v_next - v_star))
+    //((x_next, v_next), (x_next - x_star, v_next - v_star))
+    (x_next, v_next)
+}
+
+
+pub fn rkdp_step(
+    x: Vec2,
+    v: Vec2,
+    dt: f32,
+    m: f32,
+    accel_fn: &dyn Fn(Vec2, Vec2, f32) -> Vec2,
+    tolerance: f32,
+) -> (Vec2, Vec2, f32) {
+    // Butcher Tableau for Dormand-Prince
+    // Coefficients for internal stages
+    let a21 = 1.0/5.0;
+    let a31 = 3.0/40.0;       let a32 = 9.0/40.0;
+    let a41 = 44.0/45.0;      let a42 = -56.0/15.0;      let a43 = 32.0/9.0;
+    let a51 = 19372.0/6561.0; let a52 = -25360.0/2187.0; let a53 = 64448.0/6561.0; let a54 = -212.0/729.0;
+    let a61 = 9017.0/3168.0;  let a62 = -355.0/33.0;     let a63 = 46732.0/5247.0; let a64 = 49.0/176.0;   let a65 = -5103.0/18656.0;
+    let a71 = 35.0/384.0;     let a73 = 500.0/1113.0;    let a74 = 125.0/192.0;    let a75 = -2187.0/6784.0; let a76 = 11.0/84.0;
+
+    // 4th order (for error estimation)
+    let e1 = 35.0/384.0 - 5179.0/57600.0;
+    let e3 = 500.0/1113.0 - 7571.0/16695.0;
+    let e4 = 125.0/192.0 - 393.0/640.0;
+    let e5 = -2187.0/6784.0 - (-92097.0/339200.0);
+    let e6 = 11.0/84.0 - 187.0/2100.0;
+    let e7 = -1.0/40.0;
+
+    // k1: Initial slope
+    let k1_v = v;
+    let k1_a = accel_fn(x, v, 0.0);
+
+    // k2
+    let k2_v = v + k1_a * (dt * a21);
+    let k2_a = accel_fn(x + k1_v * (dt * a21), k2_v, dt * (1.0/5.0));
+
+    // k3
+    let k3_v = v + k1_a * (dt * a31) + k2_a * (dt * a32);
+    let k3_a = accel_fn(x + k1_v * (dt * a31) + k2_v * (dt * a32), k3_v, dt * (3.0/10.0));
+
+    // k4
+    let k4_v = v + k1_a * (dt * a41) + k2_a * (dt * a42) + k3_a * (dt * a43);
+    let k4_a = accel_fn(x + k1_v * (dt * a41) + k2_v * (dt * a42) + k3_v * (dt * a43), k4_v, dt * (4.0/5.0));
+
+    // k5
+    let k5_v = v + k1_a * (dt * a51) + k2_a * (dt * a52) + k3_a * (dt * a53) + k4_a * (dt * a54);
+    let k5_a = accel_fn(x + k1_v * (dt * a51) + k2_v * (dt * a52) + k3_v * (dt * a53) + k4_v * (dt * a54), k5_v, dt * (8.0/9.0));
+
+    // k6
+    let k6_v = v + k1_a * (dt * a61) + k2_a * (dt * a62) + k3_a * (dt * a63) + k4_a * (dt * a64) + k5_a * (dt * a65);
+    let k6_a = accel_fn(x + k1_v * (dt * a61) + k2_v * (dt * a62) + k3_v * (dt * a63) + k4_v * (dt * a64) + k5_v * (dt * a65), k6_v, dt);
+
+    // Final result (5th order estimate)
+    let next_x = x + (k1_v * a71 + k3_v * a73 + k4_v * a74 + k5_v * a75 + k6_v * a76) * dt;
+    let next_v = v + (k1_a * a71 + k3_a * a73 + k4_a * a74 + k5_a * a75 + k6_a * a76) * dt;
+
+    // Error estimation (the difference between 5th and 4th order)
+    // We only check position error for simplicity, but could check velocity too
+    let err_vec = (k1_v * e1 + k3_v * e3 + k4_v * e4 + k5_v * e5 + k6_v * e6 + next_v * e7) * dt;
+    let error = err_vec.length();
+
+    // Adaptive step size logic
+    let mut next_dt = dt;
+    if error > 0.0 {
+        // Safety factor 0.9 to prevent oscillating steps
+        let optimal_dt = dt * 0.9 * (tolerance / error).powf(0.2);
+        next_dt = optimal_dt.clamp(dt * 0.1, dt * 5.0);
+    }
+
+    if error <= tolerance || dt < 1e-6 {
+        // Step accepted
+        (next_x, next_v, next_dt)
+    } else {
+        // Step rejected, try again with smaller dt
+        rkdp_step(x, v, next_dt, m, accel_fn, tolerance)
+    }
+}
+
+pub fn saba4_step(
+    t: f32,
+    x: Vec2,
+    v: Vec2,
+    dt: f32,
+    m: f32,
+    force: &dyn Fn(f32, Vec2) -> Vec2,
+) -> (Vec2, Vec2) {
+    let a = |t: f32, x: Vec2| force(t, x) / m;
+
+    // Yoshida coefficients
+    let w1: f32 = 1.35120719195966;
+    let w0: f32 = -1.70241438391932;
+
+    let a1 = w1 / 2.0;
+    let a2 = (w0 + w1) / 2.0;
+    let a3 = a2;
+    let a4 = a1;
+
+    let b1 = w1;
+    let b2 = w0;
+    let b3 = w1;
+
+    let mut x = x;
+    let mut v = v;
+    let mut t = t;
+
+    // A1 (Drift)
+    x += v * (a1 * dt);
+    t += a1 * dt;
+
+    // B1 (Kick)
+    v += a(t, x) * (b1 * dt);
+
+    // A2
+    x += v * (a2 * dt);
+    t += a2 * dt;
+
+    // B2
+    v += a(t, x) * (b2 * dt);
+
+    // A3
+    x += v * (a3 * dt);
+    t += a3 * dt;
+
+    // B3
+    v += a(t, x) * (b3 * dt);
+
+    // A4
+    x += v * (a4 * dt);
+    //t += a4 * dt;
+
+    (x, v)
 }

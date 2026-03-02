@@ -73,13 +73,20 @@ impl World {
 
 
         if self.parameters.is_running {
-            let dt = Timing::now() - self.timing.timer;
-            self.timing.runtime += dt * self.parameters.time_multiplier as f64;
+            if self.parameters.delta_time != 0.0 {
+                self.timing.runtime += self.parameters.delta_time * self.parameters.updates_per_frame as f64;
+            } else {
+                let dt = Timing::now() - self.timing.timer;
+                self.timing.runtime += dt * self.parameters.time_multiplier as f64;
+                self.timing.frame_count += 1;
+            }
         }
-        self.timing.frame_count += 1;
+
         self.timing.fps = 1.0 / (Timing::now() - self.timing.timer);
         self.timing.timer = Timing::now();
-
+        if self.timing.frame_count >= 1000000{
+            self.parameters.is_running = false;
+        }
 
 
         if self.ui.is_pointer_used == false {

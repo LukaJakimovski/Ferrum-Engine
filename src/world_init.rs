@@ -260,7 +260,7 @@ impl World{
             polygons,
             weld_joints,
             pivot_joints,
-            dt: 0.0,
+            dt: 0.000001,
             energy: Default::default(),
         };
 

@@ -1,6 +1,7 @@
 use glam::Vec2;
 use crate::{Parameters, Rigidbody, Spring};
 use crate::energy::Energy;
+use crate::ode_solver::{dormand_prince_step};
 use crate::pivot_joint::PivotJoint;
 use crate::weld_joint::WeldJoint;
 
@@ -21,46 +22,42 @@ impl PhysicsSystem {
             for j in (i + 1)..rigidbodys.len() {
                 let r = rigidbodys[j].center - rigidbodys[i].center;
                 let distance = r.length();
-                potential += g * rigidbodys[i].mass * rigidbodys[j].mass / distance * rigidbodys[i].gravity_multiplier * rigidbodys[j].gravity_multiplier;
+                potential -= g * rigidbodys[i].mass * rigidbodys[j].mass / distance * rigidbodys[i].gravity_multiplier * rigidbodys[j].gravity_multiplier;
             }
         }
         potential
     }
 
-    pub fn get_gravity(&mut self, g: f32) {
-        for polygon in &mut self.polygons {
-            polygon.gravity_force = Vec2::ZERO;
-        }
+    pub fn gravity_step(&mut self, g: f32){
+        let snapshot = self.polygons.clone();
+        let mut next_bodies: Vec<Rigidbody> = Vec::with_capacity(self.polygons.len());
+
         for i in 0..self.polygons.len() {
-            for j in (i + 1)..self.polygons.len() {
+            let p = &self.polygons[i];
 
-                let pos_i = self.polygons[i].center;
-                let pos_j = self.polygons[j].center;
+            let compute_accel = |dt_offset: f32, my_pos: Vec2, _my_vel: Vec2| {
+                let mut accel = Vec2::ZERO;
+                for (j, other) in snapshot.iter().enumerate() {
+                    if i == j {continue; }
 
-                let direction = pos_j - pos_i;
-                let distance = direction.length();
+                    let other_pos_at_t = other.center + other.velocity * dt_offset;
 
-                // Prevent division by zero or extremely small distances
-                if distance <= 0.0001 {
-                    continue;
+                    let diff = other_pos_at_t - my_pos;
+                    let dist_sq = diff.length_squared() + 1e-14;
+                    accel = accel + diff * (g * other.gravity_multiplier * other.mass / (dist_sq * dist_sq.sqrt()));
                 }
-
-                let mass_product = self.polygons[i].mass * self.polygons[j].mass;
-
-                // Correct gravity formula: F = G * m1 * m2 / r^2
-                let force_magnitude = g * mass_product / (distance * distance);
-
-                // Normalize direction vector
-                let force = direction.normalize() * force_magnitude;
-                
-                let multi = self.polygons[j].gravity_multiplier;
-                let multj = self.polygons[i].gravity_multiplier;
-                self.polygons[i].gravity_force += force * multi;
-                self.polygons[j].gravity_force -= force * multj; 
-            }
+                accel
+            };
+            // Inside your loop
+            let (new_pos, new_vel) = dormand_prince_step(0.0, p.center, p.velocity, self.dt, p.mass, &compute_accel);
+            //self.dt = suggested_dt; // Update global simulation speed based on need
+            let mut p1 = p.clone();
+            p1.move_to(new_pos);
+            p1.velocity = new_vel;
+            next_bodies.push(p1);
         }
+        self.polygons = next_bodies;
     }
-
 
     pub fn update_physics(&mut self, parameters: &Parameters) {
         self.collision_resolution();
@@ -74,7 +71,8 @@ impl PhysicsSystem {
             spring.apply(self.dt, &mut self.polygons);
         }
 
-        self.get_gravity(parameters.gravitational_constant);
+        //self.get_gravity(parameters.gravitational_constant);
+        self.gravity_step(parameters.gravitational_constant);
         for polygon in &mut self.polygons {
             polygon.update_rigidbody(g, self.dt);
         }
