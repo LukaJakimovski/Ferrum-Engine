@@ -5,7 +5,6 @@ use crate::pivot_joint::PivotJoint;
 use crate::weld_joint::WeldJoint;
 
 //const G: f64 = 6.674 * 0.00000000001;
-const G: f64 = 1.0;
 pub struct PhysicsSystem {
     pub springs: Vec<Spring>,
     pub polygons: Vec<Rigidbody>,
@@ -16,19 +15,19 @@ pub struct PhysicsSystem {
 }
 
 impl PhysicsSystem {
-    pub fn calculate_gravitational_energy(rigidbodys: &Vec<Rigidbody>) -> f32{
+    pub fn calculate_gravitational_energy(rigidbodys: &Vec<Rigidbody>, g: f32) -> f32{
         let mut potential = 0.0;
         for i in 0..rigidbodys.len() {
             for j in (i + 1)..rigidbodys.len() {
                 let r = rigidbodys[j].center - rigidbodys[i].center;
                 let distance = r.length();
-                potential += G as f32 * rigidbodys[i].mass * rigidbodys[j].mass / distance * rigidbodys[i].gravity_multiplier * rigidbodys[j].gravity_multiplier;
+                potential += g * rigidbodys[i].mass * rigidbodys[j].mass / distance * rigidbodys[i].gravity_multiplier * rigidbodys[j].gravity_multiplier;
             }
         }
         potential
     }
 
-    pub fn get_gravity(&mut self) {
+    pub fn get_gravity(&mut self, g: f32) {
         for polygon in &mut self.polygons {
             polygon.gravity_force = Vec2::ZERO;
         }
@@ -49,7 +48,7 @@ impl PhysicsSystem {
                 let mass_product = self.polygons[i].mass * self.polygons[j].mass;
 
                 // Correct gravity formula: F = G * m1 * m2 / r^2
-                let force_magnitude = G as f32 * mass_product / (distance * distance);
+                let force_magnitude = g * mass_product / (distance * distance);
 
                 // Normalize direction vector
                 let force = direction.normalize() * force_magnitude;
@@ -75,7 +74,7 @@ impl PhysicsSystem {
             spring.apply(self.dt, &mut self.polygons);
         }
 
-        self.get_gravity();
+        self.get_gravity(parameters.gravitational_constant);
         for polygon in &mut self.polygons {
             polygon.update_rigidbody(g, self.dt);
         }

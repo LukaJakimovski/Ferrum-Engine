@@ -43,6 +43,7 @@ fn main() {
         gravity_force: Vec2::new(0.0, -9.81),
         clear_color: ColorRGBA::new(0.0, 0.0, 0.0, 1.0),
         is_running: false,
+        gravitational_constant: 0.0,
     };
     run(polygons, vec![], vec![], vec![], parameters);
 }

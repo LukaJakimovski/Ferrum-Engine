@@ -1,4 +1,4 @@
-use crate::{Rigidbody, Spring};
+use crate::{Parameters, Rigidbody, Spring};
 use crate::physics::PhysicsSystem;
 
 #[derive(Default)]
@@ -39,7 +39,7 @@ impl Energy {
         (0.5 * spring.stiffness * stretch * stretch) as f64
     }
 
-    pub fn update_energy(&mut self, rigidbodys: &Vec<Rigidbody>, springs: &Vec<Spring>) {
+    pub fn update_energy(&mut self, rigidbodys: &Vec<Rigidbody>, springs: &Vec<Spring>, parameters: &Parameters) {
         self.kinetic_energy = 0.0;
         self.spring_energy = 0.0;
         self.potential_energy = 0.0;
@@ -47,7 +47,7 @@ impl Energy {
             self.kinetic_energy += Self::calculate_kinetic_energy(polygon);
             //self.potential_energy += Self::calculate_fake_gravitational_energy(polygon, gravity, origin);
         }
-        self.potential_energy = PhysicsSystem::calculate_gravitational_energy(rigidbodys) as f64;
+        self.potential_energy = PhysicsSystem::calculate_gravitational_energy(rigidbodys, parameters.gravitational_constant) as f64;
         for spring in springs {
             self.spring_energy += Self::calculate_spring_energy(spring, rigidbodys);
         }

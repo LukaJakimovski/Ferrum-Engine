@@ -23,6 +23,7 @@ pub struct Parameters {
     pub clear_color: ColorRGBA,
     pub is_running: bool,
     pub initial_camera: Camera,
+    pub gravitational_constant: f32,
 }
 
 pub struct World {
@@ -62,7 +63,7 @@ impl World {
         if parameters.is_running == true { 
             physics.update_physics(&parameters);
         }
-        physics.energy.update_energy(&physics.polygons, &physics.springs);
+        physics.energy.update_energy(&physics.polygons, &physics.springs, parameters);
     }
 
     pub(crate) fn update(&mut self) {
