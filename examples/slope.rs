@@ -1,5 +1,6 @@
 use ferrum_engine::*;
 use std::f32::consts::PI;
+use glam::DVec2;
 
 fn main() {
     let mut polygons = vec![];
@@ -7,8 +8,8 @@ fn main() {
     polygons.push(Rigidbody::rectangle(
         10.0,
         1.0,
-        Vec2 { x: 0.0, y: 0.0 },
-        f32::MAX / 10.0,
+        DVec2 { x: 0.0, y: 0.0 },
+        f64::MAX / 10.0,
         0.6,
         ColorRGBA::orange(),
     ));
@@ -19,9 +20,9 @@ fn main() {
         polygons.push(Rigidbody::polygon(
             32,
             0.3533,
-            Vec2 {
+            DVec2 {
                 x: 2.5,
-                y: 6.0 + i as f32 * 2.0,
+                y: 6.0 + i as f64 * 2.0,
             },
             1.0,
             1.0,
@@ -40,9 +41,10 @@ fn main() {
         time_multiplier: 1.0,
         gravity: true,
         world_size: 300.0,
-        gravity_force: Vec2::new(0.0, -9.81),
+        gravity_force: DVec2::new(0.0, -9.81),
         clear_color: ColorRGBA::new(0.0, 0.0, 0.0, 1.0),
         is_running: false,
+        gravitational_constant: 0.0,
     };
     run(polygons, vec![], vec![], vec![], parameters);
 }

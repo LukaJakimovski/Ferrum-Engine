@@ -1,5 +1,5 @@
 use crate::{ColorRGBA};
-use glam::{Vec2, Vec4};
+use glam::{DVec2, Vec4};
 use crate::color::ColorSystem;
 use crate::input::UiSystem;
 use crate::physics::PhysicsSystem;
@@ -19,10 +19,11 @@ pub struct Parameters {
     pub angular_velocity: bool,
     pub gravity: bool,
     pub world_size: f32,
-    pub gravity_force: Vec2,
+    pub gravity_force: DVec2,
     pub clear_color: ColorRGBA,
     pub is_running: bool,
     pub initial_camera: Camera,
+    pub gravitational_constant: f64,
 }
 
 pub struct World {
@@ -44,45 +45,66 @@ impl World {
         }
     }
 
-    pub(crate) fn update(&mut self) {
-        if self.parameters.delta_time == 0.0 {
-            let mut dt = Timing::now() - self.timing.start_time;
-            self.timing.start_time = Timing::now();
-            dt *= self.parameters.time_multiplier as f64;
-            self.physics.dt = dt as f32;
+    pub(crate) fn physics_update(physics: &mut PhysicsSystem, timing: &mut Timing, parameters: &Parameters) {
+
+        if parameters.delta_time == 0.0 {
+            let mut dt = Timing::now() - timing.start_time;
+            timing.start_time = Timing::now();
+            dt *= parameters.time_multiplier as f64;
+            physics.dt = dt;
         } else {
-            self.physics.dt = self.parameters.delta_time as f32;
+            physics.dt = parameters.delta_time;
         }
-        for spring in &mut self.physics.springs {
-            spring.update_connector(&mut self.physics.polygons);
+
+        for spring in &mut physics.springs {
+            spring.update_connector(&mut physics.polygons);
         }
-        
+
+        if parameters.is_running == true { 
+            physics.update_physics(&parameters);
+        }
+        physics.energy.update_energy(&physics.polygons, &physics.springs, parameters);
+    }
+
+    pub(crate) fn update(&mut self) {
+        for _i in 0..self.parameters.updates_per_frame {
+            World::physics_update(&mut self.physics, &mut self.timing, &self.parameters);
+        }
+
+
+        if self.parameters.is_running {
+            if self.parameters.delta_time != 0.0 {
+                self.timing.runtime += self.parameters.delta_time * self.parameters.updates_per_frame as f64;
+            } else {
+                let dt = Timing::now() - self.timing.timer;
+                self.timing.runtime += dt * self.parameters.time_multiplier as f64;
+                self.timing.frame_count += 1;
+            }
+        }
+
+        self.timing.fps = 1.0 / (Timing::now() - self.timing.timer);
+        self.timing.timer = Timing::now();
+        if self.timing.frame_count >= 1000000{
+            self.parameters.is_running = false;
+        }
+
+
         if self.ui.is_pointer_used == false {
             self.ui.handle_input(&mut self.physics, &mut self.color_system);
         }
-        
+
         for i in 0..self.physics.polygons.len() {
             if i < self.physics.polygons.len()
                 && self.parameters.world_size > 0.0
-                && self.physics.polygons[i].center.distance(Vec2::ZERO) > self.parameters.world_size
+                && self.physics.polygons[i].center.distance(DVec2::ZERO) > self.parameters.world_size as f64
                 && self.physics.polygons[i].eternal == false
             {
                 self.physics.remove_rigidbody(i, &mut self.ui);
             }
         }
-        if self.parameters.is_running == true {
-            for _i in 0..self.parameters.updates_per_frame {
-                self.physics.update_physics(&self.parameters);
-            }
-        }
-        self.timing.frame_count += 1;
-        if self.timing.frame_count % 10 == 0 {
-            self.timing.fps = 10.0 / (Timing::now() - self.timing.timer);
-            self.timing.timer = Timing::now();
-        }
-
-        self.physics.energy.update_energy(&self.physics.polygons, &self.physics.springs, self.parameters.gravity_force.y,  -self.parameters.world_size);
-
+        
         self.ui.create_mouse_ghost(&mut self.physics);
     }
+    
+    
 }

@@ -1,3 +1,4 @@
+use glam::DVec2;
 use ferrum_engine::*;
 
 fn main() {
@@ -5,7 +6,7 @@ fn main() {
     polygons.push(Rigidbody::rectangle(
         0.5,
         0.5,
-        Vec2 { x: -1.0, y: 5.0 },
+        DVec2 { x: -1.0, y: 5.0 },
         1.0,
         0.6,
         ColorRGBA::random_hsl(),
@@ -13,7 +14,7 @@ fn main() {
     polygons.push(Rigidbody::rectangle(
         0.5,
         0.5,
-        Vec2 { x: 1.0, y: 5.0 },
+        DVec2 { x: 1.0, y: 5.0 },
         1.0,
         0.6,
         ColorRGBA::random_hsl(),
@@ -21,7 +22,7 @@ fn main() {
     polygons.push(Rigidbody::rectangle(
         0.5,
         0.5,
-        Vec2 { x: -2.0, y: 5.0 },
+        DVec2 { x: -2.0, y: 5.0 },
         1.0,
         0.6,
         ColorRGBA::random_hsl(),
@@ -29,7 +30,7 @@ fn main() {
     polygons.push(Rigidbody::rectangle(
         0.5,
         0.5,
-        Vec2 { x: 2.0, y: 5.0 },
+        DVec2 { x: 2.0, y: 5.0 },
         1.0,
         0.6,
         ColorRGBA::random_hsl(),
@@ -37,7 +38,7 @@ fn main() {
     polygons.push(Rigidbody::rectangle(
         0.5,
         0.5,
-        Vec2 {
+        DVec2 {
             x: -0.00001,
             y: 5.0,
         },
@@ -48,8 +49,8 @@ fn main() {
     polygons.push(Rigidbody::rectangle(
         20.0,
         1.0,
-        Vec2 { x: 0.0, y: 0.0 },
-        f32::MAX / 100000000000.0,
+        DVec2 { x: 0.0, y: 0.0 },
+        f64::MAX / 100000000000.0,
         0.6,
         ColorRGBA::random_hsl(),
     ));
@@ -69,9 +70,10 @@ fn main() {
         time_multiplier: 1.0,
         gravity: true,
         world_size: 300.0,
-        gravity_force: Vec2::new(0.0, -9.81),
+        gravity_force: DVec2::new(0.0, -9.81),
         clear_color: ColorRGBA::new(0.0, 0.0, 0.0, 1.0),
         is_running: false,
+        gravitational_constant: 0.0,
     };
     run(polygons, vec![], vec![], vec![], parameters);
 }

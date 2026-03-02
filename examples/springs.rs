@@ -1,3 +1,4 @@
+use glam::DVec2;
 use ferrum_engine::*;
 
 fn main() {
@@ -5,7 +6,7 @@ fn main() {
     polygons.push(Rigidbody::rectangle(
         0.5,
         0.5,
-        Vec2::new(0.0, 1.0),
+        DVec2::new(0.0, 1.0),
         1.0,
         1.0,
         ColorRGBA::random_hsl(),
@@ -13,7 +14,7 @@ fn main() {
     polygons.push(Rigidbody::rectangle(
         0.5,
         0.5,
-        Vec2::new(0.0, -1.0),
+        DVec2::new(0.0, -1.0),
         1.0,
         1.0,
         ColorRGBA::random_hsl(),
@@ -21,7 +22,7 @@ fn main() {
     polygons.push(Rigidbody::rectangle(
         0.5,
         0.5,
-        Vec2::new(-3.0, -5.0),
+        DVec2::new(-3.0, -5.0),
         1.0,
         1.0,
         ColorRGBA::random_hsl(),
@@ -29,7 +30,7 @@ fn main() {
     polygons.push(Rigidbody::rectangle(
         0.5,
         0.5,
-        Vec2::new(-3.0, 5.0),
+        DVec2::new(-3.0, 5.0),
         1.0,
         1.0,
         ColorRGBA::random_hsl(),
@@ -37,7 +38,7 @@ fn main() {
     polygons.push(Rigidbody::rectangle(
         0.5,
         0.5,
-        Vec2::new(2.5, 3.0),
+        DVec2::new(2.5, 3.0),
         1.0,
         1.0,
         ColorRGBA::random_hsl(),
@@ -45,7 +46,7 @@ fn main() {
     polygons.push(Rigidbody::rectangle(
         0.5,
         0.5,
-        Vec2::new(3.5, -3.0),
+        DVec2::new(3.5, -3.0),
         1.0,
         1.0,
         ColorRGBA::random_hsl(),
@@ -55,8 +56,8 @@ fn main() {
     springs.push(Spring::new(
         0,
         1,
-        Vec2::new(0.0, -0.0),
-        Vec2::new(0.0, 0.0),
+        DVec2::new(0.0, -0.0),
+        DVec2::new(0.0, 0.0),
         7.0,
         10.0,
         1.0,
@@ -65,8 +66,8 @@ fn main() {
     springs.push(Spring::new(
         2,
         3,
-        Vec2::new(0.0, 0.0),
-        Vec2::new(0.0, -0.0),
+        DVec2::new(0.0, 0.0),
+        DVec2::new(0.0, -0.0),
         2.0,
         10.0,
         2.0,
@@ -75,8 +76,8 @@ fn main() {
     springs.push(Spring::new(
         4,
         5,
-        Vec2::new(0.0, -0.0),
-        Vec2::new(0.0, 0.0),
+        DVec2::new(0.0, -0.0),
+        DVec2::new(0.0, 0.0),
         5.0,
         10.0,
         1.0,
@@ -94,9 +95,10 @@ fn main() {
         time_multiplier: 1.0,
         gravity: false,
         world_size: 300.0,
-        gravity_force: Vec2::new(0.0, -9.81),
+        gravity_force: DVec2::new(0.0, -9.81),
         clear_color: ColorRGBA::new(0.0, 0.0, 0.0, 1.0),
         is_running: false,
+        gravitational_constant: 0.0,
     };
     run(polygons, springs, vec![], vec![], parameters);
 }

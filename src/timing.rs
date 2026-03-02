@@ -3,6 +3,8 @@ pub struct Timing{
     pub frame_count: u32,
     pub timer: f64,
     pub fps: f64,
+    pub runtime: f64,
+    pub test: bool,
 }
 
 

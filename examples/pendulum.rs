@@ -1,4 +1,4 @@
-use glam::{Vec2, Vec4};
+use glam::{DVec2, Vec4};
 use ferrum_engine::{run, ColorRGBA, Parameters, Camera, PivotJoint, Rigidbody};
 
 fn main() {
@@ -13,20 +13,21 @@ fn main() {
         time_multiplier: 1.0,
         gravity: false,
         world_size: 10.0,
-        gravity_force: Vec2::new(0.0, -9.81),
+        gravity_force: DVec2::new(0.0, -9.81),
         clear_color: ColorRGBA::new(0.0, 0.0, 0.0, 1.0),
         is_running: false,
+        gravitational_constant: 0.0,
     };
     let mut polygons = vec![];
 
     polygons.push(Rigidbody::rectangle(
         0.05,
         0.05,
-        Vec2 {
+        DVec2 {
             x: 0.0,
             y: 0.0,
         },
-        f32::MAX / 10000.0,
+        f64::MAX / 10000.0,
         1.01,
         ColorRGBA::random_hsl(),
     ));
@@ -36,7 +37,7 @@ fn main() {
     polygons.push(Rigidbody::rectangle(
         0.25,
         2.0,
-        Vec2 {
+        DVec2 {
             x: 0.0,
             y: 1.0,
         },
@@ -47,13 +48,13 @@ fn main() {
     let mut pivot_joints = vec![];
 
     pivot_joints.push(
-        PivotJoint::new(Vec2::new(0.0, 0.0), Vec2::new(0.0, -1.0), &mut polygons,0, 1)
+        PivotJoint::new(DVec2::new(0.0, 0.0), DVec2::new(0.0, -1.0), &mut polygons,0, 1)
     );
 
     polygons.push(Rigidbody::rectangle(
         2.0,
         0.25,
-        Vec2 {
+        DVec2 {
             x: 1.0,
             y: 2.0,
         },
@@ -63,7 +64,7 @@ fn main() {
     ));
 
     pivot_joints.push(
-        PivotJoint::new(Vec2::new(0.0, 1.0), Vec2::new(-1.0, 0.0), &mut polygons,1, 2)
+        PivotJoint::new(DVec2::new(0.0, 1.0), DVec2::new(-1.0, 0.0), &mut polygons,1, 2)
     );
 
 

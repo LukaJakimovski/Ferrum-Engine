@@ -9,6 +9,7 @@ use crate::input::UiSystem;
 use crate::physics::PhysicsSystem;
 use crate::render::RenderSystem;
 use crate::timing::Timing;
+use crate::utility::vec2_to_string;
 
 impl RenderSystem {
     pub fn create_gui(&mut self, ui_system: &mut UiSystem, physics_system: &mut PhysicsSystem, color_system: &mut ColorSystem, timing: &mut Timing, parameters: &mut Parameters, encoder: &mut wgpu::CommandEncoder, view: &wgpu::TextureView) {
@@ -131,13 +132,17 @@ impl RenderSystem {
             .resizable(false)
             .vscroll(true)
             .default_open(true)
-            .max_height(50.0)
+            .max_height(100.0)
             .max_width(100.0)
             .title_bar(false)
             .show(self.egui_renderer.context(), |ui| {
                 ui.heading("FPS");
                 ui.label(format!("FPS: {:.3}", timing.fps));
                 ui.label(format!("ms/frame {:.3}", 1000.0 / timing.fps));
+                ui.label(format!("Runtime: {:.3}s", timing.runtime));
+                if ui.button("Reset Time").clicked() {
+                    timing.runtime = 0.0;
+                }
             });
     }
     fn config_menu(&mut self, parameters: &mut Parameters) {
@@ -193,8 +198,8 @@ impl RenderSystem {
                     if parameters.delta_time < 0.0 {
                         parameters.delta_time = 0.0;
                     }
-                    if parameters.delta_time > 0.005 {
-                        parameters.delta_time = 0.005;
+                    if parameters.delta_time > 0.1 {
+                        parameters.delta_time = 0.1;
                     }
                 });
                 ui.columns(2, |ui| {
@@ -577,7 +582,7 @@ impl RenderSystem {
                                 .speed(0.1),
                         );
                         let angle_radians = angle_degrees.to_radians();
-                        selected_polygon.rotate(angle_radians - old_angle);
+                        selected_polygon.rotate((angle_radians - old_angle) as f32);
                         selected_polygon.angle += angle_radians - old_angle;
                     });
                     ui.columns(2, |ui| {
@@ -628,6 +633,15 @@ impl RenderSystem {
                         ui[0].label("Eternal");
                         ui[1].add(egui::Checkbox::new(&mut selected_polygon.eternal, "Eternal"));
                     });
+                    let param_grav_force = &mut selected_polygon.gravity_force;
+                    ui.columns(1, |ui| {
+                        ui[0].label(format!("Gravity Force {:.4}", param_grav_force));
+                    });
+                    ui.columns(1, |ui| {
+                        ui[0].label(format!("Velocity Polar Form {}", vec2_to_string(selected_polygon.velocity)));
+
+                    });
+
                     let param_color = &mut selected_polygon.color;
                     let mut color: [f32; 3] = [param_color.r, param_color.g, param_color.b];
                     ui.columns(2, |ui| {

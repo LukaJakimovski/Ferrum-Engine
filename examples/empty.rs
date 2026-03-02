@@ -1,4 +1,5 @@
-use ferrum_engine::{run, Camera, ColorRGBA, Parameters, Vec2, Vec4};
+use glam::DVec2;
+use ferrum_engine::{run, Camera, ColorRGBA, Parameters, Vec4};
 
 fn main(){
     let parameters = Parameters {
@@ -12,9 +13,10 @@ fn main(){
         time_multiplier: 1.0,
         gravity: false,
         world_size: 300.0,
-        gravity_force: Vec2::new(0.0, -9.81),
+        gravity_force: DVec2::new(0.0, -9.81),
         clear_color: ColorRGBA::new(0.0, 0.0, 0.0, 1.0),
         is_running: false,
+        gravitational_constant: 0.0,
     };
     run(vec![], vec![], vec![], vec![], parameters);
 }

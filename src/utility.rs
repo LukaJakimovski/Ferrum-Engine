@@ -1,4 +1,5 @@
-use glam::{Mat2, Vec2};
+use std::f64::consts::PI;
+use glam::{DMat2, DVec2, Mat2, Vec2};
 use crate::{ ColorRGBA, Rigidbody};
 use crate::body_builder::BodyBuilder;
 use crate::collision_detection::sat_collision;
@@ -147,18 +148,18 @@ impl PhysicsSystem {
 
 
 impl UiSystem {
-    pub fn get_mouse_world_position(&self) -> Vec2 {
-        Vec2 {
-            x: ((self.mouse_pos.x * 2.0 - self.window_dimensions.x)
+    pub fn get_mouse_world_position(&self) -> DVec2 {
+        DVec2 {
+            x: (((self.mouse_pos.x * 2.0 - self.window_dimensions.x)
                 / self.window_dimensions.x
                 + self.camera.camera_pos.x / (-self.camera.camera_pos.w + 1.0))
-                * (-self.camera.camera_pos.w + 1.0),
-            y: ((self.mouse_pos.y * 2.0 - self.window_dimensions.y)
+                * (-self.camera.camera_pos.w + 1.0)) as f64,
+            y: (((self.mouse_pos.y * 2.0 - self.window_dimensions.y)
                 / self.window_dimensions.y
                 + self.camera.camera_pos.y / -(-self.camera.camera_pos.w + 1.0))
                 * -(-self.camera.camera_pos.w + 1.0)
                 * self.window_dimensions.y
-                / self.window_dimensions.x,
+                / self.window_dimensions.x) as f64,
         }
     }
 
@@ -243,6 +244,7 @@ impl UiSystem {
             physics_system.polygons[length].move_to(position);
             physics_system.polygons[length].change_color(ColorRGBA::new(1.0, 1.0, 1.0, 0.3));
             physics_system.polygons[length].collision = false;
+            physics_system.polygons[length].gravity_multiplier = 0.0;
             self.spawn_ghost_polygon = Some(length);
         } else if self.input_mode == InputMode::Spawn && (self.spawn_parameters.body_type == BodyType::WeldJoint || self.spawn_parameters.body_type == BodyType::PivotJoint) {
             physics_system.polygons.push(BodyBuilder::create_joint());
@@ -255,8 +257,8 @@ impl UiSystem {
     }
 }
 
-pub fn rotate_in_place(to_rotate: &mut Vec2, center: Vec2, angle: f32) -> &mut Vec2 {
-    let rot = Mat2::from_angle(angle);
+pub fn rotate_in_place(to_rotate: &mut DVec2, center: DVec2, angle: f64) -> &mut DVec2 {
+    let rot = DMat2::from_angle(angle);
     *to_rotate = rot.mul_vec2(*to_rotate - center) + center;
     to_rotate
 }
@@ -266,4 +268,19 @@ pub fn rotate(to_rotate: Vec2, center: Vec2, angle: f32) -> Vec2 {
     let mut start_vec = to_rotate;
     start_vec = rot.mul_vec2(start_vec - center) + center;
     start_vec
+}
+
+pub fn vec2_to_string(v: DVec2) -> String {
+    let angle = v.to_angle() / PI * 180.0;
+    let magnitude = v.length();
+    if 0.0 <= angle && angle <= 90.0 {
+        return format!("{:.3} [E{:.1}N] ou [N{:.1}E]", magnitude, angle, 90.0 - angle).to_string()
+    } else if 90.0 <= angle && angle <= 180.0 {
+        return format!("{:.3} [O{:.1}N] ou [N{:.1}O]", magnitude, 90.0 - angle + 90.0, angle - 90.0).to_string()
+    } else if -180.0 <= angle && angle <= -90.0 {
+        return format!("{:.3} [O{:.1}S] ou [S{:.1}O]", magnitude, angle + 180.0, 90.0 - angle - 180.0).to_string()
+    } else if -90.0 <= angle && angle <= 0.0 {
+        return format!("{:.3} [E{:.1}S] ou [S{:.1}E]", magnitude, -angle, 90.0 + angle).to_string()
+    }
+    return "Error Vector".to_string()
 }

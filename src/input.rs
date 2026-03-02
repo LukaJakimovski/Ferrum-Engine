@@ -1,4 +1,4 @@
-use glam::Vec2;
+use glam::{DVec2, Vec2};
 use crate::body_builder::{BodyBuilder, SpringParams};
 use crate::enums::{BodyType, DraggingState, InputMode, Keys, Menu, Mouse};
 use crate::spring::Spring;
@@ -102,7 +102,7 @@ impl UiSystem {
             winit::keyboard::KeyCode::KeyM => {
                 for i in 0..physics.polygons.len() {
                     physics.polygons[i].angular_velocity = 0.0;
-                    physics.polygons[i].velocity = Vec2::ZERO;
+                    physics.polygons[i].velocity = DVec2::ZERO;
                 }
             }
             winit::keyboard::KeyCode::Digit1 => {
@@ -194,22 +194,22 @@ impl UiSystem {
         }
 
         if self.pressed_keys[Keys::W as usize] == 1 {
-            self.camera.camera_pos.y += 5.0 * physics_system.dt;
+            self.camera.camera_pos.y += 5.0 * physics_system.dt as f32;
         }
         if self.pressed_keys[Keys::A as usize] == 1 {
-            self.camera.camera_pos.x -= 5.0 * physics_system.dt;
+            self.camera.camera_pos.x -= 5.0 * physics_system.dt as f32;
         }
         if self.pressed_keys[Keys::S as usize] == 1 {
-            self.camera.camera_pos.y -= 5.0 * physics_system.dt;
+            self.camera.camera_pos.y -= 5.0 * physics_system.dt as f32;
         }
         if self.pressed_keys[Keys::D as usize] == 1 {
-            self.camera.camera_pos.x += 5.0 * physics_system.dt;
+            self.camera.camera_pos.x += 5.0 * physics_system.dt as f32;
         }
         if self.pressed_keys[Keys::Plus as usize] == 1 {
-            self.camera.camera_pos.w += 5.0 * self.camera.scaling_factor * physics_system.dt;
+            self.camera.camera_pos.w += 5.0 * self.camera.scaling_factor * physics_system.dt as f32;
         }
         if self.pressed_keys[Keys::Minus as usize] == 1 {
-            self.camera.camera_pos.w -= 5.0 * self.camera.scaling_factor * physics_system.dt;
+            self.camera.camera_pos.w -= 5.0 * self.camera.scaling_factor * physics_system.dt as f32;
         }
 
         if self.pressed_buttons[Mouse::Left as usize] == 1
@@ -222,7 +222,7 @@ impl UiSystem {
             if self.selected_polygon.is_some() {
                 let position = self.get_mouse_world_position();
                 let mut mouse_polygon =
-                    Rigidbody::rectangle(0.03, 0.03, position, f32::MAX / 10000.0, 1.0, ColorRGBA::white());
+                    Rigidbody::rectangle(0.03, 0.03, position, f64::MAX / 10000.0, 1.0, ColorRGBA::white());
                 mouse_polygon.collision = false;
                 mouse_polygon.gravity_multiplier = 0.0;
                 let selected_polygon;
@@ -235,7 +235,7 @@ impl UiSystem {
 
                 if self.dragging == DraggingState::StartDragging {
                     let mut anchor_pos = mouse_polygon.center - selected_polygon.center;
-                    rotate_in_place(&mut anchor_pos, Vec2::ZERO, -selected_polygon.angle);
+                    rotate_in_place(&mut anchor_pos, DVec2::ZERO, -selected_polygon.angle);
                     physics_system.polygons.push(mouse_polygon);
                     let length = physics_system.polygons.len() - 1;
                     let spring;
@@ -244,7 +244,7 @@ impl UiSystem {
                             self.selected_polygon.unwrap(),
                             length,
                             anchor_pos,
-                            Vec2::ZERO,
+                            DVec2::ZERO,
                             self.spawn_parameters.spring_params.rest_length,
                             self.spawn_parameters.spring_params.stiffness,
                             self.spawn_parameters.spring_params.dampening,
@@ -255,7 +255,7 @@ impl UiSystem {
                             self.selected_polygon.unwrap(),
                             length,
                             anchor_pos,
-                            Vec2::ZERO,
+                            DVec2::ZERO,
                             0.0,
                             physics_system.polygons[self.selected_polygon.unwrap()].mass * 5.0,
                             1.0 * (11.0 * physics_system.polygons[self.selected_polygon.unwrap()].mass).sqrt() ,
@@ -359,7 +359,7 @@ impl UiSystem {
                     self.pressed_buttons[Mouse::Left as usize] = 0;
                 } else if self.input_mode == InputMode::Spawn && self.dragging == DraggingState::Dragging {
                     self.pressed_buttons[Mouse::Left as usize] = 1;
-                    let mouse_polygon = Rigidbody::rectangle(0.03, 0.03, position, f32::MAX / 100000.0, 1.0, ColorRGBA::white());
+                    let mouse_polygon = Rigidbody::rectangle(0.03, 0.03, position, f64::MAX / 100000.0, 1.0, ColorRGBA::white());
                     let polygon2_index = self.get_polygon_under_mouse(physics_system);
                     if polygon2_index.is_some() && self.mouse_spring.is_some() && self.selected_polygon.unwrap() != polygon2_index.unwrap() {
                         let polygon2 = &mut physics_system.polygons[polygon2_index.unwrap()];

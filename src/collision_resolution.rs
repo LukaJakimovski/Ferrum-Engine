@@ -1,4 +1,4 @@
-use glam::Vec2;
+use glam::{DVec2};
 use crate::collision_detection::{find_contact_points, sat_collision};
 use crate::physics::PhysicsSystem;
 use crate::Rigidbody;
@@ -11,17 +11,17 @@ impl PhysicsSystem {
         let mut y_max = f32::MIN;
         let mut rad_max = f32::MIN;
         for i in 0..self.polygons.len() {
-            if self.polygons[i].center.x < x_min {
-                x_min = self.polygons[i].center.x;
+            if (self.polygons[i].center.x as f32) < x_min {
+                x_min = self.polygons[i].center.x as f32;
             }
-            if self.polygons[i].center.x > x_max {
-                x_max = self.polygons[i].center.x;
+            if (self.polygons[i].center.x as f32) > x_max {
+                x_max = self.polygons[i].center.x as f32;
             }
-            if self.polygons[i].center.y < y_min {
-                y_min = self.polygons[i].center.y;
+            if (self.polygons[i].center.y as f32) < y_min {
+                y_min = self.polygons[i].center.y as f32;
             }
-            if self.polygons[i].center.y > y_max {
-                y_max = self.polygons[i].center.y;
+            if (self.polygons[i].center.y as f32) > y_max {
+                y_max = self.polygons[i].center.y as f32;
             }
             if self.polygons[i].radius > rad_max {
                 rad_max = self.polygons[i].radius;
@@ -62,8 +62,8 @@ impl PhysicsSystem {
         }
 
         for i in 0..self.polygons.len() {
-            let x_index: usize = (self.polygons[i].center.x / x_interval) as usize;
-            let y_index: usize = (self.polygons[i].center.y / y_interval) as usize;
+            let x_index: usize = (self.polygons[i].center.x / x_interval as f64) as usize;
+            let y_index: usize = (self.polygons[i].center.y / y_interval as f64) as usize;
             let mut index = x_index + y_index * x_sections;
             if index >= sections.len() {
                 index = sections.len() - 1
@@ -126,7 +126,7 @@ impl PhysicsSystem {
             }
         }
     }
-    fn resolve_contact_velocity(body1: &mut Rigidbody, body2: &mut Rigidbody, contact: Vec2, normal: Vec2) {
+    fn resolve_contact_velocity(body1: &mut Rigidbody, body2: &mut Rigidbody, contact: DVec2, normal: DVec2) {
         // Effective masses
         let m1 = if body1.is_static { 0.0 } else { 1.0 / body1.mass };
         let m2 = if body2.is_static { 0.0 } else { 1.0 / body2.mass };
@@ -147,7 +147,7 @@ impl PhysicsSystem {
 
         // Restitution OFF for resting contacts (prevents bounciness in stacks)
         let restitution_vel_threshold = 1e-2; // tweak
-        let mut e = (body1.restitution + body2.restitution) * 0.5;
+        let mut e = ((body1.restitution + body2.restitution) * 0.5) as f64;
         if vel_n.abs() < restitution_vel_threshold { e = 0.0; }
 
         if vel_n > 0.0 {
@@ -190,8 +190,8 @@ impl PhysicsSystem {
     fn positional_correction_pair(
         body1: &mut Rigidbody,
         body2: &mut Rigidbody,
-        normal: Vec2,
-        penetration: f32,
+        normal: DVec2,
+        penetration: f64,
         contact_count: usize,
     ) {
         if penetration <= 0.0 || contact_count == 0 { return; }
