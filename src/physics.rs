@@ -72,10 +72,13 @@ impl PhysicsSystem {
         }
 
         //self.get_gravity(parameters.gravitational_constant);
-        self.gravity_step(parameters.gravitational_constant);
-        for polygon in &mut self.polygons {
-            polygon.update_rigidbody(g, self.dt);
+        //self.gravity_step(parameters.gravitational_constant);
+        let snapshot = self.polygons.clone();
+        let mut next_bodies: Vec<Rigidbody> = Vec::with_capacity(self.polygons.len());
+        for i in 0..self.polygons.len() {
+            self.polygons[i].update_rigidbody(&snapshot, &mut next_bodies, i, g, parameters.gravitational_constant, self.dt);
         }
+        self.polygons = next_bodies;
         for weld_joint in &mut self.weld_joints {
             for _ in 0..1 {
                 weld_joint.solve_velocity_constraints(&mut self.polygons, self.dt);

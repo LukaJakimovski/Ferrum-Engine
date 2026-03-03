@@ -14,8 +14,6 @@ pub struct Rigidbody {
     pub moment_of_inertia: f32,
     pub area: f32,
     pub restitution: f32,
-    pub force: Vec2,
-    pub gravity_force: Vec2,
     pub torque: f32,
     pub angle: f32,
     pub collision: bool,
@@ -65,8 +63,6 @@ impl Rigidbody {
             color,
             indices,
             restitution,
-            force: Vec2::ZERO,
-            gravity_force: Vec2::ZERO,
             torque: 0.0,
             angle: 0.0,
             collision: true,
@@ -114,11 +110,9 @@ impl Rigidbody {
             velocity: Vec2::ZERO,
             radius: 0.0,
             center: Vec2::ZERO,
-            gravity_force: Vec2::ZERO,
             vertices,
             indices,
             restitution,
-            force: Vec2::ZERO,
             torque: 0.0,
             angle: 0.0,
             collision: true,
@@ -172,11 +166,9 @@ impl Rigidbody {
             color,
             radius,
             center: pos,
-            gravity_force: Vec2::ZERO,
             vertices,
             indices,
             restitution,
-            force: Vec2::ZERO,
             torque: 0.0,
             angle: 0.0,
             collision: true,
@@ -339,18 +331,33 @@ impl Rigidbody {
         self.color = color
     }
 
-    pub fn update_rigidbody(&mut self, g: Vec2, dt: f32) {
-        let force = |_: f32, _: Vec2, _: Vec2| g * self.mass * self.gravity_multiplier + self.force;
+    pub fn update_rigidbody(&self, polygons: &Vec<Rigidbody>, next: &mut Vec<Rigidbody>, i: usize, gf: Vec2, g: f32, dt: f32) {
+        let force = |dt_offset: f32, my_pos: Vec2, _my_vel: Vec2| {
+            let mut accel = gf * self.mass * self.gravity_multiplier;
+            for (j, other) in polygons.iter().enumerate() {
+                if i == j {continue; }
+
+                let other_pos_at_t = other.center + other.velocity * dt_offset;
+
+                let diff = other_pos_at_t - my_pos;
+                let dist_sq = diff.length_squared() + 1e-14;
+                accel += diff * (g * other.gravity_multiplier * other.mass / (dist_sq * dist_sq.sqrt()));
+            }
+            accel
+        };
         let (new_x, new_v) = dormand_prince_step(0.0, self.center, self.velocity, dt, self.mass, &force);
         let force = |_: f32, _: f32, _: f32| 0.0;
         let (new_angle_b, new_omega_b) = rk4_angular_step(0.0, self.angle, self.angular_velocity, dt, self.moment_of_inertia, &force, );
-        let diff = new_angle_b - self.angle;
-        self.rotate(diff);
-        self.angle = new_angle_b;
-        self.angular_velocity = new_omega_b;
-        self.velocity = new_v;
-        let diff = new_x - self.center;
-        self.translate(diff);
+
+        let mut p1 = self.clone();
+        let diff = new_angle_b - p1.angle;
+        p1.rotate(diff);
+        p1.angle = new_angle_b;
+        p1.angular_velocity = new_omega_b;
+        p1.velocity = new_v;
+        let diff = new_x - p1.center;
+        p1.translate(diff);
+        next.push(p1);
 
     }
 }

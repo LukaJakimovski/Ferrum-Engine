@@ -633,10 +633,6 @@ impl RenderSystem {
                         ui[0].label("Eternal");
                         ui[1].add(egui::Checkbox::new(&mut selected_polygon.eternal, "Eternal"));
                     });
-                    let param_grav_force = &mut selected_polygon.gravity_force;
-                    ui.columns(1, |ui| {
-                        ui[0].label(format!("Gravity Force {:.4}", param_grav_force));
-                    });
                     ui.columns(1, |ui| {
                         ui[0].label(format!("Velocity Polar Form {}", vec2_to_string(selected_polygon.velocity)));
 
